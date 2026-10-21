@@ -13,9 +13,12 @@
 
 Агент обязан автоматически руководствоваться технической документацией проекта при любых задачах по разработке MCP-сервера или созданию кастомок Dota 2:
 - **Полная техническая спецификация:** [docs/TECHNICAL_SPEC.md](./docs/TECHNICAL_SPEC.md)
+- **Протокол инженерной самопроверки агента:** [docs/SELF_CHECK_PROTOCOL.md](./docs/SELF_CHECK_PROTOCOL.md)
+- **Журнал багов, ошибок и исправлений:** [docs/BUG_LOG.md](./docs/BUG_LOG.md)
 - **Проектный навык (Workflow создания кастомок и работы с MCP):** [.agents/skills/dota2-custom-game-dev/SKILL.md](./.agents/skills/dota2-custom-game-dev/SKILL.md)
 
 ### Обязательные технические инварианты проекта:
 1. **Запрет на выдумывание путей ассетов Доты:** Все пути к моделям (`.vmdl`), партиклам (`.vpcf`), звукам (`.vsndevts`), анимациям (`ACT_DOTA_*`), точкам крепления (`attach_*`) и параметрам `Control Points` брать исключительно через инструменты MCP-сервера (`search_dota_assets`, `inspect_model`, `inspect_particle`, `get_base_dota_definition`).
 2. **Безопасная работа с картами (`.vmap`):** Никогда не читать сырые файлы `.vmap` целиком в контекст. Использовать только специализированные функции MCP (`prepare_map_from_template`, `list_map_entities`, `add_map_entity`, `remove_map_entity`, `compile_addon_resource`).
-3. **Синхронизация документации:** При любом изменении архитектуры или сигнатур инструментов в `src/dota2_mcp/` немедленно обновлять [docs/TECHNICAL_SPEC.md](./docs/TECHNICAL_SPEC.md).
+3. **Самопроверка и авто-логирование багов:** Перед генерацией кода проверяться по [docs/SELF_CHECK_PROTOCOL.md](./docs/SELF_CHECK_PROTOCOL.md). Любой обнаруженный в ходе тестирования баг или ошибку фиксировать через `log_bug_report` в [docs/BUG_LOG.md](./docs/BUG_LOG.md).
+4. **Синхронизация документации:** При любом изменении архитектуры или сигнатур инструментов в `src/dota2_mcp/` немедленно обновлять [docs/TECHNICAL_SPEC.md](./docs/TECHNICAL_SPEC.md).

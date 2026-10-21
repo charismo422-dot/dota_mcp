@@ -11,9 +11,21 @@ description: >-
 
 This skill enforces the mandatory architecture and step-by-step workflow for building Dota 2 custom games via the `dota_mcp` MCP server.
 
-## Full Technical Specification
-For complete architecture details, tool signatures, and file structures, consult:
+## Full Technical Specification & Self-Check Protocol
+For complete architecture details, tool signatures, self-check questions, and bug logs, consult:
 - [TECHNICAL_SPEC.md](../../../docs/TECHNICAL_SPEC.md)
+- [SELF_CHECK_PROTOCOL.md](../../../docs/SELF_CHECK_PROTOCOL.md)
+- [BUG_LOG.md](../../../docs/BUG_LOG.md)
+
+## Windows Environment Bootstrap (When asked to set up on Windows PC)
+If the user opens this repository on their Windows PC and asks to set up the MCP server:
+1. Create a Python virtual environment and install dependencies:
+   `python -m venv .venv`
+   `.venv\Scripts\pip install -r requirements.txt`
+2. Run the bootstrap diagnostic to verify Dota 2 paths and automatically download `Decompiler.exe`:
+   `.venv\Scripts\python -m src.dota2_mcp.diagnostics --bootstrap`
+3. Register `dota2-workshop-mcp` inside `~/.gemini/config/mcp_config.json` (on Windows: `%USERPROFILE%\.gemini\config\mcp_config.json`).
+4. Run `run_mcp_self_test` once connected.
 
 ## Mandatory Rules for Dota 2 Asset & Code Generation
 

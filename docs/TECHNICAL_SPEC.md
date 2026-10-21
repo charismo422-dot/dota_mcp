@@ -35,11 +35,12 @@
 ```text
 dota_mcp/
 ├── GEMINI.md                                  # Главные правила проекта и авто-инструкции агента
-├── README.md                                  # Краткая инструкция запуска на Windows
+├── README.md                                  # Инструкция по развертыванию агентом на Windows
 ├── requirements.txt                           # Python-зависимости (mcp, vpk, vdf, requests)
-├── setup_windows.bat                          # Авто-установщик для Windows (поиск Доты, venv, Decompiler, mcp_config)
 ├── docs/
-│   └── TECHNICAL_SPEC.md                      # Полная техническая спецификация (этот документ)
+│   ├── TECHNICAL_SPEC.md                      # Полная техническая спецификация (этот документ)
+│   ├── SELF_CHECK_PROTOCOL.md                 # Протокол инженерной самопроверки агента
+│   └── BUG_LOG.md                             # Журнал фиксации багов, ошибок и исправлений
 ├── .agents/
 │   └── skills/
 │       └── dota2-custom-game-dev/
@@ -53,7 +54,8 @@ dota_mcp/
         ├── asset_inspector.py                 # Модуль 2: Инспекция .vmdl_c (анимации/attachments) и .vpcf_c (CP)
         ├── addon_manager.py                   # Модуль 3: Создание аддона, валидация KV, авто-Precache, локализация
         ├── vmap_builder.py                    # Модуль 4: Чтение/модификация .vmap через dmxconvert + компиляция
-        └── netcon_bridge.py                   # Модуль 5: TCP-мост к запущенной Dota 2 (-netconport)
+        ├── netcon_bridge.py                   # Модуль 5: TCP-мост к запущенной Dota 2 (-netconport)
+        └── diagnostics.py                     # Модуль 6: Самодиагностика MCP и авто-логирование багов в BUG_LOG.md
 ```
 
 ---
@@ -109,9 +111,38 @@ dota_mcp/
       - `dota_dev forcegamestart` — принудительный старт игры.
     - **Возвращает:** Ответ консоли и свежие строки лога (включая стектрейсы ошибок VScript/Lua).
 
+### Модуль 6: Самодиагностика и Журнал багов (`diagnostics.py`)
+14. `run_mcp_self_test() -> dict`
+    - **Описание:** Проверяет готовность всей инфраструктуры на ПК: найден ли путь к Dota 2, открывается ли `pak01_dir.vpk`, доступны ли `dmxconvert.exe`, `resourcecompiler.exe`, `Decompiler.exe` (если нет — может автоматически скачать последний релиз `cli-windows-x64.zip` из `ValveResourceFormat`), и слушает ли Dota 2 порт `netconport`.
+15. `log_bug_report(component: str, symptom: str, root_cause: str, fix_applied: str, prevention_rule: str) -> dict`
+    - **Описание:** Автоматически добавляет структурированную запись об обнаруженном и исправленном баге в `docs/BUG_LOG.md`.
+
 ---
 
-## 5. Жизненный цикл создания кастомки агентом (Стандарт работы)
+## 5. Развертывание на Windows-ПК силами агента (Zero-Script Bootstrap)
+
+Когда пользователь открывает склонированный репозиторий в Antigravity на Windows-ПК с установленной Dota 2 и пишет: *«Настрой проект и подключи MCP»*, агент выполняет следующие шаги:
+1. Создает виртуальное окружение: `python -m venv .venv` и устанавливает зависимости: `.venv\Scripts\pip install -r requirements.txt`.
+2. Запускает первичную проверку и автозагрузку `Decompiler.exe`: `.venv\Scripts\python -m src.dota2_mcp.diagnostics --bootstrap`.
+3. Прописывает MCP-сервер в глобальный конфиг Antigravity (`~/.gemini/config/mcp_config.json`):
+   ```json
+   {
+     "mcpServers": {
+       "dota2-workshop-mcp": {
+         "command": "<АБСОЛЮТНЫЙ_ПУТЬ_К_РЕПО>/.venv/Scripts/python.exe",
+         "args": ["-m", "src.dota2_mcp.server"],
+         "env": {
+           "PYTHONPATH": "<АБСОЛЮТНЫЙ_ПУТЬ_К_РЕПО>"
+         }
+       }
+     }
+   }
+   ```
+4. Вызывает `run_mcp_self_test()` для подтверждения полной готовности.
+
+---
+
+## 6. Жизненный цикл создания кастомки агентом (Стандарт работы)
 
 При получении задачи от пользователя («Сделай кастомку...») агент обязан выполнять шаги строго в следующем порядке:
 1. **Инициализация:** Проверить/создать аддон через `create_or_configure_addon` и подготовить текстовую карту через `prepare_map_from_template`.
