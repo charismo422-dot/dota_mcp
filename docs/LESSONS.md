@@ -89,6 +89,13 @@ Entry format:
 - **Not in the API dump but exists:** `Vector:Normalized()`, built-in modifier names like `modifier_silence` (verified live by the autotest).
 - **Noise filter works in practice:** a full custom-game launch response dropped from ≈ 30 lines of engine chatter + 20 false "errors" to only meaningful lines (`noise_lines_hidden` ≈ 180).
 
+### 2026-10-22 — Stage 4 playtest feedback (owner)
+- **Shop:** a custom item is only findable via search until it is listed in `scripts/shops.txt`. An addon `shops.txt` REPLACES the stock one, so start from the stock `scripts/shops.txt` (extract from VPK) and add the item to a category (`misc` = "Разное").
+- **Looping sounds:** `Hero_Enigma.Black_Hole` loops; emitted via `EmitSoundOnLocationWithCaster` it can never be stopped and played forever. Rule: emit looping/long stock sounds on an entity you control (a `CreateModifierThinker` thinker) and `StopSoundOn` it in the modifier's `OnDestroy`. Same for long stock sounds reused for shorter spells (CM's 10 s `freezingField.wind` on a 3 s custom ultimate).
+- **Autotests must not run on game start:** they polluted manual playtests (casts, creeps appearing/disappearing). Run them only via console commands from the agent.
+- **Debuffs on enemies are hard to see:** for player-facing checks of silence/disarm etc., add a demo command where an enemy applies the effect to the player's hero (`mcp_lab_demo_silence`).
+- **Note:** a hero created with `CreateUnitByName` (no player owner) can cast items via `CastAbilityOnPosition(pos, item, -1)`.
+
 ### 2026-10-22 — Commit messages from PowerShell
 - **Doesn't work:** `git commit -F - @'...'@` in Windows PowerShell 5.1 — the here-string is passed as a pathspec, not stdin.
 - **Solution / Rule:** write the message to a temp file and use `git commit -F <file>`.

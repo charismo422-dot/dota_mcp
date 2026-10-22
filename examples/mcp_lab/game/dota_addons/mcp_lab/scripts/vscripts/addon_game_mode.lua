@@ -56,6 +56,34 @@ Convars:RegisterCommand( "mcp_lab_waves", function( _, interval )
 	GameRules.AddonTemplate:SetWaveInterval( tonumber( interval ) or 30 )
 end, "MCP Lab: start/stop timed waves", 0 )
 
+Convars:RegisterCommand( "mcp_lab_autotest", function()
+	GameRules.AddonTemplate:RunAutoTest( GameRules.AddonTemplate.hero )
+end, "MCP Lab: run all autotests (stage 1 -> 2 -> 3 -> 4)", 0 )
+
+-- Visual demo for the player: an enemy Enigma appears and uses Void Shard on the player's hero,
+-- so the silence is visible on the player's own ability bar
+Convars:RegisterCommand( "mcp_lab_demo_silence", function()
+	local hero = GameRules.AddonTemplate.hero
+	local pos = hero:GetAbsOrigin() + Vector( 600, 0, 0 )
+	local enemy = CreateUnitByName( "npc_dota_hero_enigma", pos, true, nil, nil, DOTA_TEAM_BADGUYS )
+	enemy:SetIdleAcquire( false )
+	local item = enemy:AddItemByName( "item_mcp_void_shard" )
+	enemy:SetContextThink( "MCPLabDemoCast", function()
+		enemy:GiveMana( 1000 )
+		enemy:CastAbilityOnPosition( hero:GetAbsOrigin(), item, -1 )
+		enemy:SetContextThink( "MCPLabDemoCheck", function()
+			print( "[MCP_LAB] demo silence: player hero silenced=" .. tostring( hero:IsSilenced() ) )
+			return nil
+		end, 1.3 )
+		enemy:SetContextThink( "MCPLabDemoCleanup", function()
+			UTIL_Remove( enemy )
+			return nil
+		end, 6.0 )
+		return nil
+	end, 1.5 )
+	print( "[MCP_LAB] demo silence: enemy Enigma spawned" )
+end, "MCP Lab: enemy uses Void Shard on the player's hero", 0 )
+
 Convars:RegisterCommand( "mcp_lab_autotest4", function()
 	GameRules.AddonTemplate:RunItemTest( GameRules.AddonTemplate.hero )
 end, "MCP Lab: stage 4 autotest (custom item: stats, rift pull, silence)", 0 )
@@ -70,6 +98,7 @@ function Precache( context )
 	PrecacheUnitByNameSync( "npc_dota_hero_target_dummy", context )
 	PrecacheUnitByNameSync( "npc_mcp_void_imp", context )
 	PrecacheUnitByNameSync( "npc_mcp_rift_giant", context )
+	PrecacheUnitByNameSync( "npc_dota_hero_enigma", context )
 end
 
 function Activate()
@@ -127,12 +156,9 @@ function CAddonTemplateGameMode:OnNPCSpawned( event )
 	end
 	print( "[MCP_LAB] hero " .. hero:GetUnitName() .. " slots: " .. table.concat( slots, " " ) )
 
+	-- Autotests are NOT started here: a manual playtest must begin with a clean arena.
+	-- The agent runs them on demand ("mcp_lab_autotest" = all stages, "mcp_lab_autotest3/4" = single stage).
 	self.hero = hero
-	Convars:RegisterCommand( "mcp_lab_autotest", function()
-		GameRules.AddonTemplate:RunAutoTest( GameRules.AddonTemplate.hero )
-	end, "Re-run MCP Lab ability autotest", 0 )
-
-	self:RunAutoTest( hero )
 end
 
 -- Automated check: spawn targets, cast once, verify damage + slow modifier

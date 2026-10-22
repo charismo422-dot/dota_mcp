@@ -7,7 +7,6 @@ function mcp_blizzard:OnSpellStart()
 	local caster = self:GetCaster()
 	CreateModifierThinker( caster, self, "modifier_mcp_blizzard_thinker", { duration = self:GetSpecialValueFor( "duration" ) },
 		caster:GetAbsOrigin(), caster:GetTeamNumber(), false )
-	EmitSoundOn( "hero_Crystal.freezingField.wind", caster )
 end
 
 --------------------------------------------------------------------------------
@@ -21,6 +20,8 @@ function modifier_mcp_blizzard_thinker:OnCreated()
 	self.damage = ability:GetSpecialValueFor( "damage_per_tick" )
 	self.ticks = 0
 	self:StartIntervalThink( ability:GetSpecialValueFor( "interval" ) )
+	-- Stock wind sound lasts as long as CM's 10 s ultimate: emit it on the thinker and stop it when our 3 s end
+	EmitSoundOn( "hero_Crystal.freezingField.wind", self:GetParent() )
 end
 
 function modifier_mcp_blizzard_thinker:OnIntervalThink()
@@ -47,5 +48,6 @@ end
 function modifier_mcp_blizzard_thinker:OnDestroy()
 	if not IsServer() then return end
 	print( string.format( "[MCP_LAB] mcp_blizzard finished: ticks=%d", self.ticks ) )
+	StopSoundOn( "hero_Crystal.freezingField.wind", self:GetParent() )
 	UTIL_Remove( self:GetParent() )
 end
