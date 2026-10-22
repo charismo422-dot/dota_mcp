@@ -1,0 +1,66 @@
+=== HEADER (Lines 1-18) ===
+	Resource Type: SoundEventScript [Version 1] [Header Version: 12]
+	File Size: 7826 bytes
+
+
+--- (No External Resource References Found)
+
+
+--- Resource Blocks: Count 2 ---
+	-- Block: RED2  Size: 4255   bytes [Offset:     48]
+	-- Block: DATA  Size: 3522   bytes [Offset:   4304]
+
+
+--- Data for block "RED2" ---
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	m_InputDependencies = 
+	[
+		{
+
+=== DATA BLOCK (Lines 1800..1845) ===
+--- Data for block "DATA" ---
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	Hero_Pudge.PreAttack = 
+	{
+		type = "dota_src1_3d"
+		volume_rand_min = -0.149902
+		volume_rand_max = 0.149902
+		volume = 0.849609
+		pitch_rand_min = -0.05
+		pitch_rand_max = 0.05
+		pitch = 1.0
+		soundlevel = 78.0
+		distance_max = 1500.0
+		event_type = 1.0
+		vsnd_files = 
+		[
+			"sounds/weapons/hero/shared/small_blade/whoosh01.vsnd",
+			"sounds/weapons/hero/shared/small_blade/whoosh02.vsnd",
+			"sounds/weapons/hero/shared/small_blade/whoosh03.vsnd",
+			"sounds/weapons/hero/shared/small_blade/whoosh04.vsnd",
+		]
+		vsnd_duration = 0.188254
+	}
+	Hero_Pudge.Attack = 
+	{
+		type = "dota_src1_3d"
+		volume_rand_max = 0.25
+		volume = 0.75
+		pitch_rand_min = -0.05
+		pitch_rand_max = 0.05
+		pitch = 1.0
+		soundlevel = 81.0
+		mixgroup = "BaseAttacks"
+		distance_max = 2500.0
+		soundevent_layer2 = "Hero_Pudge.Attack.Rip"
+		soundevent_layer2_on = 1.0
+		soundevent_layer3 = "Hero_Pudge.Attack.Ring"
+		soundevent_layer3_on = 1.0
+		vsnd_files = 
+		[
+			"sounds/weapons/hero/pudge/attack01.vsnd",
+			"sounds/weapons/hero/pudge/attack02.vsnd",
+			"sounds/weapons/hero/pudge/attack03.vsnd",
+		]

@@ -1,0 +1,331 @@
+=== 1. VMAP HEADER ===
+<!-- dmx encoding keyvalues2 4 format vmap 40 -->
+"$prefix_element$"
+{
+	"id" "elementid" "c6101821-c434-4729-a273-aa562bb69bf9"
+	"asset_preview_thumbnail" "binary" 
+	"
+		FFD8FFE000104A46494600010101006000600000FFDB004300
+...
+
+=== 2. CMapWorld (children element_array) ===
+"CMapWorld"
+	{
+		"id" "elementid" "9cf7fb86-8753-42ed-ab75-0b38ef5f2fcb"
+		"origin" "vector3" "0 0 0"
+		"angles" "qangle" "0 0 0"
+		"scales" "vector3" "1 1 1"
+		"nodeID" "int" "1"
+		"children" "element_array" 
+		[
+			"element" "2320ff35-ef31-4c07-aa9a-e9acaab6d79f",
+			"CMapDotaTileGrid"
+			{
+				"id" "elementid" "04a37c13-8a27-4e82-99d8-709e4b000926"
+				"origin" "vector3" "-8192 -8192 128"
+				"angles" "qangle" "0 0 0"
+				"scales" "vector3" "1 1 1"
+				"nodeID" "int" "16"
+				"children" "element_array" 
+				[
+					"CMapTileObject"
+					{
+						"id" "elementid" "e7d568e4-808f-45ba-9d66-44f346a5d785"
+						"origin" "vector3" "0 0 0"
+						"angles" "qangle" "0 0 0"
+						"scales" "vector3" "1 1 1"
+						"nodeID" "int" "17"
+						"children" "element_array" 
+						[
+						]
+						"editorOnly" "bool" "0"
+						"force_hidden" "bool" "0"
+						"variableTargetKeys" "string_array" 
+						[
+						]
+						"variableNames" "string_array" 
+						[
+						]
+						"relayPlugData" "DmePlugList"
+						{
+							"id" "elementid" "714616b2-2486-4f12-9bf2-b3c16133b617"
+							"names" "string_array" 
+				
+...
+
+=== 3. CVisibilityMgr (nodes & hiddenFlags) AND CMapGroup (children) ===
+"visbility" "CVisibilityMgr"
+	{
+		"id" "elementid" "870b7237-8a38-458b-8e29-bc8c744e5b49"
+		"origin" "vector3" "0 0 0"
+		"angles" "qangle" "0 0 0"
+		"scales" "vector3" "1 1 1"
+		"nodeID" "int" "0"
+		"children" "element_array" 
+		[
+		]
+		"editorOnly" "bool" "0"
+		"force_hidden" "bool" "0"
+		"variableTargetKeys" "string_array" 
+		[
+		]
+		"variableNames" "string_array" 
+		[
+		]
+		"nodes" "element_array" 
+		[
+			"element" "2320ff35-ef31-4c07-aa9a-e9acaab6d79f",
+			"element" "d3689e7b-df77-4691-9691-4e9458b99e83",
+			"element" "3528e212-fb9b-4613-a79b-15ef94fcc3e9",
+			"element" "da21fd95-25a6-4c0c-b250-8ea99bc47c89",
+			"element" "f1b869e7-ad36-41de-a503-1d71da1e1133",
+			"element" "ccde8f99-6f34-4e0b-95e1-1b86c1bd81c4",
+			"element" "97101e66-4998-4e3a-9d53-4ba763b5028f",
+			"element" "358d0f0f-7f4f-4bcd-a980-c2489d9d3f6e",
+			"element" "a444981e-dafa-4196-89e0-60fc81aa32e7",
+			"element" "36c654a6-4c7b-429b-b8d3-7d206f4c562f",
+			"element" "3f30c926-8be7-4293-a288-25474d9185ab",
+			"element" "a63af6d7-89f4-4ee8-a057-0dcef698c90b"
+		]
+		"hiddenFlags" "int_array" 
+		[
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+			"0"
+		]
+	}
+
+	"mapVariables" "CMapVariableSet"
+	{
+		"id" "elementid" "a24f7d6f-054a-4188-8d9f-1efaef0c4ba8"
+		"variableNames" "string_array" 
+		[
+		]
+		"variableValues" "string_array" 
+		[
+		]
+		"variableEditorOverrides" "string_array" 
+		[
+		]
+		"m_ChoiceGroups" "element_array" 
+		[
+		]
+		"variableChoiceCounts" "int_array" 
+		[
+		]
+		"variableChoices" "element_array" 
+		[
+		]
+		"variableTypeNames" "string_array" 
+		[
+		]
+	}
+
+	"rootSelectionSet" "CMapSelectionSet"
+	{
+		"id" "elementid" "0175dcea-8175-4c39-9c5f-eaefbee2600d"
+		"children" "element_array" 
+		[
+		]
+		"setType" "int" "0"
+		"selectionSetName" "string" ""
+		"selectionSetData" "element" ""
+	}
+
+	"m_ReferencedMeshSnapshots" "element_array" 
+	[
+	]
+	"m_bIsCordoning" "bool" "0"
+	"m_bCordonsVisible" "bool" "0"
+}
+
+"CMapGroup"
+{
+	"id" "elementid" "2320ff35-ef31-4c07-aa9a-e9acaab6d79f"
+	"origin" "vector3" "-128 -64 128"
+	"angles" "qangle" "0 0 0"
+	"scales" "vector3" "1 1 1"
+	"nodeID" "int" "4"
+	"children" "element_array" 
+	[
+		"element" "d3689e7b-df77-4691-9691-4e9458b99e83",
+		"element" "3528e212-fb9b-4613-a79b-15ef94fcc3e9",
+		"element" "da21fd95-25a6-4c0c-b250-8ea99bc47c89",
+		"element" "f1b869e7-ad36-41de-a503-1d71da1e1133",
+		"element" "ccde8f99-6f34-4e0b-95e1-1b86c1bd81c4",
+		"element" "97101e66-4998-4e3a-9d53-4ba763b5028f",
+		"element" "358d0f0f-7f4f-4bcd-a980-c2489d9d3f6e",
+		"element" "a444981e-dafa-4196-89e0-60fc81aa32e7",
+		"element" "36c654a6-4c7b-429b-b8d3-7d206f4c562f",
+		"element" "3f30c926-8be7-4293-a288-25474d9185ab",
+		"element" "a63af6d7-89f4-4ee8-a057-0dcef698c90b"
+	]
+	"editorOnly" "bool" "0"
+	"force_hidden" "bool" "0"
+	"variableTargetKeys" "string_array" 
+	[
+	]
+	"variableNames" "string_array" 
+	[
+	]
+}
+
+
+=== 4. ADJACENT TOP-LEVEL CMapEntity BLOCKS (SEPARATED BY BLANK LINE, NO COMMA) ===
+"CMapEntity"
+{
+	"id" "elementid" "f1b869e7-ad36-41de-a503-1d71da1e1133"
+	"origin" "vector3" "-128 64 144"
+	"angles" "qangle" "0 0 0"
+	"scales" "vector3" "1 1 1"
+	"nodeID" "int" "8"
+	"children" "element_array" 
+	[
+	]
+	"editorOnly" "bool" "0"
+	"force_hidden" "bool" "0"
+	"variableTargetKeys" "string_array" 
+	[
+	]
+	"variableNames" "string_array" 
+	[
+	]
+	"relayPlugData" "DmePlugList"
+	{
+		"id" "elementid" "c1feaff4-ddc7-46d1-a6db-7c9195ba6b68"
+		"names" "string_array" 
+		[
+		]
+		"dataTypes" "int_array" 
+		[
+		]
+		"plugTypes" "int_array" 
+		[
+		]
+		"descriptions" "string_array" 
+		[
+		]
+	}
+
+	"connectionsData" "element_array" 
+	[
+	]
+	"entity_properties" "EditGameClassProps"
+	{
+		"id" "elementid" "0047ab3f-2ccf-4783-83f9-9adcaabae6bf"
+		"classname" "string" "info_courier_spawn_radiant"
+		"targetname" "string" ""
+		"vscripts" "string" ""
+	}
+
+	"hitNormal" "vector3" "0 0 1"
+	"isProceduralEntity" "bool" "0"
+}
+
+"CMapEntity"
+{
+	"id" "elementid" "ccde8f99-6f34-4e0b-95e1-1b86c1bd81c4"
+	"origin" "vector3" "-128 -64 128"
+	"angles" "qangle" "0 0 0"
+	"scales" "vector3" "1 1 1"
+	"nodeID" "int" "9"
+	"children" "element_array" 
+	[
+	]
+	"editorOnly" "bool" "0"
+	"force_hidden" "bool" "0"
+	"variableTargetKeys" "string_array" 
+	[
+	]
+	"variableNames" "string_array" 
+	[
+	]
+	"relayPlugData" "DmePlugList"
+	{
+		"id" "elementid" "5bbe52a2-ddfd-4045-a047-8603634eba2d"
+		"names" "string_array" 
+		[
+		]
+		"dataTypes" "int_array" 
+		[
+		]
+		"plugTypes" "int_array" 
+		[
+		]
+		"descriptions" "string_array" 
+		[
+		]
+	}
+
+	"connectionsData" "element_array" 
+	[
+	]
+	"entity_properties" "EditGameClassProps"
+	{
+		"id" "elementid" "d85fb04b-16a8-47c4-a36e-02c7dcdc82b2"
+		"classname" "string" "info_player_start_goodguys"
+	}
+
+	"hitNormal" "vector3" "0 0 1"
+	"isProceduralEntity" "bool" "0"
+}
+
+"CMapEntity"
+{
+	"id" "elementid" "97101e66-4998-4e3a-9d53-4ba763b5028f"
+	"origin" "vector3" "0 -64 138"
+	"angles" "qangle" "0 180 0"
+	"scales" "vector3" "1 1 1"
+	"nodeID" "int" "10"
+	"children" "element_array" 
+	[
+	]
+	"editorOnly" "bool" "0"
+	"force_hidden" "bool" "0"
+	"variableTargetKeys" "string_array" 
+	[
+	]
+	"variableNames" "string_array" 
+	[
+	]
+	"relayPlugData" "DmePlugList"
+	{
+		"id" "elementid" "e93bfc48-daf5-418f-8cb4-5dc8e81b5b63"
+		"names" "string_array" 
+		[
+		]
+		"dataTypes" "int_array" 
+		[
+		]
+		"plugTypes" "int_array" 
+		[
+		]
+		"descriptions" "string_array" 
+		[
+		]
+	}
+
+	"connectionsData" "element_array" 
+	[
+	]
+	"entity_properties" "EditGameClassProps"
+	{
+		"id" "elementid" "a723adda-8b06-4cf3-ab2a-6f18cb485422"
+		"classname" "string" "ent_dota_game_events"
+		"targetname" "string" ""
+		"vscripts" "string" ""
+	}
+
+	"hitNormal" "vector3" "0 0 1"
+	"isProceduralEntity" "bool" "0"
+}
+

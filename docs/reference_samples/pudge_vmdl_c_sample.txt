@@ -1,0 +1,90 @@
+=== HEADER (Lines 1-25) ===
+	Resource Type: Model [Version 1] [Header Version: 12]
+	File Size: 1313926 bytes
+
+
+--- Resource External Refs: ---
+	Id:               Resource Name:                                  
+	BAC949E345C98C5C  materials/models/heroes/pudge/pudge2_body.vmat  
+	89C14C60713EA015  materials/models/items/heroes/fall20/pudge/pudge2_fall20_body.vmat
+	EDF357C696EA223A  models/heroes/pudge/pudge/head_lod1_vmorf.vtex  
+	7C1DFAD9272B9E49  models/heroes/pudge/pudge/head_vmorf.vtex       
+	808CFD093E2227F8  models/items/pudge/pudge_hungry_clown_car/pudge_hungry_clown_car.vmdl
+	E7F776F4F5E4B12A  particles/generic_gameplay/dust_impact_large.vpcf
+	7B26B92871ABC646  particles/generic_gameplay/dust_impact_medium.vpcf
+	CA6A34A2E74A0CB0  particles/units/heroes/hero_pudge/pudge_death_dust.vpcf
+	60BD88A93ED7E8C8  particles/units/heroes/hero_pudge/pudge_dismember.vpcf
+	DD641F999D8689DE  particles/units/heroes/hero_pudge/pudge_t_foot_stomp.vpcf
+
+
+--- Resource Blocks: Count 35 ---
+	-- Block: MVTX  Size: 15120  bytes [Offset:    448]
+	-- Block: MIDX  Size: 1638   bytes [Offset:  15568]
+	-- Block: MDAT  Size: 6784   bytes [Offset:  17216]
+	-- Block: MRPH  Size: 6229   bytes [Offset:  24000]
+	-- Block: MVTX  Size: 39676  bytes [Offset:  30240]
+	-- Block: MIDX  Size: 4060   bytes [Offset:  69920]
+
+=== ACTIVITIES SAMPLE (Lines 27576..27606) ===
+			]
+			m_eventArray = [  ]
+			m_activityArray = 
+			[
+				{
+					m_name = "ACT_DOTA_CAPTURE"
+					m_nActivity = 0
+					m_nFlags = 0
+					m_nWeight = 10
+				},
+			]
+			m_hierarchyArray = [  ]
+			framestalltime = 0.0
+			m_vecRootMin = [ -8.742387, 8.677028, 71.139923 ]
+			m_vecRootMax = [ -8.742387, 9.584639, 72.980728 ]
+			m_vecBoneWorldMin = 
+			[
+				[ -8.742387, 8.677028, 71.139923 ],
+				[ -8.766819, 10.134092, 86.368713 ],
+				[ -9.247848, 11.953777, 101.563545 ],
+				[ -10.367555, 13.359166, 117.208023 ],
+				[ -12.242982, -6.087255, 143.050949 ],
+				[ -23.349951, -22.80718, 141.344482 ],
+				[ -43.114929, -37.08791, 122.347168 ],
+				[ -41.439053, -54.946587, 100.2379 ],
+				[ -41.46796, -63.038692, 81.498932 ],
+				[ -35.416882, -63.540878, 97.572998 ],
+				[ -29.89875, -64.237381, 87.182953 ],
+				[ 13.220155, 11.157485, 136.722916 ],
+				[ 21.68417, 11.157481, 140.425064 ],
+
+=== ATTACHMENTS SAMPLE (Lines 1870..1900) ===
+	}
+	m_pGroomData = null
+	m_attachments = 
+	[
+		{
+			key = "attach_hook"
+			value = 
+			{
+				m_name = "attach_hook"
+				m_influenceNames = 
+				[
+					"weapon_rt_1",
+					"",
+					"",
+				]
+				m_vInfluenceRotations = 
+				[
+					[ -0.0, 0.0, 0.0, 1.0 ],
+					[ 0.0, 0.0, 0.0, 1.0 ],
+					[ 0.0, 0.0, 0.0, 1.0 ],
+				]
+				m_vInfluenceOffsets = 
+				[
+					[ 0.0, 0.0, 0.0 ],
+					[ 0.0, 0.0, 0.0 ],
+					[ 0.0, 0.0, 0.0 ],
+				]
+				m_influenceWeights = [ 1.0, 0.0, 0.0 ]
+				m_bInfluenceRootTransform = [ false, false, false ]
+				m_nInfluences = 1
