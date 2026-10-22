@@ -66,6 +66,11 @@ def create_or_configure_addon(
         except OSError:
             pass
 
+    # Remove obsolete Source 1 resource/flash3 copied from addon_template (only on fresh creation)
+    flash3_dir = game_addon / "resource" / "flash3"
+    if created_new and flash3_dir.exists():
+        shutil.rmtree(flash3_dir, ignore_errors=True)
+
     # Ensure standard NPC KV files exist
     npc_dir = game_addon / "scripts" / "npc"
     npc_dir.mkdir(parents=True, exist_ok=True)

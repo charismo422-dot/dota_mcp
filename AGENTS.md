@@ -28,6 +28,7 @@ Always consult and follow the project's technical documentation:
 - **Bug & Fix Log:** [docs/BUG_LOG.md](./docs/BUG_LOG.md)
 - **Lessons Learned (agent self-learning):** [docs/LESSONS.md](./docs/LESSONS.md)
 - **Idea Bank (MCP features):** [docs/IDEAS.md](./docs/IDEAS.md)
+- **Staged Live Test Plan:** [docs/TEST_PLAN.md](./docs/TEST_PLAN.md)
 - **Custom Game Development Workflow Skill:** [.agents/skills/dota2-custom-game-dev/SKILL.md](./.agents/skills/dota2-custom-game-dev/SKILL.md)
 - **Dota 2 7.41+ Reference:** [.agents/skills/dota2-custom-game-dev/references/DOTA2_741_REFERENCE.md](./.agents/skills/dota2-custom-game-dev/references/DOTA2_741_REFERENCE.md)
 - **Working Addon Example (`mcp_test`):** [examples/mcp_test/README.md](./examples/mcp_test/README.md)

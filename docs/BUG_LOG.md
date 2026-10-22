@@ -100,3 +100,9 @@
 - **Корневая причина:** Dota 2's NetCon TCP socket drops output after ~3,629 lines of a single command burst (around CDOTABaseAbility:GetAbilityTargetFlags alphabetically), while console.log receives the entire ~12,000-line script_help2 dump; scanning only the last 5,000 lines of console.log missed classes alphabetically between CDOTABaseAbility:G* and CScriptHeroList.
 - **Примененное решение:** Increased console.log fallback scan window in verify_vscript_api from 5,000 lines to 25,000 lines so all script_help2 classes/methods/enums (which span ~12,000 lines per dump) are captured when NetCon TCP socket truncates at ~3,629 lines.
 - **Правило предотвращения:** Never assume NetCon TCP socket returns the full ~12,000-line output of script_help2 or that 5,000 lines of console.log are enough to cover a full script_help2 dump.
+
+### [2026-10-22 19:13:05] Компонент: `src/dota2_mcp/addon_manager.py (create_or_configure_addon)`
+- **Симптом / Ошибка:** A freshly created addon immediately fails validate_and_sync_precache (ok:false) with 'OBSOLETE Source 1 resource/flash3 directory detected'.
+- **Корневая причина:** shutil.copytree copies addon_template's game/resource/flash3/custom_ui.txt into the new addon.
+- **Примененное решение:** create_or_configure_addon now removes game/<addon>/resource/flash3 right after creating a new addon from the template (existing addons are not touched).
+- **Правило предотвращения:** After copying addon_template, strip every template artifact that our own validator flags (IsTemplate, readonly_tools_asset_info.bin, resource/flash3); a fresh addon must pass validate_and_sync_precache with ok:true.

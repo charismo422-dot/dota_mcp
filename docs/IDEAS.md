@@ -6,7 +6,24 @@ Ideas for new `dota2-workshop-mcp` tools and improvements. Custom-game ideas are
 
 Format: **Name** — what it does / why — status (`idea` / `discussing` / `in progress` / `done` / `rejected`).
 
-## Ideas
+## New features (ordered by value for custom-game development)
 
-- **Verify `.png` icon compilation live** — confirm `validate_and_sync_precache` compiles custom spellicons/items to `.vtex_c` in a real addon — `idea`
-- **Verify Panorama compilation live** — confirm `compile_addon_resource` builds `.xml`/`.css`/`.js` UI — `idea`
+1. **Scaffold from description** — one call creates ability/item/hero/modifier KV + Lua + localization + precache from a short spec — `idea`
+2. **Cross-reference validator** — before launch, detect broken links: abilities referenced by heroes/units that don't exist, missing `ScriptFile` Lua files, unknown modifiers, missing localization keys — `idea`
+3. **Offline VScript API cache** — dump `script_help2` once, then verify Lua calls without a running game — `idea`
+4. **Automated mechanic tests** — Lua harness spawns hero/targets, casts the ability, asserts damage/effects via console log — `idea`
+5. **In-game screenshots** — capture a screenshot so the agent can visually check particles and UI (console command to be verified) — `idea`
+6. **Custom sounds & music** — add own audio files, generate `.vsndevts`, compile — `idea`
+7. **Particle recolor/resize** — copy a stock `.vpcf` and change color/size without the particle editor — `idea`
+8. **Multiplayer test with bots / fake clients** — launch with extra players to test team logic (commands to be verified) — `idea`
+9. **Custom model import** — compile own 3D models (e.g. FBX) into `.vmdl` (voxel/"Minecraft-like" blocks) — `idea`
+10. **Map generation from templates** — arena, corridors, maze from a description; complex, last priority — `idea`
+
+## Improvements to existing tools
+
+- **Compact `list_map_entities`** — default to id/classname/targetname/origin only, full properties on request; saves context — `idea`
+
+## Verification gaps
+
+- **Verify `.png` icon compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 4 — `idea`
+- **Verify Panorama compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 5 — `idea`
