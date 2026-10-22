@@ -22,7 +22,7 @@
 				<Panel class="SpeakerDot" />
 				<Label id="DialogSpeaker" class="DialogSpeaker" text="" />
 			</Panel>
-			<Label id="DialogText" class="DialogText" text="" />
+			<Label id="DialogText" class="DialogText" html="true" text="" />
 			<Panel id="DialogOptions" class="DialogOptions">
 				<Button id="Option1" class="DialogOption">
 					<Label class="OptionKey" text="1" />

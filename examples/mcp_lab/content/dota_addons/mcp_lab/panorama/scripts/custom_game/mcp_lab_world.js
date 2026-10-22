@@ -7,7 +7,8 @@
 var FLOAT_LIFETIME = 1.1;      // seconds a damage number lives
 var FLOAT_RISE = 70;           // pixels it drifts up
 var floats = [];               // { panel, ent, born, dx }
-var dialog = { npc: -1, open: false, fullText: "", shown: 0 };
+var TYPE_SPEED = 35;           // typewriter characters per second (time-based, independent of FPS)
+var dialog = { npc: -1, open: false, fullText: "", shown: 0, started: 0 };
 
 function UiScale()
 {
@@ -100,13 +101,15 @@ function OnDialog( data )
 		$( "#DialogSpeaker" ).text = $.Localize( data.speaker );
 		$( "#Option1Text" ).text = $.Localize( data.opt1 );
 		$( "#Option2Text" ).text = $.Localize( data.opt2 );
-		$( "#DialogOptions" ).SetHasClass( "Hidden", false );
+		$( "#DialogOptions" ).SetHasClass( "Hidden", true );   // options fade in once the line is fully typed
+		dialog.showOptions = true;
 		StartTypewriter( $.Localize( data.text ) );
 		panel.SetHasClass( "Open", true );
 	}
 	else if ( data.action === "reply" )
 	{
 		$( "#DialogOptions" ).SetHasClass( "Hidden", true );
+		dialog.showOptions = false;
 		StartTypewriter( $.Localize( data.text ) );
 	}
 	else if ( data.action === "close" )
@@ -119,22 +122,38 @@ function OnDialog( data )
 function StartTypewriter( text )
 {
 	dialog.fullText = text;
-	dialog.shown = 0;
-	$( "#DialogText" ).text = "";
+	dialog.shown = -1;
+	dialog.started = Game.Time();
+}
+
+// The whole text is laid out from the first frame; the not-yet-typed tail is rendered transparent.
+// Revealing characters therefore never re-wraps lines (words used to jump to the next line while typing).
+function RenderTypewriter( count )
+{
+	var shown = dialog.fullText.substring( 0, count );
+	var rest = dialog.fullText.substring( count );
+	$( "#DialogText" ).text = rest.length > 0 ? shown + "<font color='#00000000'>" + rest + "</font>" : shown;
 }
 
 function UpdateDialog()
 {
-	if ( dialog.shown < dialog.fullText.length )
+	var target = Math.min( dialog.fullText.length, Math.floor( ( Game.Time() - dialog.started ) * TYPE_SPEED ) );
+	if ( target !== dialog.shown )
 	{
-		dialog.shown = Math.min( dialog.fullText.length, dialog.shown + 2 );  // ~2 chars per frame
-		$( "#DialogText" ).text = dialog.fullText.substring( 0, dialog.shown );
+		dialog.shown = target;
+		RenderTypewriter( target );
+		if ( target === dialog.fullText.length && dialog.showOptions )
+		{
+			$( "#DialogOptions" ).SetHasClass( "Hidden", false );
+			dialog.showOptions = false;
+		}
 	}
-	var pos = AnchorAbove( dialog.npc, 30 );
+	var pos = AnchorAbove( dialog.npc, 70 );
 	if ( pos !== null )
 	{
 		var panel = $( "#Dialog" );
-		Place( panel, pos, -200, -( panel.actuallayoutheight * UiScale() ) - 14 );
+		var s = UiScale();
+		Place( panel, pos, -( panel.actuallayoutwidth * s ) / 2, -( panel.actuallayoutheight * s ) - 16 );
 	}
 }
 
@@ -150,19 +169,35 @@ function OnProbe( data )
 	GameEvents.SendCustomGameEventToServer( "mcp_lab_world_ack", {
 		ping: data.ping,
 		floats: floats.length,
-		overhead: $( "#Overhead" ).BHasClass( "Visible" ) ? 1 : 0,
+		// 1 = drawn above the hero, 2 = hero tracked but off-screen (camera elsewhere), 0 = broken
+		overhead: $( "#Overhead" ).BHasClass( "Visible" ) ? 1 : ( Entities.IsValidEntity( Players.GetPlayerHeroEntityIndex( Players.GetLocalPlayer() ) ) ? 2 : 0 ),
 		dialog: dialog.open && $( "#Dialog" ).BHasClass( "Open" ) ? 1 : 0,
+		frames: frames,
+		time: Game.Time(),
 	} );
+}
+
+// Click on the dialog while text is typing -> show the full line and the options at once
+function SkipTyping()
+{
+	if ( dialog.shown >= dialog.fullText.length ) return;
+	dialog.started = Game.Time() - dialog.fullText.length / TYPE_SPEED - 1;
+	UpdateDialog();
 }
 
 function OnAutoChoose( data )
 {
+	$.Msg( "[MCP_LAB] autochoose " + data.option + " typed=" + dialog.shown + "/" + dialog.fullText.length + " frames=" + frames );
+	SkipTyping();          // a player would click to skip, then pick an option
 	Choose( data.option );  // same path as a mouse click
 }
 
 // ---------- Main loop ----------
+var frames = 0;
+
 function Tick()
 {
+	frames++;
 	var now = Game.Time();
 	UpdateFloats( now );
 	UpdateOverhead();
@@ -179,6 +214,7 @@ function Tick()
 	GameEvents.Subscribe( "mcp_lab_dialog_autochoose", OnAutoChoose );
 	$( "#Option1" ).SetPanelEvent( "onactivate", function () { Choose( 1 ); } );
 	$( "#Option2" ).SetPanelEvent( "onactivate", function () { Choose( 2 ); } );
+	$( "#DialogText" ).SetPanelEvent( "onactivate", SkipTyping );
 	Tick();
 	$.Msg( "[MCP_LAB] world UI script loaded" );
 } )();

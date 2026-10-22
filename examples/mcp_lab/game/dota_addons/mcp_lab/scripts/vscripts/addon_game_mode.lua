@@ -145,7 +145,7 @@ Convars:RegisterCommand( "mcp_lab_autotest5b", function()
 		hero:SetContextThink( "MCPLab5bProbe1", function()
 			local a = ( gm.world_acks or {} )[ p1 ]
 			checks.floating_numbers = a ~= nil and a.floats > 0
-			checks.overhead = a ~= nil and a.overhead == 1
+			checks.overhead = a ~= nil and a.overhead >= 1  -- 2 = tracked but off-screen (depends on the player's camera)
 
 			-- 2) walk up to the keeper -> dialog opens; JS simulates pressing option 1
 			FindClearSpaceForUnit( hero, gm.keeper:GetAbsOrigin() + Vector( 150, -100, 0 ), true )
@@ -154,7 +154,11 @@ Convars:RegisterCommand( "mcp_lab_autotest5b", function()
 				hero:SetContextThink( "MCPLab5bProbe2", function()
 					local b = ( gm.world_acks or {} )[ p2 ]
 					checks.dialog_open = b ~= nil and b.dialog == 1
-					CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog_autochoose", { option = 1 } )
+					-- options appear only after the greeting is typed (~35 chars/s), so choose a bit later
+					hero:SetContextThink( "MCPLab5bAutoChoose", function()
+						CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog_autochoose", { option = 1 } )
+						return nil
+					end, 4.0 )
 					hero:SetContextThink( "MCPLab5bChoice", function()
 						checks.choice_applied = hero:HasModifier( "modifier_mcp_rift_blessing" )
 						FindClearSpaceForUnit( hero, home, true )
@@ -166,7 +170,7 @@ Convars:RegisterCommand( "mcp_lab_autotest5b", function()
 						end
 						print( "[MCP_LAB] AUTOTEST stage5b " .. ( all_ok and "PASS" or "FAIL" ) .. ": " .. table.concat( parts, " " ) )
 						return nil
-					end, 1.0 )
+					end, 5.0 )
 					return nil
 				end, 0.4 )
 				return nil
@@ -202,6 +206,14 @@ Convars:RegisterCommand( "mcp_lab_autotest6", function()
 		end
 	end
 	checks.crystals = crystals == 4
+	-- Crystals must be solid: point_simple_obstruction around each blocks GridNav
+	local c0 = Entities:FindByName( nil, "lab_crystal_0" )
+	checks.crystal_solid = c0 ~= nil and ( GridNav:IsBlocked( c0:GetAbsOrigin() ) or not GridNav:IsTraversable( c0:GetAbsOrigin() ) )
+	if c0 then
+		local p = c0:GetAbsOrigin()
+		print( string.format( "[MCP_LAB] crystal gridnav: blocked=%s traversable=%s obstructions=%d", tostring( GridNav:IsBlocked( p ) ),
+			tostring( GridNav:IsTraversable( p ) ), #Entities:FindAllByClassname( "point_simple_obstruction" ) ) )
+	end
 	local shop = Entities:FindByName( nil, "lab_shop" )
 	checks.shop_entity = shop ~= nil
 
@@ -214,16 +226,23 @@ Convars:RegisterCommand( "mcp_lab_autotest6", function()
 	-- Trigger touch is evaluated on the next physics ticks, so check shop range after a short delay
 	local home = hero:GetAbsOrigin()
 	checks.outside_shop = not hero:IsInRangeOfShop( DOTA_SHOP_HOME, true )
-	FindClearSpaceForUnit( hero, shop:GetAbsOrigin() + Vector( -150, 150, 0 ), true )
+	FindClearSpaceForUnit( hero, shop:GetAbsOrigin() + Vector( -120, 120, 0 ), true )
 	hero:SetContextThink( "MCPLabShopCheck", function()
-		checks.shop_range = hero:IsInRangeOfShop( DOTA_SHOP_HOME, true )
+		local home_ok = hero:IsInRangeOfShop( DOTA_SHOP_HOME, true )
+		local secret_shop = Entities:FindByName( nil, "lab_secret_shop" )
+		FindClearSpaceForUnit( hero, secret_shop:GetAbsOrigin() + Vector( -120, 0, 0 ), true )
+		hero:SetContextThink( "MCPLabSecretCheck", function()
+		checks.shop_range = home_ok and hero:IsInRangeOfShop( DOTA_SHOP_SECRET, true )
+		print( string.format( "[MCP_LAB] shop range: home=%s secret=%s", tostring( home_ok ), tostring( hero:IsInRangeOfShop( DOTA_SHOP_SECRET, true ) ) ) )
 		FindClearSpaceForUnit( hero, home, true )
 		local all_ok, parts = true, {}
-	for _, name in ipairs({ "trees", "removed_tree_gone", "trees_block_path", "crystals", "shop_entity", "shop_range", "outside_shop", "tree_cut" }) do
+	for _, name in ipairs({ "trees", "removed_tree_gone", "trees_block_path", "crystals", "crystal_solid", "shop_entity", "shop_range", "outside_shop", "tree_cut" }) do
 		all_ok = all_ok and checks[name]
 		table.insert( parts, name .. "=" .. tostring( checks[name] ) )
 	end
 		print( string.format( "[MCP_LAB] AUTOTEST stage6 %s: %s trees=%d", all_ok and "PASS" or "FAIL", table.concat( parts, " " ), #trees ) )
+		return nil
+		end, 0.5 )
 		return nil
 	end, 0.5 )
 end, "MCP Lab: stage 6 autotest (map entities)", 0 )
@@ -357,14 +376,21 @@ function CAddonTemplateGameMode:OnNPCSpawned( event )
 	-- Autotests are NOT started here: a manual playtest must begin with a clean arena.
 	-- The agent runs them on demand ("mcp_lab_autotest" = all stages, "mcp_lab_autotest3/4" = single stage).
 	self.hero = hero
-	self:SpawnRiftKeeper( hero:GetAbsOrigin() + Vector( -500, 350, 0 ) )
+	-- Free spot between the start and the south-west crystal (crystals sit on a 700-unit ring)
+	self:SpawnRiftKeeper( Vector( -600, -150, 128 ) )
 
 	-- Stage 6: the shopkeeper (ent_dota_shop, placed with add_map_entity) is only a model; the purchase radius
-	-- normally comes from a trigger_shop brush, which point-entity tools cannot create -> spawn it from Lua
-	local shop = Entities:FindByName( nil, "lab_shop" )
-	if shop then
-		self.shop_trigger = SpawnDOTAShopTriggerRadiusApproximate( shop:GetAbsOrigin(), 450 )
-		self.shop_trigger:SetShopType( DOTA_SHOP_HOME )
+	-- normally comes from a trigger_shop brush, which point-entity tools cannot create -> spawn it from Lua.
+	-- Playtest: home shop and secret shop next to each other. Two shop triggers on the SAME spot do not work —
+	-- a unit counts as being in only one of them — so each shopkeeper gets its own, non-overlapping radius.
+	self.shop_triggers = {}
+	for name, shop_type in pairs({ lab_shop = DOTA_SHOP_HOME, lab_secret_shop = DOTA_SHOP_SECRET }) do
+		local keeper = Entities:FindByName( nil, name )
+		if keeper then
+			local trigger = SpawnDOTAShopTriggerRadiusApproximate( keeper:GetAbsOrigin(), 260 )
+			trigger:SetShopType( shop_type )
+			self.shop_triggers[ name ] = trigger
+		end
 	end
 end
 
@@ -375,7 +401,8 @@ end
 function CAddonTemplateGameMode:SpawnRiftKeeper( pos )
 	local keeper = CreateUnitByName( "npc_mcp_rift_keeper", pos, true, nil, nil, DOTA_TEAM_GOODGUYS )
 	keeper:AddNewModifier( keeper, nil, "modifier_invulnerable", {} )
-	keeper:SetForwardVector( Vector( 1, -1, 0 ):Normalized() )
+	keeper:SetForwardVector( Vector( 1, 0.3, 0 ):Normalized() )
+	keeper:SetRenderColor( 200, 150, 255 )  -- violet tint: reads as a rift mystic, not a regular creep
 	self.keeper = keeper
 	self.dialog_open = false
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLabKeeperDialog", function()

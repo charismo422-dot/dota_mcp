@@ -115,7 +115,15 @@ Entry format:
 - **Entity reference on disk:** `game/dota/dota.fgd` (+ `game/core/base.fgd`) is Valve's authoritative list of map entities and their keys — read it instead of guessing. Most addon `.vmap` files are binary DMX (79 of 82 here) and stock maps put trees/shops inside prefabs, so copying from existing maps rarely works.
 - **Shop needs a radius:** `ent_dota_shop` is only the shopkeeper building; the purchase area is a `trigger_shop` BRUSH (cannot be created with point-entity tools). From Lua: `SpawnDOTAShopTriggerRadiusApproximate(origin, radius):SetShopType(DOTA_SHOP_HOME)`. `IsInRangeOfShop` updates only on the next physics tick after teleporting — check with a short delay.
 - **Batching:** 25 map edits through single MCP calls is slow and context-heavy; a batch call (or calling `vmap_builder.add_map_entity` from a script) is much cheaper (idea logged).
-- **Open:** `prop_dynamic` `rendercolor` is applied (GetRenderColor = 190 90 255) but the crystal looked untinted on the minimap capture — needs a visual check in game.
+- **Tint:** `prop_dynamic` `rendercolor` is applied (GetRenderColor = 190 90 255), yet the cavern crystal material ignores it — not every model's material supports tinting; check visually.
+
+### 2026-10-22 — Stage 5b/6 playtest feedback (owner) and fixes
+- **NPC models:** hero models (`models/heroes/oracle/oracle.vmdl`) on `npc_dota_creature` look naked (cosmetics are separate wearable models) and frozen. Use complete creature/neutral models that have `ACT_DOTA_IDLE` (check with `inspect_model`), e.g. `n_creep_frostbitten_shaman01.vmdl`; tint with `SetRenderColor`. Keep NPCs away from props (the keeper first spawned inside a crystal).
+- **Solid props:** `prop_dynamic` does not block Dota pathing. Add `point_simple_obstruction` entities (dota.fgd) — one per 64-unit GridNav cell, e.g. center + 4 neighbours for a large prop. Check with `GridNav:IsBlocked(pos)` (stays `IsTraversable() == true`).
+- **Secret shop for tests/custom games:** `SpawnDOTAShopTriggerRadiusApproximate(pos, r):SetShopType(DOTA_SHOP_SECRET)`. Two shop triggers on the same spot do NOT stack — a unit counts as being in only one; give each shop its own non-overlapping radius (second shopkeeper `secretshopkeeper_dire.vmdl`).
+- **Typewriter text:** frame-based typing (2 chars/frame) is ~280 chars/s on a high-FPS client and words jumped between lines while typing. Use time-based speed (~35 chars/s) and lay out the whole line from the start: `html="true"` label, untyped tail wrapped in `<font color='#00000000'>`. Show options after typing ends; click on the text skips typing.
+- **Panorama pauses when Dota is not the foreground window:** `$.Schedule(0, ...)` loops ran 6 frames in 6 s while `Game.Time()` advanced. Autotests of client UI must not rely on per-frame animation finishing (use skip paths) and report `frames` to detect this.
+- **JS hot reload duplicates:** each on-save recompile re-runs the layout script ("world UI script loaded" several times) — old instances can keep subscriptions; relaunch the map before trusting UI autotests.
 
 ### 2026-10-22 — Commit messages from PowerShell
 - **Doesn't work:** `git commit -F - @'...'@` in Windows PowerShell 5.1 — the here-string is passed as a pathspec, not stdin.

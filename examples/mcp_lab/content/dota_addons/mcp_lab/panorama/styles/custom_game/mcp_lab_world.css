@@ -60,11 +60,11 @@
 /* ---------- NPC dialog ---------- */
 .Dialog
 {
-	width: 400px;
+	width: 420px;
 	horizontal-align: left;
 	vertical-align: top;
 	flow-children: down;
-	padding: 14px 16px 12px 16px;
+	padding: 16px 20px 14px 20px;
 	border-radius: 12px;
 	background-color: #120a20d9;
 	background-blur: gaussian( 6 );
@@ -112,9 +112,11 @@
 .DialogText
 {
 	width: 100%;
-	font-size: 17px;
-	line-height: 24px;
+	font-size: 18px;
+	line-height: 27px;
+	text-align: left;
 	color: #f1ecf8;
+	text-shadow: 0px 1px 2px 1.0 #00000080;
 }
 
 .DialogOptions
