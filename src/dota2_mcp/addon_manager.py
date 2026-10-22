@@ -391,10 +391,14 @@ def upsert_localization(
     loc_file = res_dir / f"addon_{lang_clean}.txt"
 
     existing_tokens: dict[str, str] = {"Language": lang_clean.capitalize()}
-    target_encoding = "utf-8-sig"
+    # Verified on Windows: game/dota_addons/addon_template/resource/addon_english.txt
+    # starts with b'\xff\xfe' (UTF-16 LE with BOM, i.e. Python encoding="utf-16").
+    target_encoding = "utf-16"
     if loc_file.exists():
         raw_head = loc_file.read_bytes()[:4]
-        if raw_head.startswith((b"\xff\xfe", b"\xfe\xff")):
+        if raw_head.startswith(b"\xef\xbb\xbf"):
+            target_encoding = "utf-8-sig"
+        elif raw_head.startswith((b"\xff\xfe", b"\xfe\xff")):
             target_encoding = "utf-16"
         for enc in ("utf-16", "utf-8-sig", "utf-8", "utf-16-le"):
             try:

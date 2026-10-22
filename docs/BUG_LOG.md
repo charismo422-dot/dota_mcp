@@ -26,7 +26,8 @@
 - **Примененное решение:**
   1. В `add_map_entity` все вхождения `"id" "elementid" "..."` внутри клонируемого блока заменяются на уникальные `uuid.uuid4()`, `nodeID` выставляется в `max(nodeID) + 1`, блок `"CMapEntity"` вставляется на верхнем уровне через `\n\n`, а ссылка `"element" "<new_uuid>"` добавляется с валидным синтаксисом запятых в родительский `"children" "element_array"` и в `CVisibilityMgr.nodes` (с синхронным добавлением `"0"` в `CVisibilityMgr.hiddenFlags`).
   2. В `remove_map_entity` вместе с блоком `"CMapEntity"` удаляются ссылки `"element" "<removed_uuid>"` из `children` и `CVisibilityMgr.nodes`, а также соответствующий элемент по индексу из `CVisibilityMgr.hiddenFlags` с сохранением валидного синтаксиса запятых.
-  3. Подтверждено прогоном реального `dmxconvert.exe` в бинарный `.vmap` (код возврата `0`) и компиляцией через `resourcecompiler.exe` (код возврата `0`).
+  3. **Ограничение `remove_map_entity`:** Инструмент `remove_map_entity` рассчитан на точечные сущности (point entities с пустым массивом `"children" "element_array"`). При удалении составных/объемных сущностей с дочерними элементами вложенные элементы (`children`) рекурсивно не обрабатываются и не удаляются из `CVisibilityMgr`.
+  4. Подтверждено прогоном реального `dmxconvert.exe` в бинарный `.vmap` (код возврата `0`) и компиляцией через `resourcecompiler.exe` (код возврата `0`).
 - **Правило предотвращения:** Любые модификации `.vmap` в формате `keyvalues2` проверять на инварианты: 100% уникальность всех `elementid`, присутствие/отсутствие UUID в `children` и `CVisibilityMgr.nodes`, равенство `len(nodes) == len(hiddenFlags)` и код возврата `0` от `dmxconvert.exe`.
 
 ### [2026-10-22 13:13:05] Компонент: `vmap_builder.py` (🟠 6: Флаги компиляции карты `.vmap` в `resourcecompiler.exe`)

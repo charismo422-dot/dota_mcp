@@ -649,8 +649,9 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
     ]
     if is_map:
         # Verified Hammer Fast Compile flags from tools/hammer.dll and resourcecompiler.dll:
-        # Builds world geometry, physics, gridnav, and entities without slow GPU raytraced lightmap baking.
-        # Adding -novpk also emits loosemaps/<map>.vmap_c on disk so both loose and VPK loaders succeed.
+        # Builds world geometry, physics, gridnav, and entities into game/dota_addons/<addon>/maps/<map>.vpk
+        # (containing maps/<map>.vmap_c, maps/<map>.gnv, world.vwrld_c, entities/default_ents.vents_c)
+        # without slow GPU raytraced lightmap baking.
         cmd.extend(
             [
                 "-fshallow",
