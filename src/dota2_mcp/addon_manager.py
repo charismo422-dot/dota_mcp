@@ -58,6 +58,14 @@ def create_or_configure_addon(
             )
         created_new = True
 
+    # Remove readonly_tools_asset_info.bin if copied from addon_template
+    readonly_bin = game_addon / "readonly_tools_asset_info.bin"
+    if readonly_bin.exists():
+        try:
+            readonly_bin.unlink()
+        except OSError:
+            pass
+
     # Ensure standard NPC KV files exist
     npc_dir = game_addon / "scripts" / "npc"
     npc_dir.mkdir(parents=True, exist_ok=True)
@@ -72,7 +80,9 @@ def create_or_configure_addon(
         if not fpath.exists():
             fpath.write_text(f'"{root_key}"\n{{\n\t"Version"\t"1"\n}}\n', encoding="utf-8")
 
-    # Configure addoninfo.txt while preserving any existing custom keys
+    # Configure addoninfo.txt while preserving any existing custom keys.
+    # CRITICAL: Remove "IsTemplate" (which hides addon_template/hero_demo/npx_2019/tutorial_* from Workshop Tools UI)
+    # and force "IsPlayable" = "1". Also handle KV3 header if addon was created via Workshop Tools button.
     addoninfo_path = game_addon / "addoninfo.txt"
     effective_maps = maps if maps else ["template_map"]
     maps_str = " ".join(effective_maps)
@@ -81,16 +91,22 @@ def create_or_configure_addon(
     if addoninfo_path.exists() and vdf is not None:
         try:
             raw_info = addoninfo_path.read_text(encoding="utf-8", errors="replace")
-            parsed = vdf.loads(raw_info)
-            root_val = parsed.get("AddonInfo") or parsed.get("addoninfo")
-            if isinstance(root_val, dict):
-                addon_dict = dict(root_val)
+            if not raw_info.lstrip().startswith("<!-- kv3"):
+                parsed = vdf.loads(raw_info)
+                root_val = parsed.get("AddonInfo") or parsed.get("addoninfo")
+                if isinstance(root_val, dict):
+                    addon_dict = dict(root_val)
         except Exception:
             addon_dict = {}
 
+    # Strip template/hidden flags inherited from addon_template
+    addon_dict.pop("IsTemplate", None)
+    addon_dict.pop("istemplate", None)
+    addon_dict.pop("HideInTools", None)
+
     addon_dict["TeamCount"] = str(team_count)
     addon_dict["maps"] = maps_str
-    addon_dict["IsPlayable"] = addon_dict.get("IsPlayable", "1")
+    addon_dict["IsPlayable"] = "1"
     if "Default_Keys" not in addon_dict:
         addon_dict["Default_Keys"] = {}
 

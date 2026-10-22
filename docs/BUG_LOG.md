@@ -65,3 +65,14 @@
   - 🟠 10: В `inspect_particle` расширено регулярное выражение для всех `m_n*ControlPoint*` и `m_n*CP*` (теперь для `pudge_meathook_dragonclaw.vpcf` корректно извлекаются CP `[1, 2, 3]`), а в `inspect_model` добавлено извлечение привязки `attach_*` к костям (`attachment_bones`);
   - 🟠 11: `ent_dota_shop` убрана из таблицы точечных сущностей в `DOTA2_741_REFERENCE.md` с примечанием о `trigger_shop` и `GameRules:SetUseUniversalShopMode(true)`.
 - **Правило предотвращения:** Все регулярные выражения парсеров ресурсов сверять по эталонным дампам в `docs/reference_samples/`.
+
+### [2026-10-22 13:42:00] Компонент: `addon_manager.py` (`create_or_configure_addon`: аддон не отображался в списке Workshop Tools)
+- **Симптом / Ошибка:** Созданный через `create_or_configure_addon` аддон `mcp_test` отсутствовал в окне выбора аддонов Dota 2 Workshop Tools (так же как системные `addon_template`, `hero_demo`, `npx_2019`, `tutorial_basics`, `tutorial_assist_game`), тогда как созданный штатной кнопкой *Create New Addon* эталонный аддон `mcp_probe` отображался.
+- **Корневая причина:**
+  1. При копировании папки `game/dota_addons/addon_template` копировался её `addoninfo.txt`, содержавший `"IsTemplate" "1"` и `"IsPlayable" "0"`. После фикса 🟠 5 (сохранение существующих ключей `addoninfo.txt`) `create_or_configure_addon` читал скопированный из шаблона `addoninfo.txt`, оставлял `"IsTemplate" "1"` и из-за `addon_dict.get("IsPlayable", "1")` сохранял `"IsPlayable" "0"`. Любой аддон с `"IsTemplate" "1"` принудительно скрывается лаунчером Workshop Tools.
+  2. Кроме того, при `shutil.copytree(template_game, game_addon)` копировался файл `readonly_tools_asset_info.bin` (5288 байт), который штатная кнопка *Create New Addon* в новых аддонах (`mcp_probe`) не создаёт, и в предкомпилированных `.vtex_c`/`.vpcf_c` внутри `game/dota_addons/addon_template` в метаданных `m_SearchPath` оставалась строка `dota_addons/addon_template` (тогда как *Create New Addon* перекомпилирует их под `dota_addons/<new_addon>`).
+- **Примененное решение:**
+  1. В `create_or_configure_addon` принудительно удаляются ключи `"IsTemplate"` / `"HideInTools"` из `addoninfo.txt`, а `"IsPlayable"` всегда устанавливается в `"1"`.
+  2. Из `game/dota_addons/<addon>` удаляется унаследованный от шаблона `readonly_tools_asset_info.bin`.
+  3. Добавлена поддержка чтения `addoninfo.txt` с заголовком `<!-- kv3 ... -->` (который создаёт кнопка *Create New Addon*).
+- **Правило предотвращения:** Никогда не оставлять `"IsTemplate" "1"`, `"IsPlayable" "0"` или `readonly_tools_asset_info.bin` при клонировании `addon_template`.
