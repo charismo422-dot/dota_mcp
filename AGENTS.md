@@ -26,6 +26,8 @@ Always consult and follow the project's technical documentation:
 - **Full Technical Specification:** [docs/TECHNICAL_SPEC.md](./docs/TECHNICAL_SPEC.md)
 - **Agent Engineering Self-Check Protocol:** [docs/SELF_CHECK_PROTOCOL.md](./docs/SELF_CHECK_PROTOCOL.md)
 - **Bug & Fix Log:** [docs/BUG_LOG.md](./docs/BUG_LOG.md)
+- **Lessons Learned (agent self-learning):** [docs/LESSONS.md](./docs/LESSONS.md)
+- **Idea Bank (MCP features):** [docs/IDEAS.md](./docs/IDEAS.md)
 - **Custom Game Development Workflow Skill:** [.agents/skills/dota2-custom-game-dev/SKILL.md](./.agents/skills/dota2-custom-game-dev/SKILL.md)
 - **Dota 2 7.41+ Reference:** [.agents/skills/dota2-custom-game-dev/references/DOTA2_741_REFERENCE.md](./.agents/skills/dota2-custom-game-dev/references/DOTA2_741_REFERENCE.md)
 - **Working Addon Example (`mcp_test`):** [examples/mcp_test/README.md](./examples/mcp_test/README.md)
@@ -58,3 +60,9 @@ Always consult and follow the project's technical documentation:
    - Test changes live in Dota 2 using `run_console_command` (`dota_launch_custom_game <addon> <map>` or `script_reload`) and check `read_latest_console_log` to confirm zero Lua runtime errors.
    - Record any discovered MCP or custom game bug into [docs/BUG_LOG.md](./docs/BUG_LOG.md) via `log_bug_report`.
    - Keep [docs/TECHNICAL_SPEC.md](./docs/TECHNICAL_SPEC.md) synchronized whenever tool signatures or architecture in `src/dota2_mcp/` change.
+
+5. **Working Memory Protocol:**
+   - **Before a task:** read [docs/LESSONS.md](./docs/LESSONS.md) and, if present, the owner's local files (`.agents/rules/owner-*.md`, `.private/STATUS.md`).
+   - **After a task:** append new findings (what worked, what failed, how it was fixed) to `docs/LESSONS.md`; update `.private/STATUS.md` if it exists.
+   - **Ideas:** record MCP feature ideas in [docs/IDEAS.md](./docs/IDEAS.md); record custom-game ideas in `.private/IDEAS_GAMES.md` (local only, never commit).
+   - `.private/`, `CLAUDE.local.md` and `.agents/rules/owner-*.md` are gitignored personal files; never commit or publish them.

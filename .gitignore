@@ -17,6 +17,11 @@ bin/
 .mcp.json
 .claude/
 
+# Owner's private rules, status and custom-game ideas (local only)
+.private/
+CLAUDE.local.md
+.agents/rules/owner-*.md
+
 # OS files
 .DS_Store
 Thumbs.db
