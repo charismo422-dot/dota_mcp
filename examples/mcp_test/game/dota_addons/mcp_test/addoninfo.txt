@@ -1,0 +1,13 @@
+"AddonInfo"
+{
+	"maps" "template_map"
+	"IsPlayable" "1"
+	"TeamCount" "2"
+	"Default_Keys"
+	{
+	}
+	"template_map"
+	{
+		"MaxPlayers" "10"
+	}
+}

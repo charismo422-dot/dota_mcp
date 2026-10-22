@@ -1,0 +1,60 @@
+// Dota 2 Custom Abilities File
+"DOTAAbilities"
+{
+	"Version"		"1"
+
+	//=================================================================================================================
+	// MCP Test Ability: Ring of Fire (based on huskar_inner_fire + lina_light_strike_array)
+	//=================================================================================================================
+	"mcp_ring_of_fire"
+	{
+		"BaseClass"						"ability_lua"
+		"ScriptFile"					"abilities/mcp_ring_of_fire"
+		"AbilityTextureName"			"huskar_inner_fire"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityUnitTargetTeam"			"DOTA_UNIT_TARGET_TEAM_ENEMY"
+		"AbilityUnitTargetType"			"DOTA_UNIT_TARGET_HERO | DOTA_UNIT_TARGET_BASIC"
+		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
+		"SpellImmunityType"				"SPELL_IMMUNITY_ENEMIES_NO"
+		"FightRecapLevel"				"1"
+		"AbilitySound"					"Hero_Huskar.Inner_Fire.Cast"
+
+		// Casting
+		//-------------------------------------------------------------------------------------------------------------
+		"AbilityCastRange"				"500"
+		"AbilityCastPoint"				"0.45"
+		"AbilityCastAnimation"			"ACT_DOTA_CAST_ABILITY_2"
+
+		// Time & Cost
+		//-------------------------------------------------------------------------------------------------------------
+		"AbilityCooldown"				"13 11 9 7"
+		"AbilityManaCost"				"100 110 120 130"
+
+		// Precache
+		//-------------------------------------------------------------------------------------------------------------
+		"precache"
+		{
+			"particle"		"particles/units/heroes/hero_lina/lina_spell_light_strike_array_ring_collapse.vpcf"
+			"particle"		"particles/units/heroes/hero_huskar/huskar_inner_fire.vpcf"
+			"soundfile"		"soundevents/game_sounds_heroes/game_sounds_lina.vsndevts"
+			"soundfile"		"soundevents/game_sounds_heroes/game_sounds_huskar.vsndevts"
+		}
+
+		// Values (based on huskar_inner_fire radius/damage + 1.0s delay)
+		//-------------------------------------------------------------------------------------------------------------
+		"AbilityValues"
+		{
+			"radius"
+			{
+				"value"						"500"
+				"affected_by_aoe_increase"	"1"
+			}
+			"delay"							"1.0"
+			"damage"
+			{
+				"value"						"110 180 250 320"
+				"CalculateSpellDamageTooltip"	"1"
+			}
+		}
+	}
+}

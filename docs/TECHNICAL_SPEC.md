@@ -36,14 +36,22 @@
 
 ```text
 dota_mcp/
-├── GEMINI.md                                  # Главные правила проекта и авто-инструкции агента
-├── README.md                                  # Инструкция по параметрам запуска и эксплуатации
+├── AGENTS.md                                  # Единый источник правил проекта для всех ИИ-агентов
+├── GEMINI.md                                  # Ссылка на AGENTS.md для Antigravity (@[AGENTS.md](./AGENTS.md))
+├── CLAUDE.md                                  # Ссылка на AGENTS.md для Claude Code (@AGENTS.md)
+├── README.md                                  # Документация для пользователей (EN)
+├── README.ru.md                               # Документация для пользователей (RU)
+├── setup.py                                   # Идемпотентный установщик окружения и генератор MCP-конфигов
+├── setup.ps1                                  # PowerShell-обертка для запуска setup.py
 ├── requirements.txt                           # Python-зависимости (mcp>=2.3.0,<3.0.0, vpk, vdf, requests)
+├── examples/
+│   └── mcp_test/                              # Рабочий пример аддона со способностью «Огненное кольцо»
 ├── docs/
 │   ├── TECHNICAL_SPEC.md                      # Полная техническая спецификация (этот документ)
 │   ├── SELF_CHECK_PROTOCOL.md                 # Протокол инженерной самопроверки агента
 │   ├── BUG_LOG.md                             # Журнал фиксации багов, ошибок и исправлений
-│   ├── CODE_REVIEW_TODO.md                    # Архив чеклиста Фазы 0
+│   ├── history/
+│   │   └── CODE_REVIEW_TODO.md                # Архив чеклиста Фазы 0
 │   └── reference_samples/                     # Эталонные дампы реальных форматов (.vmap, .vmdl_c, .vpcf_c, .vsndevts_c)
 ├── tests/
 │   └── verify_phase0_acceptance.py            # Приёмочный автотест vmap_builder, dmxconvert и resourcecompiler
