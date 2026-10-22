@@ -12,21 +12,23 @@ description: >-
 This skill enforces the mandatory architecture and step-by-step workflow for building Dota 2 custom games via the `dota_mcp` MCP server.
 
 ## Full Technical Specification & Self-Check Protocol
-For complete architecture details, tool signatures, self-check questions, 7.41+ paths/icons/Lua reference, and bug logs, consult:
+For complete architecture details, tool signatures, mandatory Windows pre-launch fixes, self-check questions, 7.41+ paths/icons/Lua reference, and bug logs, consult:
+- **MANDATORY FIRST READ ON WINDOWS:** [CODE_REVIEW_TODO.md](../../../docs/CODE_REVIEW_TODO.md)
 - [TECHNICAL_SPEC.md](../../../docs/TECHNICAL_SPEC.md)
 - [SELF_CHECK_PROTOCOL.md](../../../docs/SELF_CHECK_PROTOCOL.md)
 - [DOTA2_741_REFERENCE.md](./references/DOTA2_741_REFERENCE.md)
 - [BUG_LOG.md](../../../docs/BUG_LOG.md)
 
-## Windows Environment Bootstrap (When asked to set up on Windows PC)
-If the user opens this repository on their Windows PC and asks to set up the MCP server:
-1. Create a Python virtual environment and install dependencies:
+## Windows Environment Bootstrap & Mandatory Phase 0 Fix (When asked to set up on Windows PC)
+If the user opens this repository on their Windows PC and asks to set up or continue the project:
+1. **Read [CODE_REVIEW_TODO.md](../../../docs/CODE_REVIEW_TODO.md) immediately.** Do NOT start building a custom game before completing Phase 0 (Steps 1–4 in `CODE_REVIEW_TODO.md`).
+2. Create a Python virtual environment and install dependencies:
    `python -m venv .venv`
    `.venv\Scripts\pip install -r requirements.txt`
-2. Run the bootstrap diagnostic to verify Dota 2 paths and automatically download `Decompiler.exe`:
+3. Run the bootstrap diagnostic to verify Dota 2 paths and automatically download `Source2Viewer-CLI.exe` / `Decompiler.exe`:
    `.venv\Scripts\python -m src.dota2_mcp.diagnostics --bootstrap`
-3. Register `dota2-workshop-mcp` inside `~/.gemini/config/mcp_config.json` (on Windows: `%USERPROFILE%\.gemini\config\mcp_config.json`).
-4. Run `run_mcp_self_test` once connected.
+4. Convert the real `template_map.vmap` via `dmxconvert.exe` to inspect actual `CMapEntity` KeyValues2 structure, fix 🔴 1–4 and 🟠 5–11 in `src/dota2_mcp/`, and verify map compilation with `resourcecompiler.exe`.
+5. Register `dota2-workshop-mcp` inside `%USERPROFILE%\.gemini\config\mcp_config.json` and run `run_mcp_self_test`.
 
 ## Mandatory Rules for Dota 2 Asset & Code Generation
 
