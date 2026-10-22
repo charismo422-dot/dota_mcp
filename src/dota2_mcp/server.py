@@ -1,4 +1,4 @@
-"""Main FastMCP Server entry point exposing all 16 Dota 2 Workshop Tools functions."""
+"""Main FastMCP Server entry point exposing all 19 Dota 2 Workshop Tools functions."""
 
 from __future__ import annotations
 

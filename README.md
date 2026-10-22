@@ -1,32 +1,37 @@
 # `dota_mcp` — Dota 2 Workshop Tools MCP Server для Antigravity
 
-Автономный MCP-сервер для создания, редактирования карт (`.vmap`), подбора реальных ассетов из `pak01_dir.vpk`, компиляции ресурсов и отладки кастомных игр Dota 2 через ИИ-агента Antigravity.
+Автономный MCP-сервер (19 инструментов) для создания, редактирования карт (`.vmap`), подбора реальных ассетов и звуковых событий из `pak01_dir.vpk`, компиляции ресурсов и живой отладки кастомных игр Dota 2 через ИИ-агента Antigravity.
+
+> **Статус проекта:** ✅ **Фаза 0 полностью пройдена и верифицирована на Windows-ПК с Dota 2 (7.41+).**
+> Все 19 инструментов протестированы на реальных бинарниках `dmxconvert.exe`, `resourcecompiler.exe`, `Source2Viewer-CLI.exe` и живом подключении к движку Dota 2 по NetCon (порт `2121`). В `dota_addons/mcp_test` развернута рабочая песочница для тестов.
 
 ---
 
-## Быстрый старт на Windows-ПК с Dota 2
+## Настройка запуска Dota 2 и важные требования среды
 
-1. Склонируйте этот репозиторий и откройте папку проекта в **Antigravity** на вашем Windows-ПК:
-   ```bash
-   git clone https://github.com/charismo422-dot/dota_mcp.git
-   ```
-2. Напишите агенту в чате одну фразу:
-   > **«Прочитай GEMINI.md и CODE_REVIEW_TODO.md, выполни Фазу 0 (настройка, проверка на реальных файлах Доты и починка по чеклисту) и подключи MCP-сервер»**
-3. Агент автоматически прочитает [GEMINI.md](./GEMINI.md) и [docs/CODE_REVIEW_TODO.md](./docs/CODE_REVIEW_TODO.md):
-   - создаст `.venv`, установит библиотеки, скачает `Source2Viewer-CLI.exe`;
-   - снимет реальный образец `.vmap` через `dmxconvert.exe` вашей установленной Dota 2;
-   - исправит все пункты 🔴 1–4 и 🟠 5–11 из ревью и протестирует сборку реальным `resourcecompiler.exe`;
-   - пропишет сервер в `mcp_config.json` и запустит `run_mcp_self_test()`.
-4. Для живого управления игрой и чтения ошибок Lua (без конфликта с портом `29000` от `vconsole2`) запускайте Dota 2 Workshop Tools с параметрами запуска Steam:
+1. **Параметры запуска Dota 2 в Steam:**
+   Для живого управления игрой и чтения логов/ошибок Lua по TCP-мосту NetCon укажите в свойствах Dota 2 в Steam (**Свойства -> Общие -> Параметры запуска**):
    ```text
-   -tools -netconport 2121 -console -condebug
+   -netconport 2121 -console -condebug
+   ```
+   *(Не добавляйте `-tools` в параметры запуска Steam — выбирайте **Launch Dota 2 - Tools** в штатном окне Steam при старте игры. Порт `2121` используется вместо `29000`, чтобы не конфликтовать с бинарным протоколом `vconsole2.exe`).*
+
+2. **Запрет флага `RUNASADMIN` (Запуск от имени администратора):**
+   - Ни `dota2.exe`, ни `dota2cfg.exe`, ни **Antigravity** **не должны** запускаться от имени администратора (в Свойствах `.exe` -> Совместимость галочка *«Запускать эту программу от имени администратора»* должна быть снята).
+   - Иначе не-админский лаунчер Workshop Tools (`dota2cfg.exe`) при нажатии *Launch Tools* получит от Windows ошибку `ERROR_ELEVATION_REQUIRED` (`WinError 740` / `Failed to launch`).
+
+3. **Автоматический приёмочный тест:**
+   Для проверки целостности парсера `.vmap`, `dmxconvert.exe`, `resourcecompiler.exe` и инспекторов ресурсов в любой момент можно запустить:
+   ```powershell
+   $env:PYTHONPATH="."; .\.venv\Scripts\python tests\verify_phase0_acceptance.py
    ```
 
 ---
 
 ## Документация проекта
-- **[План обязательной починки и проверки на Windows (`docs/CODE_REVIEW_TODO.md`)](./docs/CODE_REVIEW_TODO.md)**
 - [Полная техническая спецификация (`docs/TECHNICAL_SPEC.md`)](./docs/TECHNICAL_SPEC.md)
 - [Протокол инженерной самопроверки (`docs/SELF_CHECK_PROTOCOL.md`)](./docs/SELF_CHECK_PROTOCOL.md)
 - [Журнал багов и исправлений (`docs/BUG_LOG.md`)](./docs/BUG_LOG.md)
+- [Эталонные дампы реальных форматов Dota 2 (`docs/reference_samples/`)](./docs/reference_samples/)
+- [План проверки и починки Фазы 0 (`docs/CODE_REVIEW_TODO.md`)](./docs/CODE_REVIEW_TODO.md)
 - [Навык разработки кастомок (`.agents/skills/dota2-custom-game-dev/SKILL.md`)](./.agents/skills/dota2-custom-game-dev/SKILL.md)
