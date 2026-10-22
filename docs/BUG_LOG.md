@@ -106,3 +106,9 @@
 - **Корневая причина:** shutil.copytree copies addon_template's game/resource/flash3/custom_ui.txt into the new addon.
 - **Примененное решение:** create_or_configure_addon now removes game/<addon>/resource/flash3 right after creating a new addon from the template (existing addons are not touched).
 - **Правило предотвращения:** After copying addon_template, strip every template artifact that our own validator flags (IsTemplate, readonly_tools_asset_info.bin, resource/flash3); a fresh addon must pass validate_and_sync_precache with ok:true.
+
+### [2026-10-22 19:53:08] Компонент: `src/dota2_mcp/vmap_builder.py (compile_addon_resource)`
+- **Симптом / Ошибка:** compile_addon_resource returned ok:true for a map while the log said 'Write ...\maps\lab.vpk Failed!' — the new map was silently not written.
+- **Корневая причина:** resourcecompiler.exe exits with code 0 even when it cannot write the output VPK; it was locked by Dota 2 with the same map loaded. ok was based on the return code only.
+- **Примененное решение:** compile_addon_resource now scans the log for 'Write ... Failed!' lines, returns ok:false with write_failures and a hint to run 'disconnect' first.
+- **Правило предотвращения:** Never trust resourcecompiler's exit code alone; check its log for write failures. Run 'disconnect' in Dota before recompiling a map that is currently loaded.

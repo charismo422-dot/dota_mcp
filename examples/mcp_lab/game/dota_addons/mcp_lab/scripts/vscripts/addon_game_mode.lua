@@ -4,12 +4,19 @@ if CAddonTemplateGameMode == nil then
 	CAddonTemplateGameMode = class({})
 end
 
+LinkLuaModifier( "modifier_mcp_damage_meter", "modifiers/modifier_mcp_damage_meter", LUA_MODIFIER_MOTION_NONE )
+
+local function DamageTaken( unit )
+	local meter = unit:FindModifierByName( "modifier_mcp_damage_meter" )
+	return meter and meter.total or 0
+end
+
 -- Debug console commands are registered at file load so that script_reload picks up new ones
 Convars:RegisterCommand( "mcp_lab_status", function()
 	local hero = GameRules.AddonTemplate and GameRules.AddonTemplate.hero
 	if not hero then print( "[MCP_LAB] status: no hero" ) return end
 	local o = hero:GetAbsOrigin()
-	print( string.format( "[MCP_LAB] status: hero at %d %d", o.x, o.y ) )
+	print( string.format( "[MCP_LAB] status: hero at %d %d; world X %d..%d Y %d..%d", o.x, o.y, GetWorldMinX(), GetWorldMaxX(), GetWorldMinY(), GetWorldMaxY() ) )
 	local units = FindUnitsInRadius( hero:GetTeamNumber(), o, nil, FIND_UNITS_EVERYWHERE, DOTA_UNIT_TARGET_TEAM_ENEMY,
 		DOTA_UNIT_TARGET_BASIC, DOTA_UNIT_TARGET_FLAG_INVULNERABLE + DOTA_UNIT_TARGET_FLAG_FOW_VISIBLE, 0, false )
 	print( "[MCP_LAB] status: visible enemies=" .. #units )
@@ -23,10 +30,28 @@ Convars:RegisterCommand( "mcp_lab_status", function()
 	end
 end, "MCP Lab: print hero and enemy positions", 0 )
 
+-- Minimap capture helper: dota_minimap_create bakes visible units into the image,
+-- so remove spawned test units and park the hero outside the minimap bounds first ("mcp_lab_minimap_prep 0" to return).
+Convars:RegisterCommand( "mcp_lab_minimap_prep", function( _, restore )
+	local hero = GameRules.AddonTemplate and GameRules.AddonTemplate.hero
+	if not hero then return end
+	if restore == "0" then
+		FindClearSpaceForUnit( hero, Vector( 0, 0, 0 ), true )
+		print( "[MCP_LAB] minimap prep: hero restored" )
+		return
+	end
+	for _, u in ipairs( FindUnitsInRadius( hero:GetTeamNumber(), Vector( 0, 0, 0 ), nil, FIND_UNITS_EVERYWHERE, DOTA_UNIT_TARGET_TEAM_BOTH,
+		DOTA_UNIT_TARGET_ALL, DOTA_UNIT_TARGET_FLAG_INVULNERABLE, 0, false ) ) do
+		if u ~= hero then UTIL_Remove( u ) end
+	end
+	hero:SetAbsOrigin( Vector( 6000, 6000, 0 ) )
+	print( "[MCP_LAB] minimap prep: units removed, hero parked outside bounds" )
+end, "MCP Lab: clear units before dota_minimap_create", 0 )
+
 function Precache( context )
 	xpcall(function() require("auto_precache")(context) end, function(err) print("[MCP Precache Error] " .. tostring(err)) end)
 	-- Units spawned from Lua are invisible unless their model is precached
-	PrecacheUnitByNameSync( "npc_dota_creep_badguys_melee", context )
+	PrecacheUnitByNameSync( "npc_dota_hero_target_dummy", context )
 end
 
 function Activate()
@@ -51,9 +76,15 @@ end
 function CAddonTemplateGameMode:SpawnTargets( center )
 	local targets = {}
 	for _, offset in ipairs({ Vector( 150, 0, 0 ), Vector( -150, 0, 0 ), Vector( 0, 150, 0 ) }) do
-		local unit = CreateUnitByName( "npc_dota_creep_badguys_melee", center + offset, true, nil, nil, DOTA_TEAM_BADGUYS )
+		-- Training dummy hero, set up exactly like Valve's hero_demo (5000 HP, no damage, never acquires targets).
+		-- npc_dota_target_dummy from npc_units.txt cannot be created in custom games ("entity class is NULL").
+		local unit = CreateUnitByName( "npc_dota_hero_target_dummy", center + offset, true, nil, nil, DOTA_TEAM_NEUTRALS )
 		if unit then
-			unit:SetAttackCapability( DOTA_UNIT_CAP_NO_ATTACK )
+			unit:SetAbilityPoints( 0 )
+			unit:Hold()
+			unit:SetIdleAcquire( false )
+			unit:SetAcquisitionRange( 0 )
+			unit:AddNewModifier( unit, nil, "modifier_mcp_damage_meter", {} )
 			table.insert( targets, unit )
 		end
 	end
@@ -94,14 +125,14 @@ function CAddonTemplateGameMode:RunAutoTest( hero )
 	local targets = self:SpawnTargets( center )
 	hero:SetContextThink( "MCPLabAutoCast", function()
 		local hp_before = {}
-		for i, t in ipairs( targets ) do hp_before[i] = t:GetHealth() end
+		for i, t in ipairs( targets ) do hp_before[i] = DamageTaken( t ) end
 		hero:GiveMana( 1000 )
 		hero:CastAbilityOnPosition( center, ability, hero:GetPlayerOwnerID() )
 
 		hero:SetContextThink( "MCPLabAutoCheck", function()
 			local damaged, slowed = 0, 0
 			for i, t in ipairs( targets ) do
-				if not t:IsAlive() or t:GetHealth() < hp_before[i] then damaged = damaged + 1 end
+				if DamageTaken( t ) > hp_before[i] then damaged = damaged + 1 end
 				if t:IsAlive() and t:HasModifier( "modifier_mcp_frost_nova_slow" ) then slowed = slowed + 1 end
 			end
 			local result = ( damaged == #targets and slowed == #targets ) and "PASS" or "FAIL"
@@ -134,15 +165,15 @@ function CAddonTemplateGameMode:RunHeroTest( hero, targets )
 	hero:SetContextThink( "MCPLabBoltCheck", function()
 		checks.stun = target:IsAlive() and target:HasModifier( "modifier_mcp_ice_bolt_stun" ) and target:IsStunned()
 
-		local hp_before = 0
-		for _, t in ipairs( targets ) do if t:IsAlive() then hp_before = hp_before + t:GetHealth() end end
+		local dmg_before = 0
+		for _, t in ipairs( targets ) do dmg_before = dmg_before + DamageTaken( t ) end
 		hero:GiveMana( 1000 )
 		blizzard:EndCooldown()
 		hero:CastAbilityNoTarget( blizzard, hero:GetPlayerOwnerID() )
 		hero:SetContextThink( "MCPLabBlizzardCheck", function()
-			local hp_after = 0
-			for _, t in ipairs( targets ) do if t:IsAlive() then hp_after = hp_after + t:GetHealth() end end
-			checks.ultimate = hp_after < hp_before
+			local dmg_after = 0
+			for _, t in ipairs( targets ) do dmg_after = dmg_after + DamageTaken( t ) end
+			checks.ultimate = dmg_after > dmg_before
 
 			local all_ok, parts = true, {}
 			for _, name in ipairs({ "stats", "slots", "aura", "stun", "ultimate" }) do

@@ -700,8 +700,11 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
                         except Exception:
                             pass
 
-        return {
-            "ok": proc.returncode == 0,
+        # resourcecompiler exits 0 even when it cannot write the output (e.g. lab.vpk locked by a running game)
+        write_failures = [l for l in lines if l.strip().startswith("Write ") and l.rstrip().endswith("Failed!")]
+
+        result: dict[str, Any] = {
+            "ok": proc.returncode == 0 and not write_failures,
             "return_code": proc.returncode,
             "command": cmd,
             "resource": str(full_input),
@@ -710,5 +713,12 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
             "errors_and_warnings": error_lines[-40:],
             "tail_log": lines[-25:],
         }
+        if write_failures:
+            result["write_failures"] = write_failures
+            result["hint"] = (
+                "Output file is locked, most likely by Dota 2 with this map loaded. "
+                "Run 'disconnect' via run_console_command, then compile again."
+            )
+        return result
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
