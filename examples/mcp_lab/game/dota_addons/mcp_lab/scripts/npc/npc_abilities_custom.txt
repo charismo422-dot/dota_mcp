@@ -37,4 +37,98 @@
 			"vision_duration"			"6"
 		}
 	}
+
+	//=================================================================================================================
+	// MCP Lab: Ice Bolt (stage 2) — tracking projectile from attach_attack1, damage + stun
+	//=================================================================================================================
+	"mcp_ice_bolt"
+	{
+		"BaseClass"						"ability_lua"
+		"ScriptFile"					"abilities/mcp_ice_bolt"
+		"AbilityTextureName"			"crystal_maiden_frostbite"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_UNIT_TARGET"
+		"AbilityUnitTargetTeam"			"DOTA_UNIT_TARGET_TEAM_ENEMY"
+		"AbilityUnitTargetType"			"DOTA_UNIT_TARGET_HERO | DOTA_UNIT_TARGET_BASIC"
+		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
+		"AbilityCastAnimation"			"ACT_DOTA_CAST_ABILITY_2"
+
+		"precache"
+		{
+			"soundfile"					"soundevents/game_sounds_heroes/game_sounds_crystalmaiden.vsndevts"
+		}
+
+		"AbilityValues"
+		{
+			"AbilityCastRange"			"800"
+			"AbilityCastPoint"			"0.2"
+			"AbilityCooldown"			"3"
+			"AbilityManaCost"			"40"
+			"damage"					"80 120 160 200"
+			"stun_duration"				"1.5"
+			"projectile_speed"			"1000"
+		}
+	}
+
+	//=================================================================================================================
+	// MCP Lab: hidden slot placeholders — "" in npc_heroes_custom does not clear a slot, the engine compacts the list
+	//=================================================================================================================
+	"mcp_empty1"
+	{
+		"BaseClass"						"ability_datadriven"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_PASSIVE | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE"
+		"MaxLevel"						"0"
+	}
+	"mcp_empty2"
+	{
+		"BaseClass"						"ability_datadriven"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_HIDDEN | DOTA_ABILITY_BEHAVIOR_PASSIVE | DOTA_ABILITY_BEHAVIOR_NOT_LEARNABLE"
+		"MaxLevel"						"0"
+	}
+
+	//=================================================================================================================
+	// MCP Lab: Frost Aura (stage 2) — passive aura slowing nearby enemies
+	//=================================================================================================================
+	"mcp_frost_aura"
+	{
+		"BaseClass"						"ability_lua"
+		"ScriptFile"					"abilities/mcp_frost_aura"
+		"AbilityTextureName"			"crystal_maiden_brilliance_aura"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_PASSIVE | DOTA_ABILITY_BEHAVIOR_AURA"
+
+		"AbilityValues"
+		{
+			"radius"					"600"
+			"movespeed_slow"			"-10 -15 -20 -25"
+		}
+	}
+
+	//=================================================================================================================
+	// MCP Lab: Blizzard (stage 2, ultimate) — thinker dealing periodic AoE damage around the caster
+	//=================================================================================================================
+	"mcp_blizzard"
+	{
+		"BaseClass"						"ability_lua"
+		"ScriptFile"					"abilities/mcp_blizzard"
+		"AbilityTextureName"			"crystal_maiden_freezing_field"
+		"AbilityType"					"ABILITY_TYPE_ULTIMATE"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
+		"AbilityCastAnimation"			"ACT_DOTA_CAST_ABILITY_4"
+
+		"precache"
+		{
+			"soundfile"					"soundevents/game_sounds_heroes/game_sounds_crystalmaiden.vsndevts"
+		}
+
+		"AbilityValues"
+		{
+			"AbilityCastPoint"			"0.3"
+			"AbilityCooldown"			"10"
+			"AbilityManaCost"			"100"
+			"radius"					"700"
+			"duration"					"3"
+			"interval"					"0.5"
+			"damage_per_tick"			"40 60 80"
+		}
+	}
 }

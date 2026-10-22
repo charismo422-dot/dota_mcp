@@ -23,6 +23,7 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 - **Resolve sound events in precache** — `validate_and_sync_precache` maps sound event names used in Lua/KV to their `.vsndevts` (cached event index built once from the VPK) and precaches them; currently sounds silently go un-precached. High priority — `idea`
 - **`verify_vscript_api` from a cached dump** — run `script_help2` once per game build, then answer from the cache; avoids flooding `console.log` and duplicate matches — `done` (also covers feature #3)
+- **Compact `get_base_dota_definition`** — optional `fields` filter / summary mode (abilities, stats only) instead of the full ≈ 10 KB hero block with bot builds and item slots — `idea`
 - **Precache units created from Lua** — detect `CreateUnitByName("x", ...)` literals and add `PrecacheUnitByNameSync` to `auto_precache.lua`; otherwise spawned units are invisible — `idea`
 - **Compact `list_map_entities`** — default to id/classname/targetname/origin only, full properties on request; saves context — `idea`
 

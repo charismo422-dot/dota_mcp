@@ -17,7 +17,9 @@ Convars:RegisterCommand( "mcp_lab_status", function()
 		DOTA_UNIT_TARGET_BASIC, DOTA_UNIT_TARGET_FLAG_INVULNERABLE, 0, false )
 	for _, u in ipairs( all ) do
 		local p = u:GetAbsOrigin()
-		print( string.format( "[MCP_LAB] status: %s at %d %d dist=%d", u:GetUnitName(), p.x, p.y, ( p - o ):Length2D() ) )
+		local mods = {}
+		for i = 0, u:GetModifierCount() - 1 do table.insert( mods, u:GetModifierNameByIndex( i ) ) end
+		print( string.format( "[MCP_LAB] status: %s at %d %d dist=%d mods=%s", u:GetUnitName(), p.x, p.y, ( p - o ):Length2D(), table.concat( mods, "," ) ) )
 	end
 end, "MCP Lab: print hero and enemy positions", 0 )
 
@@ -40,7 +42,7 @@ function CAddonTemplateGameMode:InitGameMode()
 	GameRules:LockCustomGameSetupTeamAssignment( true )
 	GameRules:SetPreGameTime( 600 )
 
-	GameRules:GetGameModeEntity():SetCustomGameForceHero( "npc_dota_hero_lina" )
+	GameRules:GetGameModeEntity():SetCustomGameForceHero( "npc_dota_hero_crystal_maiden" )
 
 	self.hero_initialized = false
 	ListenToGameEvent( "npc_spawned", Dynamic_Wrap( CAddonTemplateGameMode, "OnNPCSpawned" ), self )
@@ -65,13 +67,16 @@ function CAddonTemplateGameMode:OnNPCSpawned( event )
 	end
 	self.hero_initialized = true
 
-	local first = hero:GetAbilityByIndex( 0 )
-	if first then
-		hero:RemoveAbility( first:GetAbilityName() )
+	-- Kit comes from npc_heroes_custom.txt (override_hero); log slots to verify the override and level everything
+	local slots = {}
+	for i = 0, hero:GetAbilityCount() - 1 do
+		local a = hero:GetAbilityByIndex( i )
+		if a then
+			table.insert( slots, i .. "=" .. a:GetAbilityName() )
+			if string.sub( a:GetAbilityName(), 1, 4 ) == "mcp_" then a:SetLevel( 1 ) end
+		end
 	end
-	local ability = hero:AddAbility( "mcp_frost_nova" )
-	ability:SetLevel( 1 )
-	print( "[MCP_LAB] mcp_frost_nova added to slot Q" )
+	print( "[MCP_LAB] hero " .. hero:GetUnitName() .. " slots: " .. table.concat( slots, " " ) )
 
 	self.hero = hero
 	Convars:RegisterCommand( "mcp_lab_autotest", function()
@@ -101,8 +106,52 @@ function CAddonTemplateGameMode:RunAutoTest( hero )
 			end
 			local result = ( damaged == #targets and slowed == #targets ) and "PASS" or "FAIL"
 			print( string.format( "[MCP_LAB] AUTOTEST stage1 %s: targets=%d damaged=%d slowed=%d", result, #targets, damaged, slowed ) )
+			self:RunHeroTest( hero, targets )
 			return nil
 		end, 1.5 )
 		return nil
 	end, 2.0 )
+end
+
+-- Stage 2: hero override (stats, slots), unit-target projectile + stun, passive aura, ultimate thinker
+function CAddonTemplateGameMode:RunHeroTest( hero, targets )
+	local target = targets[1]
+	local bolt = hero:FindAbilityByName( "mcp_ice_bolt" )
+	local blizzard = hero:FindAbilityByName( "mcp_blizzard" )
+	local checks = {}
+	checks.stats = hero:GetBaseMoveSpeed() == 320
+	checks.slots = hero:GetAbilityByIndex( 1 ) == bolt and hero:GetAbilityByIndex( 5 ) == blizzard
+
+	local aura_count = 0
+	for _, t in ipairs( targets ) do
+		if t:IsAlive() and t:HasModifier( "modifier_mcp_frost_aura_debuff" ) then aura_count = aura_count + 1 end
+	end
+	checks.aura = aura_count > 0
+
+	hero:GiveMana( 1000 )
+	bolt:EndCooldown()
+	hero:CastAbilityOnTarget( target, bolt, hero:GetPlayerOwnerID() )
+	hero:SetContextThink( "MCPLabBoltCheck", function()
+		checks.stun = target:IsAlive() and target:HasModifier( "modifier_mcp_ice_bolt_stun" ) and target:IsStunned()
+
+		local hp_before = 0
+		for _, t in ipairs( targets ) do if t:IsAlive() then hp_before = hp_before + t:GetHealth() end end
+		hero:GiveMana( 1000 )
+		blizzard:EndCooldown()
+		hero:CastAbilityNoTarget( blizzard, hero:GetPlayerOwnerID() )
+		hero:SetContextThink( "MCPLabBlizzardCheck", function()
+			local hp_after = 0
+			for _, t in ipairs( targets ) do if t:IsAlive() then hp_after = hp_after + t:GetHealth() end end
+			checks.ultimate = hp_after < hp_before
+
+			local all_ok, parts = true, {}
+			for _, name in ipairs({ "stats", "slots", "aura", "stun", "ultimate" }) do
+				all_ok = all_ok and checks[name]
+				table.insert( parts, name .. "=" .. tostring( checks[name] ) )
+			end
+			print( string.format( "[MCP_LAB] AUTOTEST stage2 %s: %s aura_targets=%d", all_ok and "PASS" or "FAIL", table.concat( parts, " " ), aura_count ) )
+			return nil
+		end, 3.8 )
+		return nil
+	end, 1.0 )
 end

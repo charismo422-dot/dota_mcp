@@ -4,12 +4,18 @@
 "DOTAHeroes"
 {
 	//=================================================================================================================
-	// HERO: Templar Assassin
+	// MCP Lab: Frost Mage (stage 2) — Crystal Maiden with a fully custom kit and tweaked stats
 	//=================================================================================================================
-	"npc_dota_hero_templar_assassin_template"
+	"npc_dota_hero_mcp_frost_mage"
 	{
-		"override_hero"				"npc_dota_hero_templar_assassin"			// Hero to override
-		"Ability1"					"templar_assassin_refraction_holdout"		// Ability 1
-		"VisionNighttimeRange"		"1800"										// Range of vision at night time.
+		"override_hero"				"npc_dota_hero_crystal_maiden"
+		"Ability1"					"mcp_frost_nova"
+		"Ability2"					"mcp_ice_bolt"
+		"Ability3"					"mcp_frost_aura"
+		"Ability4"					"mcp_empty1"
+		"Ability5"					"mcp_empty2"
+		"Ability6"					"mcp_blizzard"
+		"MovementSpeed"				"320"
+		"ArmorPhysical"				"3"
 	}
 }
