@@ -1,4 +1,4 @@
-"""Main FastMCP Server entry point exposing all 15 Dota 2 Workshop Tools functions."""
+"""Main FastMCP Server entry point exposing all 16 Dota 2 Workshop Tools functions."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ mcp = FastMCP("dota2-workshop-mcp")
 
 
 # ---------------------------------------------------------------------------
-# Module 1: VPK Asset & Script Explorer
+# Module 1: VPK Asset, Sound Event & Script Explorer
 # ---------------------------------------------------------------------------
 
 
@@ -35,8 +35,18 @@ def search_dota_assets(
 
 
 @mcp.tool()
+def search_sound_events(
+    query: str, file_filter: str = "", limit: int = 30
+) -> dict[str, Any]:
+    """Search Dota 2 .vsndevts_c files inside pak01_dir.vpk for real Sound Event names (e.g. 'Hero_Pudge.Attack') to use in EmitSoundOn / StopSoundOn."""
+    return vpk_explorer.search_sound_events(
+        query=query, file_filter=file_filter, limit=limit
+    )
+
+
+@mcp.tool()
 def get_base_dota_definition(category: str, name: str) -> dict[str, Any]:
-    """Extract standard Dota 2 KeyValues block from pak01_dir.vpk (npc_heroes.txt, npc_abilities.txt, npc_units.txt, items.txt).
+    """Extract standard Dota 2 KeyValues block from pak01_dir.vpk (npc_heroes.txt, npc_abilities.txt, scripts/npc/heroes/*.txt, npc_units.txt, items.txt).
     Valid category values: 'hero', 'ability', 'unit', 'item'.
     """
     return vpk_explorer.get_base_dota_definition(category=category, name=name)
@@ -49,7 +59,7 @@ def get_base_dota_definition(category: str, name: str) -> dict[str, Any]:
 
 @mcp.tool()
 def inspect_model(model_path: str) -> dict[str, Any]:
-    """Inspect a Dota 2 model (.vmdl) to extract valid ACT_DOTA_* animation activities and attach_* points."""
+    """Inspect a Dota 2 model (.vmdl) to extract valid ACT_DOTA_* animation activities, attach_* points, and bone attachments."""
     return asset_inspector.inspect_model(model_path=model_path)
 
 
@@ -71,7 +81,7 @@ def create_or_configure_addon(
     max_players: int = 10,
     team_count: int = 2,
 ) -> dict[str, Any]:
-    """Create a new Dota 2 custom game addon from addon_template (if needed) and configure addoninfo.txt."""
+    """Create a new Dota 2 custom game addon from addon_template (if needed) and configure addoninfo.txt without clobbering existing keys."""
     return addon_manager.create_or_configure_addon(
         addon_name=addon_name,
         maps=maps,
@@ -121,7 +131,7 @@ def prepare_map_from_template(
 def list_map_entities(
     addon_name: str, map_name: str, classname_filter: str = ""
 ) -> dict[str, Any]:
-    """Return a compact list of all CMapEntity nodes in a .vmap (id, classname, targetname, origin, angles, properties) without loading heavy mesh data."""
+    """Return a compact list of all CMapEntity nodes in a .vmap (id, nodeID, classname, targetname, origin, angles, properties) without loading heavy mesh data."""
     return vmap_builder.list_map_entities(
         addon_name=addon_name, map_name=map_name, classname_filter=classname_filter
     )
@@ -176,7 +186,7 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
 
 @mcp.tool()
 def run_console_command(command: str, wait_response_ms: int = 1200) -> dict[str, Any]:
-    """Send a console command to running Dota 2 via NetCon TCP port 29000 (e.g. 'dota_launch_custom_game <addon> <map>', 'script_reload') and read console logs/errors."""
+    """Send a console command to running Dota 2 via NetCon TCP port 2121 (e.g. 'dota_launch_custom_game <addon> <map>', 'script_reload') and read console logs/errors."""
     return netcon_bridge.run_console_command(
         command=command, wait_response_ms=wait_response_ms
     )

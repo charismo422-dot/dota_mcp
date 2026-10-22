@@ -28,7 +28,7 @@ def create_or_configure_addon(
     max_players: int = 10,
     team_count: int = 2,
 ) -> dict[str, Any]:
-    """Create a new addon from addon_template (if missing) and configure addoninfo.txt."""
+    """Create a new addon from addon_template (if missing) and configure addoninfo.txt without clobbering existing keys."""
     if not CONFIG.is_valid or not CONFIG.game_addons_dir or not CONFIG.content_addons_dir:
         return {"ok": False, "error": "Dota 2 root directory not found."}
 
@@ -72,22 +72,52 @@ def create_or_configure_addon(
         if not fpath.exists():
             fpath.write_text(f'"{root_key}"\n{{\n\t"Version"\t"1"\n}}\n', encoding="utf-8")
 
-    # Configure addoninfo.txt
+    # Configure addoninfo.txt while preserving any existing custom keys
     addoninfo_path = game_addon / "addoninfo.txt"
-    maps_str = " ".join(maps) if maps else "template_map"
-    map_blocks = "\n".join(
-        f'\t"{m}"\n\t{{\n\t\t"MaxPlayers"\t"{max_players}"\n\t}}' for m in (maps or ["template_map"])
-    )
-    addoninfo_content = (
-        '"AddonInfo"\n'
-        "{\n"
-        f'\t"TeamCount"\t\t"{team_count}"\n'
-        f'\t"maps"\t\t\t"{maps_str}"\n'
-        '\t"IsPlayable"\t"1"\n'
-        '\t"Default_Keys"\n\t{\n\t}\n'
-        f"{map_blocks}\n"
-        "}\n"
-    )
+    effective_maps = maps if maps else ["template_map"]
+    maps_str = " ".join(effective_maps)
+
+    addon_dict: dict[str, Any] = {}
+    if addoninfo_path.exists() and vdf is not None:
+        try:
+            raw_info = addoninfo_path.read_text(encoding="utf-8", errors="replace")
+            parsed = vdf.loads(raw_info)
+            root_val = parsed.get("AddonInfo") or parsed.get("addoninfo")
+            if isinstance(root_val, dict):
+                addon_dict = dict(root_val)
+        except Exception:
+            addon_dict = {}
+
+    addon_dict["TeamCount"] = str(team_count)
+    addon_dict["maps"] = maps_str
+    addon_dict["IsPlayable"] = addon_dict.get("IsPlayable", "1")
+    if "Default_Keys" not in addon_dict:
+        addon_dict["Default_Keys"] = {}
+
+    for m in effective_maps:
+        existing_map_cfg = addon_dict.get(m)
+        if isinstance(existing_map_cfg, dict):
+            existing_map_cfg["MaxPlayers"] = str(max_players)
+        else:
+            addon_dict[m] = {"MaxPlayers": str(max_players)}
+
+    if vdf is not None:
+        addoninfo_content = vdf.dumps({"AddonInfo": addon_dict}, pretty=True)
+    else:
+        map_blocks = "\n".join(
+            f'\t"{m}"\n\t{{\n\t\t"MaxPlayers"\t"{max_players}"\n\t}}'
+            for m in effective_maps
+        )
+        addoninfo_content = (
+            '"AddonInfo"\n'
+            "{\n"
+            f'\t"TeamCount"\t\t"{team_count}"\n'
+            f'\t"maps"\t\t\t"{maps_str}"\n'
+            '\t"IsPlayable"\t"1"\n'
+            '\t"Default_Keys"\n\t{\n\t}\n'
+            f"{map_blocks}\n"
+            "}\n"
+        )
     addoninfo_path.write_text(addoninfo_content, encoding="utf-8")
 
     return {
@@ -97,7 +127,7 @@ def create_or_configure_addon(
         "game_addon_path": str(game_addon),
         "content_addon_path": str(content_addon),
         "addoninfo_path": str(addoninfo_path),
-        "maps": maps,
+        "maps": effective_maps,
         "directory_routing": get_addon_paths(addon_name),
     }
 
@@ -183,7 +213,6 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
         ("*.png", "content/.../panorama/images/spellicons/ (or items/)"),
     ):
         for f in game_addon.rglob(bad_ext):
-            # Ignore addon_template default files if any, but warn on custom ones
             if f.name in ("addon_icon.png",):
                 continue
             misplaced_files.append(
@@ -253,7 +282,6 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
                             continue
                         tex_name = entry_data.get("AbilityTextureName")
                         if tex_name and is_item_file:
-                            # If using a custom png in panorama/images/items/<x>.png, remind about item_ prefix convention
                             clean_tex = tex_name.removeprefix("item_")
                             custom_item_png = (
                                 content_addon
@@ -288,7 +316,7 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
         else:
             missing_assets.append(asset)
 
-    # Generate auto_precache.lua and hook into addon_game_mode.lua
+    # Generate auto_precache.lua and hook into addon_game_mode.lua with visible xpcall error logging
     vscripts_dir = game_addon / "scripts" / "vscripts"
     vscripts_dir.mkdir(parents=True, exist_ok=True)
     auto_precache_file = vscripts_dir / "auto_precache.lua"
@@ -310,16 +338,23 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
     precache_lines.append("end\n")
     auto_precache_file.write_text("\n".join(precache_lines), encoding="utf-8")
 
-    # Ensure addon_game_mode.lua calls require("auto_precache")(context) inside Precache(context)
+    # Ensure addon_game_mode.lua calls require("auto_precache")(context) with xpcall inside Precache(context)
     game_mode_lua = vscripts_dir / "addon_game_mode.lua"
+    xpcall_line = '\txpcall(function() require("auto_precache")(context) end, function(err) print("[MCP Precache Error] " .. tostring(err)) end)'
     if game_mode_lua.exists():
         gm_text = game_mode_lua.read_text(encoding="utf-8", errors="replace")
         if "auto_precache" not in gm_text and "function Precache(" in gm_text:
             gm_text = re.sub(
                 r"(function\s+Precache\s*\(\s*context\s*\))",
-                r'\1\n\tpcall(function() require("auto_precache")(context) end)',
+                rf"\1\n{xpcall_line}",
                 gm_text,
                 count=1,
+            )
+            game_mode_lua.write_text(gm_text, encoding="utf-8")
+        elif 'pcall(function() require("auto_precache")(context) end)' in gm_text:
+            gm_text = gm_text.replace(
+                'pcall(function() require("auto_precache")(context) end)',
+                xpcall_line.lstrip(),
             )
             game_mode_lua.write_text(gm_text, encoding="utf-8")
 
@@ -344,7 +379,7 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
 def upsert_localization(
     addon_name: str, language: str, tokens: dict[str, str]
 ) -> dict[str, Any]:
-    """Create or update game/dota_addons/<addon>/resource/addon_<language>.txt with UTF-8 Tokens."""
+    """Create or update game/dota_addons/<addon>/resource/addon_<language>.txt."""
     if not CONFIG.is_valid or not CONFIG.game_addons_dir:
         return {"ok": False, "error": "Dota 2 root directory not found."}
     if vdf is None:
@@ -356,8 +391,12 @@ def upsert_localization(
     loc_file = res_dir / f"addon_{lang_clean}.txt"
 
     existing_tokens: dict[str, str] = {"Language": lang_clean.capitalize()}
+    target_encoding = "utf-8-sig"
     if loc_file.exists():
-        for enc in ("utf-8", "utf-16", "utf-16-le"):
+        raw_head = loc_file.read_bytes()[:4]
+        if raw_head.startswith((b"\xff\xfe", b"\xfe\xff")):
+            target_encoding = "utf-16"
+        for enc in ("utf-16", "utf-8-sig", "utf-8", "utf-16-le"):
             try:
                 raw = loc_file.read_text(encoding=enc)
                 parsed = vdf.loads(raw)
@@ -385,10 +424,11 @@ def upsert_localization(
         lines.append(f'\t\t"{k}"\t\t"{safe_v}"')
     lines.extend(["\t}", "}", ""])
 
-    loc_file.write_text("\n".join(lines), encoding="utf-8")
+    loc_file.write_text("\n".join(lines), encoding=target_encoding)
     return {
         "ok": True,
         "localization_file": str(loc_file),
+        "encoding": target_encoding,
         "updated_keys_count": len(tokens),
         "total_keys_count": len(existing_tokens),
     }

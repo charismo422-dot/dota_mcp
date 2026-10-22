@@ -26,7 +26,7 @@
 - **Внешний CLI-инспектор скомпилированных ресурсов (`_c`):**
   - `Decompiler.exe` (Source 2 Viewer CLI / `ValveResourceFormat`) — автоматическое скачивание в `bin/Decompiler.exe` при установке на Windows. Используется для чтения анимаций и точек крепления (`Attachment points`) из `.vmdl_c`, а также Control Points из `.vpcf_c`.
 - **Сетевой интерфейс движка (Live Engine Bridge):**
-  - TCP-клиент к порту `-netconport 29000` (консоль `vconsole2` запущенной Dota 2) для отправки команд (`dota_launch_custom_game`, `script_reload`, `ent_create`) и чтения логов/ошибок Lua в реальном времени.
+  - TCP-клиент к порту `-netconport 2121` (текстовый Telnet-поток запущенной Dota 2, не конфликтующий с портом `29000` бинарного `vconsole2.exe`) для отправки команд (`dota_launch_custom_game`, `script_reload`, `ent_create`) и чтения логов/ошибок Lua в реальном времени.
 
 ---
 
@@ -67,7 +67,9 @@ dota_mcp/
    - **Описание:** Ищет в `game/dota/pak01_dir.vpk` реальные пути к файлам по подстроке/ключевым словам.
    - **Фильтры `asset_type`:** `"model"` (`.vmdl`), `"particle"` (`.vpcf`), `"sound"` (`.vsnd` / `.vsndevts`), `"material"` (`.vmat`), `"panorama"` (`.png` / `.vsvg`), `"script"` (`.txt` / `.lua`), `"all"`.
    - **Особенность:** Автоматически убирает суффикс `_c` у возвращаемых путей, чтобы пути сразу подходили для вставки в Lua, KV и `.vmap`.
-2. `get_base_dota_definition(category: str, name: str) -> dict`
+2. `search_sound_events(query: str, file_filter: str = "", limit: int = 30) -> dict`
+   - **Описание:** Ищет внутри `soundevents/**/*.vsndevts_c` в `pak01_dir.vpk` (через `Source2Viewer-CLI.exe -b DATA` или поиск строк) точные имена звуковых событий (например, `Hero_Pudge.Attack`) для использования в `EmitSoundOn` / `StopSoundOn`, а также возвращает путь к файлу `.vsndevts` для предзагрузки (`PrecacheResource("soundfile", ...)`).
+3. `get_base_dota_definition(category: str, name: str) -> dict`
    - **Описание:** Извлекает из `pak01_dir.vpk` (`scripts/npc/npc_heroes.txt`, `npc_abilities.txt`, `scripts/npc/heroes/npc_dota_hero_*.txt`, `npc_units.txt`, `items.txt`) точный блок настроек стандартного героя, способности, юнита или предмета актуальной Dota 2 (7.41+).
    - **Параметр `category`:** `"hero"`, `"ability"`, `"unit"`, `"item"`.
 
@@ -108,7 +110,7 @@ dota_mcp/
 
 ### Модуль 5: Управление игрой и живая отладка (`netcon_bridge.py`)
 14. `run_console_command(command: str, wait_response_ms: int = 1200) -> dict`
-    - **Описание:** Отправляет консольную команду в запущенную Dota 2 по TCP (`127.0.0.1:29000`), например:
+    - **Описание:** Отправляет консольную команду в запущенную Dota 2 по TCP (`127.0.0.1:2121`), например:
       - `dota_launch_custom_game <addon_name> <map_name>` — запуск карты.
       - `script_reload` — горячая перезагрузка Lua-скриптов без перезапуска карты.
       - `dota_dev forcegamestart` — принудительный старт игры.

@@ -15,7 +15,7 @@ except ImportError:
     requests = None
 
 from .config import BIN_DIR, BUG_LOG_PATH, CONFIG
-from .netcon_bridge import check_netcon_open
+from .netcon_bridge import DEFAULT_NETCON_PORT, check_netcon_open
 from .vpk_explorer import search_dota_assets
 
 
@@ -55,7 +55,18 @@ def ensure_decompiler_binary() -> dict[str, Any]:
         with zipfile.ZipFile(io.BytesIO(zip_resp.content)) as zf:
             zf.extractall(BIN_DIR)
 
-        # Normalize executable name if needed
+        # If binary was extracted inside a nested subfolder, flatten into BIN_DIR
+        if not CONFIG.decompiler_exe.exists():
+            for exe_cand in list(BIN_DIR.rglob("Source2Viewer-CLI.exe")) + list(
+                BIN_DIR.rglob("Decompiler.exe")
+            ):
+                if exe_cand.parent != BIN_DIR:
+                    for item in exe_cand.parent.iterdir():
+                        target = BIN_DIR / item.name
+                        if not target.exists():
+                            item.replace(target)
+                    break
+
         extracted_files = [p.name for p in BIN_DIR.iterdir()]
         return {
             "ok": CONFIG.decompiler_exe.exists(),
@@ -97,7 +108,8 @@ def run_mcp_self_test(auto_download_decompiler: bool = True) -> dict[str, Any]:
         "config": cfg_summary,
         "decompiler_bootstrap": decompiler_status,
         "vpk_index_test": vpk_test,
-        "netcon_port_29000_open": netcon_listening,
+        "netcon_port": DEFAULT_NETCON_PORT,
+        "netcon_port_open": netcon_listening,
         "ready_for_custom_game_creation": all_ready,
     }
 

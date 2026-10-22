@@ -7,7 +7,7 @@
 | **Lua VScripts (`.lua`)** | `game/dota_addons/<addon>/scripts/vscripts/` | **NO** | Same (`game/.../scripts/vscripts/`) |
 | **NPC KeyValues (`.txt`/`.kv`)** | `game/dota_addons/<addon>/scripts/npc/` | **NO** | Same (`game/.../scripts/npc/`) |
 | **Localization (`addon_*.txt`)** | `game/dota_addons/<addon>/resource/` | **NO** | Same (`game/.../resource/`) |
-| **Maps (`.vmap`)** | `content/dota_addons/<addon>/maps/<map>.vmap` | **YES** | `game/dota_addons/<addon>/maps/<map>.vmap_c` |
+| **Maps (`.vmap`)** | `content/dota_addons/<addon>/maps/<map>.vmap` | **YES** | `game/dota_addons/<addon>/maps/<map>.vpk` / `.vmap_c` |
 | **Custom Ability Icons (`.png`)** | `content/dota_addons/<addon>/panorama/images/spellicons/<name>.png` | **YES** (auto-compiled by `validate_and_sync_precache`) | `game/.../panorama/images/spellicons/<name>_png.vtex_c` |
 | **Custom Item Icons (`.png`)** | `content/dota_addons/<addon>/panorama/images/items/<name>.png` | **YES** (auto-compiled by `validate_and_sync_precache`) | `game/.../panorama/images/items/<name>_png.vtex_c` |
 | **Panorama Layout (`.xml`)** | `content/dota_addons/<addon>/panorama/layout/custom_game/` | **YES** | `game/.../panorama/layout/custom_game/*.vxml_c` |
@@ -82,7 +82,7 @@ if CCustomGameMode == nil then
 end
 
 function Precache(context)
-    pcall(function() require("auto_precache")(context) end)
+    xpcall(function() require("auto_precache")(context) end, function(err) print("[MCP Precache Error] " .. tostring(err)) end)
 end
 
 function Activate()
@@ -138,7 +138,7 @@ end
 
 ---
 
-## 5. Common `.vmap` Entities Reference (For `add_map_entity`)
+## 5. Common `.vmap` Point Entities Reference (For `add_map_entity`)
 
 | Entity `classname` | Purpose | Required `properties` |
 | :--- | :--- | :--- |
@@ -148,7 +148,8 @@ end
 | `ent_dota_tree` | Cuttable Dota 2 tree on map | `{"model": "models/props_tree/tree_oak_01.vmdl"}` (verify model via `search_dota_assets`) |
 | `prop_dynamic` | Decorative 3D model on map | `{"model": "<verified_vmdl_path>", "defaultAnim": "idle", "solid": "6"}` |
 | `ent_dota_fountain` | Team fountain heal/auras | `{"teamnumber": "2"}` (`2` = Radiant, `3` = Dire) |
-| `ent_dota_shop` | Item shop building/zone | `{"shoptype": "0"}` (`0` = Home, `1` = Side, `2` = Secret) |
+
+> **IMPORTANT NOTE ON SHOPS:** In Source 2 Dota 2, a shop zone is a volumetric brush entity (`trigger_shop` with mesh children), **not** a point entity (`ent_dota_shop`). For custom games without brush editing, enable universal shop mode in Lua via `GameRules:SetUseUniversalShopMode(true)`.
 
 ---
 

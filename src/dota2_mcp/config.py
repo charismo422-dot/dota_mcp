@@ -34,12 +34,13 @@ def _find_steam_path_windows() -> Optional[Path]:
             for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
                 try:
                     with winreg.OpenKey(hive, reg_path) as key:
-                        val, _ = winreg.QueryValueEx(key, "InstallPath")
-                        if val and Path(val).exists():
-                            return Path(val)
-                        val, _ = winreg.QueryValueEx(key, "SteamPath")
-                        if val and Path(val).exists():
-                            return Path(val)
+                        for value_name in ("InstallPath", "SteamPath"):
+                            try:
+                                val, _ = winreg.QueryValueEx(key, value_name)
+                                if val and Path(val).exists():
+                                    return Path(val)
+                            except OSError:
+                                continue
                 except OSError:
                     continue
     except ImportError:
@@ -152,7 +153,11 @@ class DotaConfig:
 
     @property
     def decompiler_exe(self) -> Path:
-        exe_name = "Source2Viewer-CLI.exe" if (BIN_DIR / "Source2Viewer-CLI.exe").exists() else "Decompiler.exe"
+        exe_name = (
+            "Source2Viewer-CLI.exe"
+            if (BIN_DIR / "Source2Viewer-CLI.exe").exists()
+            else "Decompiler.exe"
+        )
         return BIN_DIR / exe_name
 
     def summary(self) -> dict:

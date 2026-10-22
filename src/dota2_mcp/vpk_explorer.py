@@ -1,7 +1,9 @@
-"""Module 1: Search Dota 2 assets and extract base KeyValues definitions from pak01_dir.vpk."""
+"""Module 1: Search Dota 2 assets, sound events, and extract base KeyValues definitions from pak01_dir.vpk."""
 
 from __future__ import annotations
 
+import re
+import subprocess
 from pathlib import Path
 from typing import Any, Optional
 
@@ -15,7 +17,7 @@ try:
 except ImportError:
     vdf = None
 
-from .config import CONFIG
+from .config import CACHE_DIR, CONFIG
 
 
 _VPK_HANDLE: Optional[Any] = None
@@ -93,6 +95,102 @@ def search_dota_assets(query: str, asset_type: str = "all", limit: int = 25) -> 
         "asset_type": asset_type,
         "count": len(matches),
         "results": matches,
+    }
+
+
+def search_sound_events(
+    query: str, file_filter: str = "", limit: int = 30
+) -> dict[str, Any]:
+    """Search inside Dota 2 .vsndevts_c files for exact Sound Event names (e.g. 'Hero_Pudge.Attack') to use in EmitSoundOn."""
+    try:
+        pak = _get_vpk()
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+    assert _VPK_FILE_LIST is not None
+    tokens = [t.lower() for t in query.strip().split() if t]
+    flt_lower = file_filter.strip().lower()
+
+    vsndevts_files = [
+        f
+        for f in _VPK_FILE_LIST
+        if f.startswith("soundevents/") and f.endswith(".vsndevts_c")
+    ]
+    if flt_lower:
+        vsndevts_files = [f for f in vsndevts_files if flt_lower in f.lower()]
+    else:
+        # Prioritize files whose path matches any token in query
+        vsndevts_files.sort(
+            key=lambda p: 0 if any(tok in p.lower() for tok in tokens) else 1
+        )
+
+    # Verified against Source2Viewer-CLI KV3 DATA block in game_sounds_pudge.vsndevts_c:
+    # Top-level entries inside DATA look like: Hero_Pudge.Attack = \n\t{
+    event_header_re = re.compile(
+        r"^\t([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)+)\s*=\s*$", re.MULTILINE
+    )
+    ascii_event_re = re.compile(r"\b([A-Za-z0-9_]{2,32}\.[A-Za-z0-9_.]{2,64})\b")
+
+    results: list[dict[str, str]] = []
+    seen_events: set[str] = set()
+    max_results = max(1, min(limit, 100))
+
+    for vpath in vsndevts_files[:60]:
+        engine_vsndevts = strip_compiled_suffix(vpath)
+        found_in_file: list[str] = []
+
+        if CONFIG.decompiler_exe.exists():
+            try:
+                local_f = extract_vpk_file_to_cache(vpath, CACHE_DIR)
+                proc = subprocess.run(
+                    [str(CONFIG.decompiler_exe), "-i", str(local_f), "-b", "DATA"],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=15,
+                )
+                if proc.stdout:
+                    found_in_file = event_header_re.findall(proc.stdout)
+            except Exception:
+                pass
+
+        if not found_in_file:
+            try:
+                raw_bytes = pak.get_file(vpath).read()
+                text_latin = raw_bytes.decode("latin-1", errors="ignore")
+                found_in_file = [
+                    c
+                    for c in ascii_event_re.findall(text_latin)
+                    if not c.endswith((".vsnd", ".wav", ".mp3", ".vsndevts"))
+                ]
+            except Exception:
+                continue
+
+        for ev_name in found_in_file:
+            if ev_name in seen_events:
+                continue
+            ev_lower = ev_name.lower()
+            if all(
+                tok in ev_lower or tok in engine_vsndevts.lower() for tok in tokens
+            ):
+                seen_events.add(ev_name)
+                results.append(
+                    {
+                        "sound_event_name": ev_name,
+                        "soundevents_file": engine_vsndevts,
+                    }
+                )
+                if len(results) >= max_results:
+                    break
+        if len(results) >= max_results:
+            break
+
+    return {
+        "ok": True,
+        "query": query,
+        "count": len(results),
+        "results": results,
     }
 
 
@@ -177,7 +275,6 @@ def get_base_dota_definition(category: str, name: str) -> dict[str, Any]:
                 for f in _VPK_FILE_LIST
                 if f.startswith("scripts/npc/heroes/") and f.endswith(".txt")
             ]
-            # Prioritize matching hero filename first for speed
             hero_files.sort(key=lambda p: 0 if hero_prefix and hero_prefix in p else 1)
             for hf in hero_files:
                 hf_dict = _load_vpk_kv_dict(pak, hf)

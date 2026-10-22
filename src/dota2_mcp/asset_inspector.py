@@ -1,17 +1,19 @@
-"""Module 2: Deep inspection of compiled models (.vmdl_c) and particles (.vpcf_c) via Decompiler CLI."""
+"""Module 2: Deep inspection of compiled models (.vmdl_c) and particles (.vpcf_c) via Source2Viewer-CLI."""
 
 from __future__ import annotations
 
 import re
 import subprocess
-from typing import Any
+from typing import Any, Optional
 
 from .config import CACHE_DIR, CONFIG
 from .vpk_explorer import extract_vpk_file_to_cache
 
 
-def _run_decompiler_block_dump(compiled_file_path: str) -> str:
-    """Run Source2Viewer-CLI / Decompiler.exe with --all to dump resource blocks as text."""
+def _run_decompiler_block_dump(
+    compiled_file_path: str, block_name: Optional[str] = None
+) -> str:
+    """Run Source2Viewer-CLI / Decompiler.exe to dump resource blocks as text."""
     exe = CONFIG.decompiler_exe
     if not exe.exists():
         raise FileNotFoundError(
@@ -19,8 +21,14 @@ def _run_decompiler_block_dump(compiled_file_path: str) -> str:
             "Run: python -m src.dota2_mcp.diagnostics --bootstrap"
         )
 
+    cmd = [str(exe), "-i", compiled_file_path]
+    if block_name:
+        cmd.extend(["-b", block_name])
+    else:
+        cmd.append("--all")
+
     proc = subprocess.run(
-        [str(exe), "-i", compiled_file_path, "--all"],
+        cmd,
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -34,7 +42,7 @@ def _run_decompiler_block_dump(compiled_file_path: str) -> str:
 
 
 def inspect_model(model_path: str) -> dict[str, Any]:
-    """Extract .vmdl_c and parse animations, ACT_DOTA_* activities, and attach_* points."""
+    """Extract .vmdl_c and parse animations, ACT_DOTA_* activities, and attach_* points with bones."""
     try:
         local_file = extract_vpk_file_to_cache(model_path, CACHE_DIR)
     except Exception as exc:
@@ -42,29 +50,40 @@ def inspect_model(model_path: str) -> dict[str, Any]:
 
     try:
         dump = _run_decompiler_block_dump(str(local_file))
-    except Exception as exc:
-        # Fallback: extract ASCII strings directly from the binary .vmdl_c if Decompiler is unavailable
+    except Exception:
         raw_bytes = local_file.read_bytes()
         dump = raw_bytes.decode("latin-1", errors="ignore")
 
+    # Verified against Source2Viewer-CLI output on models/heroes/pudge/pudge.vmdl_c:
+    # m_activityArray = [ { m_name = "ACT_DOTA_CAPTURE" ... } ]
     activities = sorted(set(re.findall(r"\bACT_DOTA_[A-Z0-9_]+\b", dump)))
+
+    # m_attachments = [ { key = "attach_hook" value = { m_name = "attach_hook" m_influenceNames = [ "weapon_rt_1", ... ] } } ]
     attachments = sorted(set(re.findall(r"\battach_[a-zA-Z0-9_]+\b", dump)))
+    attachment_bones: dict[str, str] = {}
+    for att_match in re.finditer(
+        r'm_name\s*=\s*"(attach_[a-zA-Z0-9_]+)"\s+m_influenceNames\s*=\s*\[\s*"([^"]*)"',
+        dump,
+    ):
+        attachment_bones[att_match.group(1)] = att_match.group(2)
+
     anim_names = sorted(
         set(
             re.findall(
-                r'(?:m_sActivityName|m_name|m_activity|"@?[a-zA-Z0-9_]+(?:_anim|_attack|_idle|_run|_cast|_die)[a-zA-Z0-9_]*")',
+                r'"(@?[a-zA-Z0-9_]+(?:_anim|_attack|_idle|_run|_cast|_die|_flail|_stun)[a-zA-Z0-9_]*)"',
                 dump,
             )
         )
     )
-    cleaned_anims = [a.strip('"') for a in anim_names if not a.startswith("m_")][:60]
+    cleaned_anims = [a for a in anim_names if not a.startswith("m_")][:60]
 
     return {
         "ok": True,
         "model_path": model_path.removesuffix("_c"),
         "activities": activities,
         "attachments": attachments,
-        "animation_Identifiers_sample": cleaned_anims,
+        "attachment_bones": attachment_bones,
+        "animation_identifiers_sample": cleaned_anims,
     }
 
 
@@ -81,10 +100,10 @@ def inspect_particle(particle_path: str) -> dict[str, Any]:
         raw_bytes = local_file.read_bytes()
         dump = raw_bytes.decode("latin-1", errors="ignore")
 
-    # Find control point numbers referenced in operators/initializers
+    # Verified against Source2Viewer-CLI KV3 DATA block in pudge_meathook_dragonclaw.vpcf_c:
+    # Matches m_nControlPointNumber = 1, m_nOverrideCP = 2, m_nFirstControlPoint = 3, m_nScaleControlPoint = ...
     cp_matches = re.findall(
-        r"(?:m_nControlPointNumber|m_nControlPoint|m_nFirstControlPoint|m_nScaleControlPoint|"
-        r"m_nCP|control_point)\s*=\s*(\d+)",
+        r"\b(?:m_n[A-Za-z0-9_]*ControlPoint[A-Za-z0-9_]*|m_n[A-Za-z0-9_]*CP[A-Za-z0-9_]*|control_point)\s*=\s*(\d+)",
         dump,
     )
     control_points = sorted({int(cp) for cp in cp_matches})

@@ -130,6 +130,32 @@ def _find_matching_brace(text: str, open_brace_idx: int) -> int:
     return -1
 
 
+def _find_matching_bracket(text: str, open_bracket_idx: int) -> int:
+    """Return index of matching ']' for '[' at open_bracket_idx, respecting quoted strings."""
+    depth = 0
+    in_quotes = False
+    escape = False
+    for i in range(open_bracket_idx, len(text)):
+        ch = text[i]
+        if escape:
+            escape = False
+            continue
+        if ch == "\\":
+            escape = True
+            continue
+        if ch == '"':
+            in_quotes = not in_quotes
+            continue
+        if not in_quotes:
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth -= 1
+                if depth == 0:
+                    return i
+    return -1
+
+
 def _extract_cmap_entities(vmap_text: str) -> list[dict[str, Any]]:
     """Locate all CMapEntity blocks in a keyvalues2 .vmap text without loading mesh arrays."""
     entities: list[dict[str, Any]] = []
@@ -145,6 +171,7 @@ def _extract_cmap_entities(vmap_text: str) -> list[dict[str, Any]]:
         block = vmap_text[start_idx : brace_close + 1]
 
         ent_id_m = re.search(r'"id"\s+"elementid"\s+"([^"]+)"', block)
+        node_id_m = re.search(r'"nodeID"\s+"int"\s+"(\d+)"', block)
         origin_m = re.search(r'"origin"\s+"vector3"\s+"([^"]+)"', block)
         angles_m = re.search(r'"angles"\s+"qangle"\s+"([^"]+)"', block)
         scales_m = re.search(r'"scales"\s+"vector3"\s+"([^"]+)"', block)
@@ -170,6 +197,7 @@ def _extract_cmap_entities(vmap_text: str) -> list[dict[str, Any]]:
         entities.append(
             {
                 "id": ent_id_m.group(1) if ent_id_m else "",
+                "nodeID": int(node_id_m.group(1)) if node_id_m else 0,
                 "classname": props.get("classname", ""),
                 "targetname": props.get("targetname", ""),
                 "origin": origin_m.group(1) if origin_m else "0 0 0",
@@ -204,6 +232,7 @@ def list_map_entities(
         cleaned.append(
             {
                 "id": e["id"],
+                "nodeID": e["nodeID"],
                 "classname": e["classname"],
                 "targetname": e["targetname"],
                 "origin": e["origin"],
@@ -219,6 +248,192 @@ def list_map_entities(
         "total_entities": len(cleaned),
         "entities": cleaned,
     }
+
+
+def _append_to_visibility_mgr(text: str, new_ent_id: str) -> str:
+    """Append new_ent_id to CVisibilityMgr.nodes and '0' to CVisibilityMgr.hiddenFlags with valid comma syntax."""
+    vis_m = re.search(r'"visbility"\s+"CVisibilityMgr"\s*\{', text)
+    if not vis_m:
+        return text
+
+    vis_open = text.find("{", vis_m.start())
+    vis_close = _find_matching_brace(text, vis_open)
+    if vis_close == -1:
+        return text
+
+    vis_block = text[vis_open : vis_close + 1]
+
+    # 1. Update "nodes" "element_array" [ ... ]
+    nodes_m = re.search(r'"nodes"\s+"element_array"\s*\[', vis_block)
+    if nodes_m:
+        b_open = vis_block.find("[", nodes_m.start())
+        b_close = _find_matching_bracket(vis_block, b_open)
+        if b_close != -1:
+            inner = vis_block[b_open + 1 : b_close]
+            existing_items = re.findall(r'"element"\s+"([^"]+)"', inner)
+            all_items = existing_items + [new_ent_id]
+            new_inner = (
+                "\n"
+                + ",\n".join(f'\t\t\t"element" "{uid}"' for uid in all_items)
+                + "\n\t\t"
+            )
+            vis_block = vis_block[: b_open + 1] + new_inner + vis_block[b_close:]
+
+    # 2. Update "hiddenFlags" "int_array" [ ... ]
+    flags_m = re.search(r'"hiddenFlags"\s+"int_array"\s*\[', vis_block)
+    if flags_m:
+        f_open = vis_block.find("[", flags_m.start())
+        f_close = _find_matching_bracket(vis_block, f_open)
+        if f_close != -1:
+            inner_f = vis_block[f_open + 1 : f_close]
+            existing_flags = re.findall(r'"(-?\d+)"', inner_f)
+            all_flags = existing_flags + ["0"]
+            new_inner_f = (
+                "\n"
+                + ",\n".join(f'\t\t\t"{fl}"' for fl in all_flags)
+                + "\n\t\t"
+            )
+            vis_block = vis_block[: f_open + 1] + new_inner_f + vis_block[f_close:]
+
+    return text[:vis_open] + vis_block + text[vis_close + 1 :]
+
+
+def _remove_from_visibility_mgr(text: str, target_ent_id: str) -> str:
+    """Remove target_ent_id from CVisibilityMgr.nodes and its matching index from CVisibilityMgr.hiddenFlags."""
+    vis_m = re.search(r'"visbility"\s+"CVisibilityMgr"\s*\{', text)
+    if not vis_m:
+        return text
+
+    vis_open = text.find("{", vis_m.start())
+    vis_close = _find_matching_brace(text, vis_open)
+    if vis_close == -1:
+        return text
+
+    vis_block = text[vis_open : vis_close + 1]
+    removed_index: Optional[int] = None
+
+    nodes_m = re.search(r'"nodes"\s+"element_array"\s*\[', vis_block)
+    if nodes_m:
+        b_open = vis_block.find("[", nodes_m.start())
+        b_close = _find_matching_bracket(vis_block, b_open)
+        if b_close != -1:
+            inner = vis_block[b_open + 1 : b_close]
+            existing_items = re.findall(r'"element"\s+"([^"]+)"', inner)
+            if target_ent_id in existing_items:
+                removed_index = existing_items.index(target_ent_id)
+                new_items = [u for u in existing_items if u != target_ent_id]
+                if new_items:
+                    new_inner = (
+                        "\n"
+                        + ",\n".join(f'\t\t\t"element" "{uid}"' for uid in new_items)
+                        + "\n\t\t"
+                    )
+                else:
+                    new_inner = "\n\t\t"
+                vis_block = vis_block[: b_open + 1] + new_inner + vis_block[b_close:]
+
+    if removed_index is not None:
+        flags_m = re.search(r'"hiddenFlags"\s+"int_array"\s*\[', vis_block)
+        if flags_m:
+            f_open = vis_block.find("[", flags_m.start())
+            f_close = _find_matching_bracket(vis_block, f_open)
+            if f_close != -1:
+                inner_f = vis_block[f_open + 1 : f_close]
+                existing_flags = re.findall(r'"(-?\d+)"', inner_f)
+                if 0 <= removed_index < len(existing_flags):
+                    existing_flags.pop(removed_index)
+                if existing_flags:
+                    new_inner_f = (
+                        "\n"
+                        + ",\n".join(f'\t\t\t"{fl}"' for fl in existing_flags)
+                        + "\n\t\t"
+                    )
+                else:
+                    new_inner_f = "\n\t\t"
+                vis_block = vis_block[: f_open + 1] + new_inner_f + vis_block[f_close:]
+
+    return text[:vis_open] + vis_block + text[vis_close + 1 :]
+
+
+def _append_to_parent_children_array(
+    text: str, donor_id: str, new_ent_id: str
+) -> str:
+    """Insert '"element" "<new_ent_id>"' right after '"element" "<donor_id>"' inside parent 'children' element_array."""
+    # Search outside CVisibilityMgr (which uses 'nodes') for '"element" "<donor_id>"'
+    pattern = re.compile(
+        rf'([ \t]*"element"\s+"{re.escape(donor_id)}")(\s*,?)'
+    )
+
+    # Note: donor_id may appear in CVisibilityMgr.nodes AND in CMapGroup.children (or CMapWorld.children).
+    # We only want to add it to 'children' element_array here because CVisibilityMgr is handled by _append_to_visibility_mgr.
+    vis_m = re.search(r'"visbility"\s+"CVisibilityMgr"\s*\{', text)
+    vis_range = (-1, -1)
+    if vis_m:
+        v_open = text.find("{", vis_m.start())
+        v_close = _find_matching_brace(text, v_open)
+        vis_range = (vis_m.start(), v_close + 1 if v_close != -1 else -1)
+
+    for m in pattern.finditer(text):
+        if vis_range[0] <= m.start() <= vis_range[1]:
+            continue
+        indent_match = re.match(r"^([ \t]*)", m.group(1))
+        indent = indent_match.group(1) if indent_match else "\t\t"
+        has_comma = "," in m.group(2)
+        if has_comma:
+            replacement = f'{m.group(1)},\n{indent}"element" "{new_ent_id}",'
+        else:
+            replacement = f'{m.group(1)},\n{indent}"element" "{new_ent_id}"'
+        return text[: m.start()] + replacement + text[m.end() :]
+
+    return text
+
+
+def _remove_from_parent_children_arrays(text: str, target_ent_id: str) -> str:
+    """Remove '"element" "<target_ent_id>"' from any 'children' element_array while keeping comma syntax valid."""
+    # Rebuild any '"children" "element_array" [ ... ]' block that contains '"element" "<target_ent_id>"'
+    pattern = re.compile(r'"children"\s+"element_array"\s*\[')
+    pos = 0
+    while True:
+        m = pattern.search(text, pos)
+        if not m:
+            break
+        b_open = text.find("[", m.start())
+        b_close = _find_matching_bracket(text, b_open)
+        if b_close == -1:
+            pos = m.end()
+            continue
+
+        inner = text[b_open + 1 : b_close]
+        if f'"{target_ent_id}"' in inner:
+            # Remove either:
+            # 1) Leading comma + whitespace + "element" "target_ent_id" (when it's the last or middle item)
+            # 2) "element" "target_ent_id" + trailing comma + whitespace (when it's the first item)
+            # 3) "element" "target_ent_id" (when it's the only item)
+            new_inner, count = re.subn(
+                rf',\s*"element"\s+"{re.escape(target_ent_id)}"',
+                "",
+                inner,
+                count=1,
+            )
+            if count == 0:
+                new_inner, count = re.subn(
+                    rf'"element"\s+"{re.escape(target_ent_id)}"\s*,\s*',
+                    "",
+                    inner,
+                    count=1,
+                )
+            if count == 0:
+                new_inner = re.sub(
+                    rf'"element"\s+"{re.escape(target_ent_id)}"\s*',
+                    "",
+                    inner,
+                    count=1,
+                )
+            text = text[: b_open + 1] + new_inner + text[b_close:]
+            pos = b_open + 1 + len(new_inner)
+        else:
+            pos = m.end()
+    return text
 
 
 def add_map_entity(
@@ -246,15 +461,21 @@ def add_map_entity(
             "error": "No existing CMapEntity found in map to clone schema from.",
         }
 
-    # Prefer cloning a simple point entity ( without nested mesh children )
+    # Prefer cloning 'info_player_start_goodguys' or another clean point entity without children
     donor = raw_ents[0]
     for e in raw_ents:
-        if e["classname"].startswith("info_") or e["classname"].startswith("ent_dota_"):
+        if e["classname"] == "info_player_start_goodguys":
             donor = e
             break
+    else:
+        for e in raw_ents:
+            if e["classname"].startswith("info_") or e["classname"].startswith("ent_dota_"):
+                donor = e
+                break
 
-    new_ent_id = str(uuid.uuid4())
-    new_props_id = str(uuid.uuid4())
+    # Compute max nodeID across the entire .vmap file
+    all_node_ids = [int(x) for x in re.findall(r'"nodeID"\s+"int"\s+"(\d+)"', text)]
+    new_node_id = (max(all_node_ids) + 1) if all_node_ids else 1
 
     merged_props: dict[str, str] = {"classname": classname}
     if targetname:
@@ -263,17 +484,31 @@ def add_map_entity(
         for k, v in properties.items():
             merged_props[str(k)] = str(v)
 
-    # Detect indentation of donor
     donor_raw = donor["_raw"]
-    new_block = donor_raw
 
-    # Replace top-level entity id
+    # Replace EVERY "id" "elementid" "..." inside the cloned block with a fresh UUID
+    generated_uuids: list[str] = []
+
+    def _replace_uuid(match: re.Match) -> str:
+        fresh = str(uuid.uuid4())
+        generated_uuids.append(fresh)
+        return f'{match.group(1)}{fresh}{match.group(2)}'
+
     new_block = re.sub(
         r'("id"\s+"elementid"\s+")[^"]+(")',
-        rf"\g<1>{new_ent_id}\2",
+        _replace_uuid,
+        donor_raw,
+    )
+    new_ent_id = generated_uuids[0] if generated_uuids else str(uuid.uuid4())
+
+    # Replace nodeID with max + 1
+    new_block = re.sub(
+        r'("nodeID"\s+"int"\s+")\d+(")',
+        rf"\g<1>{new_node_id}\2",
         new_block,
         count=1,
     )
+
     # Replace origin, angles, scales
     new_block = re.sub(
         r'("origin"\s+"vector3"\s+")[^"]+(")',
@@ -294,7 +529,8 @@ def add_map_entity(
         count=1,
     )
 
-    # Rebuild the entity_properties inner block
+    # Rebuild the entity_properties inner block with its own fresh UUID
+    new_props_id = str(uuid.uuid4())
     props_m = re.search(
         r'"entity_properties"\s+"(?:EditGameClassProps|CDmePropertyList|element)"\s*\{',
         new_block,
@@ -303,25 +539,35 @@ def add_map_entity(
         p_open = new_block.find("{", props_m.start())
         p_close = _find_matching_brace(new_block, p_open)
         if p_close != -1:
-            prop_lines = [f'\n\t\t\t\t\t"id" "elementid" "{new_props_id}"']
+            prop_lines = [f'\n\t\t"id" "elementid" "{new_props_id}"']
             for pk, pv in merged_props.items():
                 safe_pv = str(pv).replace('"', '\\"')
-                prop_lines.append(f'\t\t\t\t\t"{pk}" "string" "{safe_pv}"')
-            prop_lines.append("\t\t\t\t")
+                prop_lines.append(f'\t\t"{pk}" "string" "{safe_pv}"')
+            prop_lines.append("\t")
             new_block = (
                 new_block[: p_open + 1]
                 + "\n".join(prop_lines)
                 + new_block[p_close:]
             )
 
-    # Insert right after the donor entity in the same element_array
+    # 1. Insert the new top-level CMapEntity block right after donor block (separated by \n\n, no comma)
     insert_pos = donor["_end"]
-    updated_text = text[:insert_pos] + "\n\t\t\t" + new_block + text[insert_pos:]
+    updated_text = text[:insert_pos] + "\n\n" + new_block + text[insert_pos:]
+
+    # 2. Register '"element" "<new_ent_id>"' in parent's children element_array (CMapGroup / CMapWorld)
+    updated_text = _append_to_parent_children_array(
+        updated_text, donor_id=donor["id"], new_ent_id=new_ent_id
+    )
+
+    # 3. Register '"element" "<new_ent_id>"' in CVisibilityMgr.nodes and "0" in CVisibilityMgr.hiddenFlags
+    updated_text = _append_to_visibility_mgr(updated_text, new_ent_id=new_ent_id)
+
     vmap_path.write_text(updated_text, encoding="utf-8")
 
     return {
         "ok": True,
         "added_entity_id": new_ent_id,
+        "nodeID": new_node_id,
         "classname": classname,
         "targetname": targetname,
         "origin": origin,
@@ -332,7 +578,7 @@ def add_map_entity(
 def remove_map_entity(
     addon_name: str, map_name: str, targetname_or_id: str
 ) -> dict[str, Any]:
-    """Remove CMapEntity matching targetname or element id from the .vmap."""
+    """Remove CMapEntity matching targetname or element id from the .vmap along with all references."""
     try:
         vmap_path = _resolve_map_path(addon_name, map_name)
         _ensure_keyvalues2_vmap(vmap_path)
@@ -355,18 +601,26 @@ def remove_map_entity(
             "error": f"Entity '{targetname_or_id}' not found in {vmap_path.name}",
         }
 
+    removed_id = target["id"]
     start_idx = target["_start"]
     end_idx = target["_end"]
-    # Also strip trailing newline/tabs if present
+    # Strip trailing blank lines after the removed top-level CMapEntity block
     while end_idx < len(text) and text[end_idx] in (" ", "\t", "\r", "\n"):
         end_idx += 1
 
     updated_text = text[:start_idx] + text[end_idx:]
+
+    # Remove reference from parent children element_array (CMapGroup / CMapWorld)
+    updated_text = _remove_from_parent_children_arrays(updated_text, removed_id)
+
+    # Remove reference from CVisibilityMgr.nodes and corresponding flag from CVisibilityMgr.hiddenFlags
+    updated_text = _remove_from_visibility_mgr(updated_text, removed_id)
+
     vmap_path.write_text(updated_text, encoding="utf-8")
 
     return {
         "ok": True,
-        "removed_id": target["id"],
+        "removed_id": removed_id,
         "removed_classname": target["classname"],
         "removed_targetname": target["targetname"],
     }
@@ -374,26 +628,46 @@ def remove_map_entity(
 
 def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str, Any]:
     """Compile a map (.vmap), Panorama layout, or material using resourcecompiler.exe."""
-    if not CONFIG.content_addons_dir:
-        return {"ok": False, "error": "Dota 2 content directory not found."}
+    if not CONFIG.content_addons_dir or not CONFIG.game_addons_dir:
+        return {"ok": False, "error": "Dota 2 content/game directory not found."}
     if not CONFIG.resourcecompiler_exe or not CONFIG.resourcecompiler_exe.exists():
         return {
             "ok": False,
             "error": f"resourcecompiler.exe not found at {CONFIG.resourcecompiler_exe}",
         }
 
-    full_input = CONFIG.content_addons_dir / addon_name / resource_rel_path.lstrip("/\\")
+    clean_rel = resource_rel_path.lstrip("/\\")
+    full_input = CONFIG.content_addons_dir / addon_name / clean_rel
     if not full_input.exists():
         return {"ok": False, "error": f"Resource file does not exist: {full_input}"}
 
+    is_map = full_input.suffix.lower() == ".vmap"
+    cmd = [
+        str(CONFIG.resourcecompiler_exe),
+        "-i",
+        str(full_input),
+    ]
+    if is_map:
+        # Verified Hammer Fast Compile flags from tools/hammer.dll and resourcecompiler.dll:
+        # Builds world geometry, physics, gridnav, and entities without slow GPU raytraced lightmap baking.
+        # Adding -novpk also emits loosemaps/<map>.vmap_c on disk so both loose and VPK loaders succeed.
+        cmd.extend(
+            [
+                "-fshallow",
+                "-v",
+                "-world",
+                "-phys",
+                "-gridnav",
+                "-entities",
+                "-nolightmaps",
+            ]
+        )
+    else:
+        cmd.append("-v")
+
     try:
         proc = subprocess.run(
-            [
-                str(CONFIG.resourcecompiler_exe),
-                "-i",
-                str(full_input),
-                "-v",
-            ],
+            cmd,
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -403,12 +677,35 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
         combined = (proc.stdout or "") + "\n" + (proc.stderr or "")
         lines = [line.strip() for line in combined.splitlines() if line.strip()]
         error_lines = [
-            l for l in lines if any(w in l.lower() for w in ("error", "fail", "warning", "fatal"))
+            l
+            for l in lines
+            if any(w in l.lower() for w in ("error", "fail", "warning", "fatal"))
         ]
+
+        compiled_outputs: list[str] = []
+        compiled_vpk_entries: list[str] = []
+        if is_map:
+            game_maps_dir = CONFIG.game_addons_dir / addon_name / "maps"
+            if game_maps_dir.exists():
+                for out_f in game_maps_dir.glob(f"{full_input.stem}*"):
+                    compiled_outputs.append(str(out_f))
+                    if out_f.suffix.lower() == ".vpk":
+                        try:
+                            import vpk as _vpk
+
+                            if _vpk is not None:
+                                pak = _vpk.open(str(out_f))
+                                compiled_vpk_entries = sorted(list(pak))
+                        except Exception:
+                            pass
+
         return {
             "ok": proc.returncode == 0,
             "return_code": proc.returncode,
+            "command": cmd,
             "resource": str(full_input),
+            "compiled_outputs": compiled_outputs,
+            "compiled_map_vpk_entries": compiled_vpk_entries,
             "errors_and_warnings": error_lines[-40:],
             "tail_log": lines[-25:],
         }
