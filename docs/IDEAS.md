@@ -21,6 +21,8 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 ## Improvements to existing tools
 
+- **Resolve sound events in precache** — `validate_and_sync_precache` maps sound event names used in Lua/KV to their `.vsndevts` (cached event index built once from the VPK) and precaches them; currently sounds silently go un-precached. High priority — `idea`
+- **`verify_vscript_api` from a cached dump** — run `script_help2` once per game build, then answer from the cache; avoids flooding `console.log` and duplicate matches — `idea` (overlaps with feature #3)
 - **Compact `list_map_entities`** — default to id/classname/targetname/origin only, full properties on request; saves context — `idea`
 
 - **Filter console noise** — split `errors_and_warnings` into addon errors (Lua, own assets) vs known base-game noise; trim server-info dumps from `read_latest_console_log` — `idea`

@@ -1,0 +1,13 @@
+"AddonInfo"
+{
+	"maps" "lab"
+	"IsPlayable" "1"
+	"TeamCount" "2"
+	"Default_Keys"
+	{
+	}
+	"lab"
+	{
+		"MaxPlayers" "10"
+	}
+}
