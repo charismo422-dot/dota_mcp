@@ -82,6 +82,13 @@ Entry format:
 - **Open question:** "Attempted to create unknown modifier type modifier_mcp_wave_ai!" is printed once per unit, but the server has the modifier and the AI works; most likely the client VM side. Cause not found yet.
 - **Cost traps:** `compile_addon_resource` returns ≈ 6 KB (repeated shader warnings) per map build; filter like the console.
 
+### 2026-10-22 — Test plan stage 4 (custom item `item_mcp_void_shard` with own icon)
+- **Works:** `item_lua` item with intrinsic passive modifier (stats via `MODIFIER_PROPERTY_*`), point-target active, horizontal motion controller pull (`LinkLuaModifier(..., LUA_MODIFIER_MOTION_HORIZONTAL)`, `ApplyHorizontalMotionController`, `UpdateHorizontalMotion`, `RemoveHorizontalMotionController` on destroy), stock `modifier_silence`. In-game autotest PASS. Icon drawn procedurally (pure-Python PNG, 88×64) — `examples/mcp_lab/tools/draw_void_shard_icon.py`.
+- **Icon pipeline (fixed, see BUG_LOG):** PNG goes to `content/<addon>/panorama/images/items/<name>.png`, item uses `"AbilityTextureName" "item_<name>"`; the icon is compiled as a dependency of a Panorama layout that references it (`validate_and_sync_precache` now generates `mcp_auto_icons.xml`). Neither `resourcecompiler -i icon.png` nor Tools-mode on-demand loading compiles it.
+- **Bug fixed:** `get_base_dota_definition` failed for all items (CRLF in items.txt).
+- **Not in the API dump but exists:** `Vector:Normalized()`, built-in modifier names like `modifier_silence` (verified live by the autotest).
+- **Noise filter works in practice:** a full custom-game launch response dropped from ≈ 30 lines of engine chatter + 20 false "errors" to only meaningful lines (`noise_lines_hidden` ≈ 180).
+
 ### 2026-10-22 — Commit messages from PowerShell
 - **Doesn't work:** `git commit -F - @'...'@` in Windows PowerShell 5.1 — the here-string is passed as a pathspec, not stdin.
 - **Solution / Rule:** write the message to a temp file and use `git commit -F <file>`.

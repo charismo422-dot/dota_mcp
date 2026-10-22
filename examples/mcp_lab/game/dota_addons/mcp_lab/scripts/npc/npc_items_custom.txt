@@ -1,3 +1,40 @@
 "DOTAAbilities"
 {
+	//=================================================================================================================
+	// MCP Lab (stage 4): Void Shard — custom icon (content/panorama/images/items/mcp_void_shard.png),
+	// passive stats + active rift that pulls enemies to its center (horizontal motion controller) and silences them
+	//=================================================================================================================
+	"item_mcp_void_shard"
+	{
+		"BaseClass"						"item_lua"
+		"ScriptFile"					"items/item_mcp_void_shard"
+		"AbilityTextureName"			"item_mcp_void_shard"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_POINT | DOTA_ABILITY_BEHAVIOR_AOE"
+		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
+		"ItemCost"						"1500"
+		"ItemShopTags"					"int;armor"
+		"ItemQuality"					"epic"
+		"ItemPurchasable"				"1"
+		"ItemSellable"					"1"
+		"ItemDroppable"					"1"
+
+		"precache"
+		{
+			"soundfile"					"soundevents/game_sounds_heroes/game_sounds_enigma.vsndevts"
+		}
+
+		"AbilityValues"
+		{
+			"AbilityCastRange"			"900"
+			"AbilityCooldown"			"8"
+			"AbilityManaCost"			"75"
+			"bonus_intellect"			"12"
+			"bonus_armor"				"4"
+			"radius"					"400"
+			"delay"						"0.6"
+			"pull_duration"				"0.4"
+			"silence_duration"			"2"
+			"damage"					"120"
+		}
+	}
 }

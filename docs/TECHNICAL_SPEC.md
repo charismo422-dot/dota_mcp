@@ -105,7 +105,7 @@ dota_mcp/
    - **Описание:**
      1. Проверяет все `.txt` / `.kv` файлы в `game/dota_addons/<addon_name>/scripts/npc/` через парсер `vdf` на синтаксические ошибки и правильность префиксов `AbilityTextureName` (`item_` для предметов).
      2. Ловит ошибочно размещенные файлы (например, устаревшую папку `resource/flash3`, сырые `.png`/`.xml`/`.css`/`.js` в `game/` или `.lua` в `content/`).
-     3. Автоматически компилирует новые `.png` иконки из `content/.../panorama/images/` в `.vtex_c` через `resourcecompiler.exe`.
+     3. Автоматически компилирует новые и изменённые `.png` иконки из `content/.../panorama/images/` в `<name>_png.vtex_c`: генерирует скрытый макет `panorama/layout/custom_game/mcp_auto_icons.xml` со ссылками на все иконки и компилирует его `resourcecompiler.exe` (голый `.png` компилятор не принимает, картинки собираются только как зависимости макета).
      4. Сканирует все `.lua` и `.txt` файлы аддона на наличие путей `.vmdl`, `.vpcf`, `.vsndevts` и проверяет их существование в `pak01_dir.vpk`.
      5. Автоматически формирует/обновляет список `PrecacheResource` в `auto_precache.lua` и подключает его к `addon_game_mode.lua` через `xpcall` с логированием ошибок.
 9. `upsert_localization(addon_name: str, language: str, tokens: dict[str, str]) -> dict`

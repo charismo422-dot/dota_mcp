@@ -56,6 +56,10 @@ Convars:RegisterCommand( "mcp_lab_waves", function( _, interval )
 	GameRules.AddonTemplate:SetWaveInterval( tonumber( interval ) or 30 )
 end, "MCP Lab: start/stop timed waves", 0 )
 
+Convars:RegisterCommand( "mcp_lab_autotest4", function()
+	GameRules.AddonTemplate:RunItemTest( GameRules.AddonTemplate.hero )
+end, "MCP Lab: stage 4 autotest (custom item: stats, rift pull, silence)", 0 )
+
 Convars:RegisterCommand( "mcp_lab_autotest3", function()
 	GameRules.AddonTemplate:RunWaveTest( GameRules.AddonTemplate.hero )
 end, "MCP Lab: stage 3 autotest (waves, spawners, AI, elite slam)", 0 )
@@ -329,10 +333,66 @@ function CAddonTemplateGameMode:RunWaveTest( hero )
 					table.insert( parts, name .. "=" .. tostring( checks[name] ) )
 				end
 				print( string.format( "[MCP_LAB] AUTOTEST stage3 %s: %s units=%d dist_start=%d", all_ok and "PASS" or "FAIL", table.concat( parts, " " ), #units, dist_start ) )
+				self:RunItemTest( hero )
 				return nil
 			end, 2.6 )
 			return nil
 		end, 3.5 )
 		return nil
 	end, 3.0 )
+end
+
+--------------------------------------------------------------------------------
+-- Stage 4: custom item with own icon — passive stats, active rift pull (motion controller), silence
+--------------------------------------------------------------------------------
+
+function CAddonTemplateGameMode:RunItemTest( hero )
+	local checks = {}
+	local armor_before = hero:GetPhysicalArmorValue( false )
+	local item = hero:FindItemInInventory( "item_mcp_void_shard" ) or hero:AddItemByName( "item_mcp_void_shard" )
+	checks.item_added = item ~= nil
+	if not item then
+		print( "[MCP_LAB] AUTOTEST stage4 FAIL: item not created" )
+		return
+	end
+	checks.passive = hero:HasModifier( "modifier_item_mcp_void_shard" ) and hero:GetPhysicalArmorValue( false ) > armor_before
+
+	local center = hero:GetAbsOrigin() + Vector( 500, 0, 0 )
+	local dummies = {}
+	for _, offset in ipairs({ Vector( 300, 0, 0 ), Vector( -250, 150, 0 ), Vector( 0, -300, 0 ) }) do
+		local d = CreateUnitByName( "npc_dota_hero_target_dummy", center + offset, true, nil, nil, DOTA_TEAM_NEUTRALS )
+		d:SetAbilityPoints( 0 )
+		d:Hold()
+		d:SetIdleAcquire( false )
+		d:SetAcquisitionRange( 0 )
+		d:AddNewModifier( d, nil, "modifier_mcp_damage_meter", {} )
+		table.insert( dummies, d )
+	end
+
+	hero:SetContextThink( "MCPLabItemCast", function()
+		item:EndCooldown()
+		hero:GiveMana( 1000 )
+		hero:CastAbilityOnPosition( center, item, hero:GetPlayerOwnerID() )
+
+		hero:SetContextThink( "MCPLabItemCheck", function()
+			local pulled, silenced, damaged = 0, 0, 0
+			for _, d in ipairs( dummies ) do
+				if ( d:GetAbsOrigin() - center ):Length2D() < 150 then pulled = pulled + 1 end
+				if d:IsSilenced() then silenced = silenced + 1 end
+				if DamageTaken( d ) > 0 then damaged = damaged + 1 end
+			end
+			checks.pull = pulled == #dummies
+			checks.silence = silenced == #dummies
+			checks.damage = damaged == #dummies
+
+			local all_ok, parts = true, {}
+			for _, name in ipairs({ "item_added", "passive", "pull", "silence", "damage" }) do
+				all_ok = all_ok and checks[name]
+				table.insert( parts, name .. "=" .. tostring( checks[name] ) )
+			end
+			print( string.format( "[MCP_LAB] AUTOTEST stage4 %s: %s pulled=%d silenced=%d", all_ok and "PASS" or "FAIL", table.concat( parts, " " ), pulled, silenced ) )
+			return nil
+		end, 1.6 )
+		return nil
+	end, 1.0 )
 end

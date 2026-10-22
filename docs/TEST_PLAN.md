@@ -12,7 +12,7 @@ Every stage also checks the error channel: after each change, `script_reload` (o
 | 1 | Ability | Lua ability + modifier + particle + sound: `search_dota_assets`, `inspect_particle` (CPs), `search_sound_events`, `verify_vscript_api`, `validate_and_sync_precache`, hot reload via `script_reload` | done (2026-10-22): autotest PASS, hot reload PASS; sound precache gap found |
 | 2 | Hero | Custom hero based on a stock one: `get_base_dota_definition`, `inspect_model` (activities/attachments), 4 abilities, hero pick | done (2026-10-22): autotest PASS (stats, slots, projectile+stun, aura, ultimate thinker) |
 | 3 | Creeps & AI | Timed creep waves, spawn points via `add_map_entity`, simple AI | done (2026-10-22): autotest PASS (spawners, AI attached, chase, telegraphed elite slam, wave timer) |
-| 4 | Item | Custom item with custom `.png` icon compiled to `.vtex_c` (unverified area) | todo |
+| 4 | Item | Custom item with custom `.png` icon compiled to `.vtex_c` (unverified area) | done (2026-10-22): autotest PASS (stats, rift pull motion controller, silence, damage); icon compile fixed |
 | 5 | Panorama | Simple HUD panel (score/timer), Lua → JS events, `compile_addon_resource` for `.xml`/`.css`/`.js` (unverified area) | todo |
 | 6 | Map | Trees, shop, spawns: `add_map_entity`, `list_map_entities`, `remove_map_entity`, recompile | todo |
 | 7 | Sound | Stock sound events; check whether custom sound files can be added (expected gap) | todo |

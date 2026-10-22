@@ -112,3 +112,15 @@
 - **Корневая причина:** resourcecompiler.exe exits with code 0 even when it cannot write the output VPK; it was locked by Dota 2 with the same map loaded. ok was based on the return code only.
 - **Примененное решение:** compile_addon_resource now scans the log for 'Write ... Failed!' lines, returns ok:false with write_failures and a hint to run 'disconnect' first.
 - **Правило предотвращения:** Never trust resourcecompiler's exit code alone; check its log for write failures. Run 'disconnect' in Dota before recompiling a map that is currently loaded.
+
+### [2026-10-22 20:19:50] Компонент: `src/dota2_mcp/addon_manager.py (validate_and_sync_precache, icon compile)`
+- **Симптом / Ошибка:** Custom item icon panorama/images/items/mcp_void_shard.png was never compiled: 'Failed to find compiler for file ...png', validate returned ok:false.
+- **Корневая причина:** resourcecompiler.exe cannot compile a bare .png; Panorama images are built only as dependencies of a layout (.xml) that references them. Tools mode does not compile them on demand either.
+- **Примененное решение:** validate_and_sync_precache now writes content/.../panorama/layout/custom_game/mcp_auto_icons.xml referencing every .png under panorama/images and compiles it; each icon becomes <name>_png.vtex_c. Stale icons (png newer than vtex_c) are rebuilt.
+- **Правило предотвращения:** Compile Panorama images through a referencing layout, never the .png directly; verify the expected _png.vtex_c exists and is newer than the source.
+
+### [2026-10-22 20:19:50] Компонент: `src/dota2_mcp/vpk_explorer.py (get_base_dota_definition, category item)`
+- **Симптом / Ошибка:** get_base_dota_definition('item', 'item_blink') returned 'not found' for every stock item.
+- **Корневая причина:** items.txt uses CRLF line endings; the multiline-scalar fix regex ('$' after the value) never matched before '\r', so python-vdf failed on '"ItemRequirements"\n""' and the parse error was swallowed (empty dict).
+- **Примененное решение:** Normalize CRLF to LF before applying the multiline-scalar regex in _load_vpk_kv_dict.
+- **Правило предотвращения:** Normalize line endings before regex-based KV cleanup; never silently return {} on a parse error of a stock file — check all four categories with a known name after parser changes.

@@ -247,11 +247,12 @@ def _load_vpk_kv_dict(pak: Any, kv_rel_path: str) -> dict[str, Any]:
 
     # Valve KV files in Dota 7.41+ occasionally put a scalar value on the next line after its key
     # (e.g. "default_attack"\n\t"" in npc_abilities.txt or "ItemRequirements"\n\t\t"" in items.txt),
-    # which python-vdf rejects with 'expected openning bracket'. Collapse multiline key-value scalars:
+    # which python-vdf rejects with 'expected openning bracket'. Collapse multiline key-value scalars.
+    # items.txt uses CRLF line endings: normalize first, otherwise '$' never matches before '\r'.
     cleaned_text = re.sub(
-        r'^([ \t]*"[^"\r\n]*")[ \t]*\r?\n[ \t]*("[^"\r\n]*")[ \t]*(?://.*)?$',
+        r'^([ \t]*"[^"\r\n]*")[ \t]*\n[ \t]*("[^"\r\n]*")[ \t]*(?://.*)?$',
         r"\1\t\2",
-        raw_text,
+        raw_text.replace("\r\n", "\n"),
         flags=re.MULTILINE,
     )
     try:
