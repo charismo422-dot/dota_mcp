@@ -86,6 +86,33 @@
 	}
 
 	//=================================================================================================================
+	// MCP Lab: Giant Slam (stage 3, unit ability) — telegraphed ring during a long cast point, then AoE stun
+	//=================================================================================================================
+	"mcp_giant_slam"
+	{
+		"BaseClass"						"ability_lua"
+		"ScriptFile"					"abilities/mcp_giant_slam"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_NO_TARGET"
+		"AbilityUnitDamageType"			"DAMAGE_TYPE_MAGICAL"
+		"AbilityCastAnimation"			"ACT_DOTA_CAST_ABILITY_1"
+		"MaxLevel"						"1"
+
+		"precache"
+		{
+			"soundfile"					"soundevents/game_sounds_heroes/game_sounds_centaur.vsndevts"
+		}
+
+		"AbilityValues"
+		{
+			"AbilityCastPoint"			"1.2"
+			"AbilityCooldown"			"6"
+			"radius"					"375"
+			"damage"					"60"
+			"stun_duration"				"1.2"
+		}
+	}
+
+	//=================================================================================================================
 	// MCP Lab: Frost Aura (stage 2) — passive aura slowing nearby enemies
 	//=================================================================================================================
 	"mcp_frost_aura"

@@ -2,91 +2,78 @@
 "DOTAUnits"
 {
 	"Version"	"1"
-	
-	//=================================================================================	
-	// Creature: Gnoll Assassin
+
 	//=================================================================================
-	"npc_dota_creature_gnoll_assassin"	
+	// MCP Lab (stage 3): Void Imp — small fast melee wave unit, recolored purple in Lua
+	//=================================================================================
+	"npc_mcp_void_imp"
 	{
-		// General
-		//----------------------------------------------------------------
-		"Model"						"models/creeps/neutral_creeps/n_creep_gnoll/n_creep_gnoll_frost.vmdl"	// Model.
+		"Model"						"models/creeps/ice_biome/frostbitten/n_creep_frostbitten_01.vmdl"
 		"BaseClass"					"npc_dota_creature"
-		"SoundSet"					"n_creep_Ranged"
-		"GameSoundsFile"			"soundevents/game_sounds_creeps.vsndevts"
+		"SoundSet"					"n_creep_Melee"
 		"Level"						"1"
-		"ModelScale" 				".9"
-
-		// Abilities
-		//----------------------------------------------------------------
-		"Ability1"					""			// Ability 1
-		"Ability2"					""			// Ability 2
-		"Ability3"					""			// Ability 3
-		"Ability4"					""			// Ability 4
-
-		// Armor
-		//----------------------------------------------------------------
-		"ArmorPhysical"				"1"			// Physical protection.
-
-		// Attack
-		//----------------------------------------------------------------
-		"AttackCapabilities"		"DOTA_UNIT_CAP_RANGED_ATTACK"
-		"AttackDamageMin"			"30"		// Damage range min.
-		"AttackDamageMax"			"36"		// Damage range max.
-		"AttackRate"				"1.6"		// Speed of attack.
-		"AttackAnimationPoint"		"0.4"		// Normalized time in animation cycle to attack.
-		"AttackAcquisitionRange"	"800"		// Range within a target can be acquired.
-		"AttackRange"				"500"		// Range within a target can be attacked.
-		"ProjectileModel"			"particles/neutral_fx/gnoll_base_attack.vpcf" // Particle system model for projectile.
-		"ProjectileSpeed"			"1500"		// Speed of projectile.		     
-
-		// Bounds
-		//----------------------------------------------------------------
-		"RingRadius"				"40"
-		"HealthBarOffset"			"170"
-
-		// Bounty
-		//----------------------------------------------------------------
-		"BountyXP"					"24"		// Experience earn.
-		"BountyGoldMin"				"21"		// Gold earned min.
-		"BountyGoldMax"				"29"		// Gold earned max.
-
-		// Movement
-		//----------------------------------------------------------------
+		"ModelScale"				"0.7"
+		"ArmorPhysical"				"0"
+		"AttackCapabilities"		"DOTA_UNIT_CAP_MELEE_ATTACK"
+		"AttackDamageMin"			"8"
+		"AttackDamageMax"			"12"
+		"AttackRate"				"1.0"
+		"AttackAnimationPoint"		"0.4"
+		"AttackAcquisitionRange"	"600"
+		"AttackRange"				"100"
+		"RingRadius"				"35"
+		"HealthBarOffset"			"120"
+		"BountyXP"					"10"
+		"BountyGoldMin"				"5"
+		"BountyGoldMax"				"8"
 		"MovementCapabilities"		"DOTA_UNIT_CAP_MOVE_GROUND"
-		"MovementSpeed"				"270"		// Speed.			
-
-		// Status
-		//----------------------------------------------------------------
-		"StatusHealth"				"75"		// Base health.
-		"StatusHealthRegen"			"0.5"		// Health regeneration rate.
-		"StatusMana"				"0"			// Base mana.
-		"StatusManaRegen"			"0.0"		// Mana regeneration rate.		 
-		
-		// Vision
-		//----------------------------------------------------------------
-		"VisionDaytimeRange"		"400"		// Range of vision during day light.
-		"VisionNighttimeRange"		"400"		// Range of vision at night time.
-
-		// Team
-		//----------------------------------------------------------------
-		"TeamName"					"DOTA_TEAM_NEUTRALS"						// Team name.
-		"CombatClassAttack"			"DOTA_COMBAT_CLASS_ATTACK_PIERCE"
+		"MovementSpeed"				"380"
+		"StatusHealth"				"220"
+		"StatusHealthRegen"			"0"
+		"StatusMana"				"0"
+		"VisionDaytimeRange"		"800"
+		"VisionNighttimeRange"		"800"
+		"TeamName"					"DOTA_TEAM_BADGUYS"
+		"CombatClassAttack"			"DOTA_COMBAT_CLASS_ATTACK_BASIC"
 		"CombatClassDefend"			"DOTA_COMBAT_CLASS_DEFEND_BASIC"
 		"UnitRelationshipClass"		"DOTA_NPC_UNIT_RELATIONSHIP_TYPE_DEFAULT"
+	}
 
-		// Creature Data
-		//----------------------------------------------------------------
-		"Creature"
-		{
-			//Level Up
-			"HPGain"					"50"
-			"DamageGain"				"2"
-			"ArmorGain"					"0.25"
-			"MagicResistGain"			"0.1"
-			"MoveSpeedGain"				"1"
-			"BountyGain"				"3"
-			"XPGain"					"15"
-		}
+	//=================================================================================
+	// MCP Lab (stage 3): Rift Giant — elite with a telegraphed ground slam (custom AI casts it)
+	//=================================================================================
+	"npc_mcp_rift_giant"
+	{
+		"Model"						"models/creeps/ice_biome/giant/ice_giant01.vmdl"
+		"BaseClass"					"npc_dota_creature"
+		"SoundSet"					"n_creep_Ranged"
+		"Level"						"5"
+		"ModelScale"				"1.7"
+		"Ability1"					"mcp_giant_slam"
+		"ArmorPhysical"				"4"
+		"MagicalResistance"			"30"
+		"AttackCapabilities"		"DOTA_UNIT_CAP_MELEE_ATTACK"
+		"AttackDamageMin"			"30"
+		"AttackDamageMax"			"40"
+		"AttackRate"				"2.0"
+		"AttackAnimationPoint"		"0.5"
+		"AttackAcquisitionRange"	"600"
+		"AttackRange"				"150"
+		"RingRadius"				"90"
+		"HealthBarOffset"			"300"
+		"BountyXP"					"100"
+		"BountyGoldMin"				"60"
+		"BountyGoldMax"				"80"
+		"MovementCapabilities"		"DOTA_UNIT_CAP_MOVE_GROUND"
+		"MovementSpeed"				"260"
+		"StatusHealth"				"2500"
+		"StatusHealthRegen"			"0"
+		"StatusMana"				"0"
+		"VisionDaytimeRange"		"1000"
+		"VisionNighttimeRange"		"1000"
+		"TeamName"					"DOTA_TEAM_BADGUYS"
+		"CombatClassAttack"			"DOTA_COMBAT_CLASS_ATTACK_BASIC"
+		"CombatClassDefend"			"DOTA_COMBAT_CLASS_DEFEND_STRONG"
+		"UnitRelationshipClass"		"DOTA_NPC_UNIT_RELATIONSHIP_TYPE_DEFAULT"
 	}
 }
