@@ -76,3 +76,15 @@
   2. Из `game/dota_addons/<addon>` удаляется унаследованный от шаблона `readonly_tools_asset_info.bin`.
   3. Добавлена поддержка чтения `addoninfo.txt` с заголовком `<!-- kv3 ... -->` (который создаёт кнопка *Create New Addon*).
 - **Правило предотвращения:** Никогда не оставлять `"IsTemplate" "1"`, `"IsPlayable" "0"` или `readonly_tools_asset_info.bin` при клонировании `addon_template`.
+
+### [2026-10-22 14:33:00] Компонент: `dota2.exe` / Windows Registry (`AppCompatFlags\Layers`) (Ошибка `Failed to launch` при нажатии *Launch Tools*)
+- **Симптом / Ошибка:** При нажатии кнопки *Launch Tools* в окне выбора аддона (`dota2cfg.exe`) появлялось окно с ошибкой `Failed to launch: "D:\steam\steamapps\common\dota 2 beta\game\bin\win64\dota2.exe" -addon <addon> -tools -steam`, хотя обычная Dota 2 из Steam запускалась нормально.
+- **Корневая причина:** В реестре совместимости Windows (`HKCU:\Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers`) для `dota2.exe` стоял флаг `~ RUNASADMIN` («Запускать эту программу от имени администратора»). Лаунчер `dota2cfg.exe` работает без прав администратора и вызывает `CreateProcessW` для запуска `dota2.exe`, что приводит к системной ошибке Windows `ERROR_ELEVATION_REQUIRED` (`WinError 740`). Обычный же клиент Steam использует `ShellExecuteExW`, который запрашивает повышение прав через UAC.
+- **Примененное решение:** Снята галочка «Запускать эту программу от имени администратора» (`~ RUNASADMIN`) со свойств `dota2.exe` (и перезапущен Antigravity без прав администратора).
+- **Правило предотвращения:** Не устанавливать флаг `RUNASADMIN` на `dota2.exe` (или `dota2cfg.exe`), чтобы дочерние процессы Workshop Tools запускались через `CreateProcessW` без `ERROR_ELEVATION_REQUIRED`.
+
+### [2026-10-22 14:33:10] Компонент: `server.py` (Несовместимость импорта `FastMCP` в пакете `mcp >= 2.0`)
+- **Симптом / Ошибка:** При старте MCP-сервера (`python -m src.dota2_mcp.server`) возникала ошибка `ModuleNotFoundError: No module named 'mcp.server.fastmcp'. This is mcp 2.x, where FastMCP was renamed to MCPServer (from mcp.server.mcpserver import MCPServer)`, из-за чего `dota2-workshop-mcp` падал при инициализации в Antigravity.
+- **Корневая причина:** В `requirements.txt` было указано `mcp>=1.2.0`, и `pip` установил `mcp 2.3.0`, где `FastMCP` переименован в `mcp.server.mcpserver.MCPServer`.
+- **Примененное решение:** В `src/dota2_mcp/server.py` добавлен совместимый импорт `from mcp.server.mcpserver import MCPServer as FastMCP` (с фоллбэком на `mcp.server.fastmcp` для `mcp 1.x`).
+- **Правило предотвращения:** Всегда проверять запуск `python -m src.dota2_mcp.server` тестовым JSON-RPC запросом `initialize` перед подключением в `mcp_config.json`.

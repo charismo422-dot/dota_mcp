@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from mcp.server.fastmcp import FastMCP
+try:
+    from mcp.server.mcpserver import MCPServer as FastMCP
+except ImportError:
+    from mcp.server.fastmcp import FastMCP
 
 from . import (
     addon_manager,
