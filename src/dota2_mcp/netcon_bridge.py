@@ -131,14 +131,16 @@ def verify_vscript_api(search_term: str) -> dict[str, Any]:
     # Filter the entire raw buffer on Python side before slicing to 50 lines
     matched_lines = [line for line in all_lines if term_lower in line.lower()]
 
-    # Fallback: if NetCon buffer missed lines written to console.log, also scan console.log
+    # Fallback: if NetCon TCP buffer truncated script_help2 output (>3600 lines), scan console.log
     if not matched_lines and CONFIG.game_dir:
         log_path = CONFIG.game_dir / "dota" / "console.log"
         if log_path.exists():
             try:
                 log_text = log_path.read_text(encoding="utf-8", errors="replace")
                 log_lines = [l.rstrip() for l in log_text.splitlines() if l.strip()]
-                matched_lines = [l for l in log_lines[-5000:] if term_lower in l.lower()]
+                matched_lines = [
+                    l for l in log_lines[-25000:] if term_lower in l.lower()
+                ]
             except Exception:
                 pass
 

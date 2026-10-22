@@ -245,13 +245,42 @@ def _load_vpk_kv_dict(pak: Any, kv_rel_path: str) -> dict[str, Any]:
         else:
             return {}
 
-    parsed = vdf.loads(raw_text)
+    # Valve KV files in Dota 7.41+ occasionally put a scalar value on the next line after its key
+    # (e.g. "default_attack"\n\t"" in npc_abilities.txt or "ItemRequirements"\n\t\t"" in items.txt),
+    # which python-vdf rejects with 'expected openning bracket'. Collapse multiline key-value scalars:
+    cleaned_text = re.sub(
+        r'^([ \t]*"[^"\r\n]*")[ \t]*\r?\n[ \t]*("[^"\r\n]*")[ \t]*(?://.*)?$',
+        r"\1\t\2",
+        raw_text,
+        flags=re.MULTILINE,
+    )
+    try:
+        parsed = vdf.loads(cleaned_text)
+    except Exception:
+        return {}
     root_dict = next(iter(parsed.values())) if parsed else {}
     return root_dict if isinstance(root_dict, dict) else {}
 
 
+def _extract_abilities_from_hero_kv(hf_dict: dict[str, Any]) -> dict[str, Any]:
+    """Extract ability definitions from a 7.41+ hero KV file (either top-level or nested under Hero.AbilityDefinitions)."""
+    extracted: dict[str, Any] = {}
+    for k, v in hf_dict.items():
+        if not isinstance(v, dict):
+            continue
+        if k.startswith("npc_dota_hero_"):
+            ab_defs = v.get("AbilityDefinitions")
+            if isinstance(ab_defs, dict):
+                for ab_name, ab_val in ab_defs.items():
+                    if isinstance(ab_val, dict):
+                        extracted[ab_name] = ab_val
+        else:
+            extracted[k] = v
+    return extracted
+
+
 def get_base_dota_definition(category: str, name: str) -> dict[str, Any]:
-    """Read standard hero, ability, unit, or item definition from pak01_dir.vpk (supports 7.41+ split hero ability files)."""
+    """Read standard hero, ability, unit, or item definition from pak01_dir.vpk (supports 7.41+ split hero/ability files)."""
     cat = category.lower().strip()
     if cat not in BASE_KV_FILES:
         return {
@@ -266,27 +295,36 @@ def get_base_dota_definition(category: str, name: str) -> dict[str, Any]:
         pak = _get_vpk()
         root_dict = _load_vpk_kv_dict(pak, kv_rel_path)
 
-        # In modern Dota 2 (7.33 - 7.41+), hero abilities are split into scripts/npc/heroes/npc_dota_hero_*.txt
-        if cat == "ability" and name not in root_dict:
+        # In modern Dota 2 (7.33 - 7.41+), both heroes and hero abilities live in scripts/npc/heroes/npc_dota_hero_*.txt
+        if cat in ("ability", "hero") and name not in root_dict:
             assert _VPK_FILE_LIST is not None
-            hero_prefix = name.split("_")[0].lower() if "_" in name else ""
+            if cat == "hero":
+                hero_token = name.removeprefix("npc_dota_hero_").lower()
+            else:
+                hero_token = name.split("_")[0].lower() if "_" in name else ""
+
             hero_files = [
                 f
                 for f in _VPK_FILE_LIST
                 if f.startswith("scripts/npc/heroes/") and f.endswith(".txt")
             ]
-            hero_files.sort(key=lambda p: 0 if hero_prefix and hero_prefix in p else 1)
+            hero_files.sort(key=lambda p: 0 if hero_token and hero_token in p else 1)
             for hf in hero_files:
                 hf_dict = _load_vpk_kv_dict(pak, hf)
-                if name in hf_dict:
+                search_space = (
+                    hf_dict
+                    if cat == "hero"
+                    else _extract_abilities_from_hero_kv(hf_dict)
+                )
+                if name in search_space:
                     return {
                         "ok": True,
                         "category": cat,
                         "source_file": hf,
                         "name": name,
-                        "definition": hf_dict[name],
+                        "definition": search_space[name],
                     }
-                root_dict.update(hf_dict)
+                root_dict.update(search_space)
 
         # Exact match
         if name in root_dict:

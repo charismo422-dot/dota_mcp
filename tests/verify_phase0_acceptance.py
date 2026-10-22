@@ -6,6 +6,9 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.dota2_mcp.config import CONFIG
 from src.dota2_mcp.addon_manager import create_or_configure_addon
