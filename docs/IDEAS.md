@@ -28,6 +28,9 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - **`verify_panorama_api` tool** — cache `cl_panorama_script_help_2` per build (like the Lua cache) and search JS bindings; optionally CSS properties via `dump_panorama_css_properties` — `idea` (high value for UI work)
 - **Panorama compile guard** — `compile_addon_resource` warns about includes of stock files without SDK source (`dotastyles.css`) and about compiling a manifest whose referenced layouts don't exist yet — `idea`
 - **Listener-stacking lint** — warn when Lua calls `ListenToGameEvent` at file load without `StopListeningToGameEvent` of a stored id — `idea`
+- **Batch map edits** — `add_map_entities` (list) / pattern helpers (ring, grid, line) in one call — `idea` (high value for map work)
+- **Brush triggers in `.vmap`** — create box-shaped `trigger_*` meshes (shop, no-wards, custom triggers) so maps don't need Lua workarounds — `idea`
+- **FGD lookup tool** — search `dota.fgd`/`base.fgd` for an entity class and its keys/choices before placing it — `idea`
 - **`add_item_to_shop` tool** — create the addon `shops.txt` from the stock VPK copy (first time) and insert custom items into a chosen category — `idea`
 - **Looping-sound lint** — warn when Lua emits a known looping sound event with `EmitSoundOnLocationWithCaster` (cannot be stopped) — `idea`
 - **`create_minimap` tool** — one call: add/update `dota_minimap_boundary` pair, disconnect, compile map, relaunch, clear units, run `dota_minimap_create`, verify `resource/overviews/<map>.txt` — `idea`

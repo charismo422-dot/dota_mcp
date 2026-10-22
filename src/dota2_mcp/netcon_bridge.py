@@ -39,6 +39,8 @@ NOISE_PATTERNS = re.compile(
             r"AuthStatus", r"Certificate expires", r"OnSteamServersConnected", r"GC Connection established",
             r"Received server welcome", r"ResetBreakpadAppId", r"SteamGameServer_Init", r"Client missing networkable entity class",
             r"msec change '", r"LoopActivateAllSystems",
+            r"DepthPassBatchID", r"can't solve quadratic for light", r"OnHltvReplay", r"Signon traffic",
+            r"NetChan Setting Timeout", r"received full update", r"Resetting prediction state", r"non-incremental update",
             # script_help2 API dump lines (served from the verify_vscript_api cache instead)
             r"^(\[VScript\] ?)?(---\[\[|-- @|--- Enum|function .*\) end$|[A-Za-z_][A-Za-z0-9_]* = -?\d+( --.*)?$|$)", r"^(Server|Client):\s+(Inactive|Disconnected)", r"@ Current\s+:", r"Queued\s+:",
         ]

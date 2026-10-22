@@ -177,6 +177,57 @@ Convars:RegisterCommand( "mcp_lab_autotest5b", function()
 	end, 0.3 )
 end, "MCP Lab: stage 5b autotest (world-space Panorama)", 0 )
 
+-- Stage 6: map entities placed by the MCP map tools (tree ring with gates, shopkeeper, crystals, removed tree)
+Convars:RegisterCommand( "mcp_lab_autotest6", function()
+	local hero = GameRules.AddonTemplate.hero
+	local checks = {}
+	local trees = Entities:FindAllByClassname( "ent_dota_tree" )
+	checks.trees = #trees == 19
+	checks.removed_tree_gone = Entities:FindByName( nil, "lab_tree_05" ) == nil
+	-- Trees are tracked by the tree system, not as static GridNav blockers (IsBlocked() is false at a tree)
+	local blocked = 0
+	for _, t in ipairs( trees ) do
+		if GridNav:IsNearbyTree( t:GetAbsOrigin(), 32, true ) then blocked = blocked + 1 end
+	end
+	checks.trees_block_path = blocked == #trees
+	local crystals = 0
+	for i = 0, 3 do
+		local c = Entities:FindByName( nil, "lab_crystal_" .. i )
+		if c then
+			crystals = crystals + 1
+			if i == 0 then
+				local col = c:GetRenderColor()
+				print( string.format( "[MCP_LAB] crystal render color %d %d %d model=%s", col.x, col.y, col.z, c:GetModelName() ) )
+			end
+		end
+	end
+	checks.crystals = crystals == 4
+	local shop = Entities:FindByName( nil, "lab_shop" )
+	checks.shop_entity = shop ~= nil
+
+	-- Can the hero buy next to the shopkeeper? (purchase radius normally comes from a trigger_shop brush)
+	-- Tree interaction at runtime
+	trees[1]:CutDown( -1 )
+	checks.tree_cut = not trees[1]:IsStanding()
+	trees[1]:GrowBack()
+
+	-- Trigger touch is evaluated on the next physics ticks, so check shop range after a short delay
+	local home = hero:GetAbsOrigin()
+	checks.outside_shop = not hero:IsInRangeOfShop( DOTA_SHOP_HOME, true )
+	FindClearSpaceForUnit( hero, shop:GetAbsOrigin() + Vector( -150, 150, 0 ), true )
+	hero:SetContextThink( "MCPLabShopCheck", function()
+		checks.shop_range = hero:IsInRangeOfShop( DOTA_SHOP_HOME, true )
+		FindClearSpaceForUnit( hero, home, true )
+		local all_ok, parts = true, {}
+	for _, name in ipairs({ "trees", "removed_tree_gone", "trees_block_path", "crystals", "shop_entity", "shop_range", "outside_shop", "tree_cut" }) do
+		all_ok = all_ok and checks[name]
+		table.insert( parts, name .. "=" .. tostring( checks[name] ) )
+	end
+		print( string.format( "[MCP_LAB] AUTOTEST stage6 %s: %s trees=%d", all_ok and "PASS" or "FAIL", table.concat( parts, " " ), #trees ) )
+		return nil
+	end, 0.5 )
+end, "MCP Lab: stage 6 autotest (map entities)", 0 )
+
 Convars:RegisterCommand( "mcp_lab_autotest4", function()
 	GameRules.AddonTemplate:RunItemTest( GameRules.AddonTemplate.hero )
 end, "MCP Lab: stage 4 autotest (custom item: stats, rift pull, silence)", 0 )
@@ -307,6 +358,14 @@ function CAddonTemplateGameMode:OnNPCSpawned( event )
 	-- The agent runs them on demand ("mcp_lab_autotest" = all stages, "mcp_lab_autotest3/4" = single stage).
 	self.hero = hero
 	self:SpawnRiftKeeper( hero:GetAbsOrigin() + Vector( -500, 350, 0 ) )
+
+	-- Stage 6: the shopkeeper (ent_dota_shop, placed with add_map_entity) is only a model; the purchase radius
+	-- normally comes from a trigger_shop brush, which point-entity tools cannot create -> spawn it from Lua
+	local shop = Entities:FindByName( nil, "lab_shop" )
+	if shop then
+		self.shop_trigger = SpawnDOTAShopTriggerRadiusApproximate( shop:GetAbsOrigin(), 450 )
+		self.shop_trigger:SetShopType( DOTA_SHOP_HOME )
+	end
 end
 
 --------------------------------------------------------------------------------

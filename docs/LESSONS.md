@@ -110,6 +110,13 @@ Entry format:
 - **Tools mode compiles Panorama on save** (`compile_addon_resource` then reports `[SKIP]`, identical CRC) — still write children before the manifest.
 - **Playtest convenience:** `GameRules:SetStartingGold(99999)` in the test addon so new shop items can be bought by hand.
 
+### 2026-10-22 — Test plan stage 6 (map dressing with point entities)
+- **Works:** `ent_dota_tree` (with `model`, e.g. `models/props_tree/tree_pine_01_heavysnow.vmdl`), `ent_dota_shop` (shopkeeper model, `shoptype`), `prop_dynamic` (`model`, `rendercolor`, scales) via `add_map_entity`; `remove_map_entity` by targetname; `disconnect` → recompile → relaunch. Runtime checks: `Entities:FindAllByClassname("ent_dota_tree")`, `GridNav:IsNearbyTree` (trees are NOT `GridNav:IsBlocked`), `tree:CutDown(-1)` / `IsStanding()` / `GrowBack()`.
+- **Entity reference on disk:** `game/dota/dota.fgd` (+ `game/core/base.fgd`) is Valve's authoritative list of map entities and their keys — read it instead of guessing. Most addon `.vmap` files are binary DMX (79 of 82 here) and stock maps put trees/shops inside prefabs, so copying from existing maps rarely works.
+- **Shop needs a radius:** `ent_dota_shop` is only the shopkeeper building; the purchase area is a `trigger_shop` BRUSH (cannot be created with point-entity tools). From Lua: `SpawnDOTAShopTriggerRadiusApproximate(origin, radius):SetShopType(DOTA_SHOP_HOME)`. `IsInRangeOfShop` updates only on the next physics tick after teleporting — check with a short delay.
+- **Batching:** 25 map edits through single MCP calls is slow and context-heavy; a batch call (or calling `vmap_builder.add_map_entity` from a script) is much cheaper (idea logged).
+- **Open:** `prop_dynamic` `rendercolor` is applied (GetRenderColor = 190 90 255) but the crystal looked untinted on the minimap capture — needs a visual check in game.
+
 ### 2026-10-22 — Commit messages from PowerShell
 - **Doesn't work:** `git commit -F - @'...'@` in Windows PowerShell 5.1 — the here-string is passed as a pathspec, not stdin.
 - **Solution / Rule:** write the message to a temp file and use `git commit -F <file>`.
