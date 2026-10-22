@@ -29,7 +29,8 @@ NOISE_PATTERNS = re.compile(
         [
             r"^server_\w+:", r"^relays?_", r"^tv_secret_code:", r"^build_version:", r"^allow_custom_games:",
             r"^assigned_server_tv_port:", r"^---$", r"Sent CMsgGameServerInfo", r"\b(Send|Recv) msg \d+",
-            r"PR:\w+ \d+:", r"Tick packet desired", r"\[(NetSteamConn|Networking|SteamNetSockets|SplitScreen|stringtables|AnimResource|SOCache|GCClient|Prediction|SignonState|EngineServiceManager)\]",
+            r"PR:\w+", r"Gamerules: entering state", r"EventGameRulesStateChanged", r"LoadingDisplay changed",
+            r"STEAM USERID validated", r"m_fl\w+Time set to", r"GC connection established\.\s+This is guaranteed", r"Tick packet desired", r"\[(NetSteamConn|Networking|SteamNetSockets|SplitScreen|stringtables|AnimResource|SOCache|GCClient|Prediction|SignonState|EngineServiceManager)\]",
             r"Bot ward spot", r"^\*\*\*\* Panel", r"CL:\s+(pending|prerequisite|waiting|sequential|firstspawngroup|\s*:)",
             r"SteamRemoteStorage", r"CAsyncWriteInProgress", r"IGameSystem::Loop", r"CRecipientFilter",
             r"PERF WARNING", r"broadcastfacts_", r"DOTANeutralItems", r"npc_neutral_items_custom\.txt",

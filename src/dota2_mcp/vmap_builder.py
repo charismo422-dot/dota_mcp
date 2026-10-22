@@ -436,6 +436,9 @@ def _remove_from_parent_children_arrays(text: str, target_ent_id: str) -> str:
     return text
 
 
+OVERLAP_WARN_RADIUS = 250.0  # units; model entities closer than this to a new model entity are reported
+
+
 def add_map_entity(
     addon_name: str,
     map_name: str,
@@ -564,7 +567,7 @@ def add_map_entity(
 
     vmap_path.write_text(updated_text, encoding="utf-8")
 
-    return {
+    result: dict[str, Any] = {
         "ok": True,
         "added_entity_id": new_ent_id,
         "nodeID": new_node_id,
@@ -573,6 +576,24 @@ def add_map_entity(
         "origin": origin,
         "map_path": str(vmap_path),
     }
+    # Overlap guard: warn about visible entities (with a model) too close to the new one, e.g. a shopkeeper
+    # placed inside a crystal. Obstructions/markers without models are ignored.
+    if properties and properties.get("model"):
+        try:
+            nx, ny = (float(v) for v in origin.split()[:2])
+            close = []
+            for e in raw_ents:
+                if not e.get("properties", {}).get("model"):
+                    continue
+                ex, ey = (float(v) for v in str(e.get("origin", "0 0 0")).split()[:2])
+                dist = ((ex - nx) ** 2 + (ey - ny) ** 2) ** 0.5
+                if dist < OVERLAP_WARN_RADIUS:
+                    close.append(f'{e.get("classname")} "{e.get("targetname", "")}" at {dist:.0f} units')
+            if close:
+                result["overlap_warning"] = close
+        except (ValueError, TypeError):
+            pass
+    return result
 
 
 def remove_map_entity(
@@ -703,16 +724,28 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
         # resourcecompiler exits 0 even when it cannot write the output (e.g. lab.vpk locked by a running game)
         write_failures = [l for l in lines if l.strip().startswith("Write ") and l.rstrip().endswith("Failed!")]
 
+        # Compact output (context cost): drop known-benign SDK noise, de-duplicate, keep the log tail only on failure
+        benign = re.compile(
+            r"Error creating shader generic\.vfx|soundevents_test\.vsndevts_c|surfaceproperties_steamaudio\.txt|"
+            r"nav_hulls\.vdata_c|Aggregate Rejections|Couldn't load public key|Not signing"
+        )
+        meaningful_errors = list(dict.fromkeys(l for l in error_lines if not benign.search(l)))
+        ok = proc.returncode == 0 and not write_failures
+        summary = next((l for l in reversed(lines) if re.match(r"(OK|ERROR):\s+\d+ compiled", l)), "")
         result: dict[str, Any] = {
-            "ok": proc.returncode == 0 and not write_failures,
+            "ok": ok,
             "return_code": proc.returncode,
-            "command": cmd,
             "resource": str(full_input),
+            "summary": summary,
             "compiled_outputs": compiled_outputs,
-            "compiled_map_vpk_entries": compiled_vpk_entries,
-            "errors_and_warnings": error_lines[-40:],
-            "tail_log": lines[-25:],
+            "compiled_map_entries_count": len(compiled_vpk_entries),
+            "compiled_map_has_vmap_c": any(e.endswith(".vmap_c") for e in compiled_vpk_entries),
+            "errors_and_warnings": meaningful_errors[-20:],
+            "benign_lines_hidden": len(error_lines) - len(meaningful_errors),
         }
+        if not ok:
+            result["command"] = cmd
+            result["tail_log"] = lines[-25:]
         if write_failures:
             result["write_failures"] = write_failures
             result["hint"] = (

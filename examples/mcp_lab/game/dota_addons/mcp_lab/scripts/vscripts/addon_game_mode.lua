@@ -371,7 +371,7 @@ function CAddonTemplateGameMode:OnNPCSpawned( event )
 			if string.sub( a:GetAbilityName(), 1, 4 ) == "mcp_" then a:SetLevel( 1 ) end
 		end
 	end
-	print( "[MCP_LAB] hero " .. hero:GetUnitName() .. " slots: " .. table.concat( slots, " " ) )
+	self.hero_slots = slots  -- inspected by the stage 2 autotest; not printed (saves log/context on every launch)
 
 	-- Autotests are NOT started here: a manual playtest must begin with a clean arena.
 	-- The agent runs them on demand ("mcp_lab_autotest" = all stages, "mcp_lab_autotest3/4" = single stage).
@@ -405,6 +405,7 @@ function CAddonTemplateGameMode:SpawnRiftKeeper( pos )
 	keeper:SetRenderColor( 200, 150, 255 )  -- violet tint: reads as a rift mystic, not a regular creep
 	self.keeper = keeper
 	self.dialog_open = false
+	self.keeper_idle_at = 0
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLabKeeperDialog", function()
 		return self:UpdateKeeperDialog()
 	end, 0.25 )
@@ -413,8 +414,23 @@ end
 function CAddonTemplateGameMode:UpdateKeeperDialog()
 	if not IsValidEntity( self.keeper ) or not IsValidEntity( self.hero ) then return nil end
 	local dist = ( self.hero:GetAbsOrigin() - self.keeper:GetAbsOrigin() ):Length2D()
+	local now = GameRules:GetGameTime()
+
+	-- A static creature (MOVE_NONE) freezes after its spawn animation, so idle is driven from script:
+	-- replay the idle gesture every few seconds, sometimes the "rare" idle, never while talking.
+	if not self.dialog_open and now >= self.keeper_idle_at then
+		self.keeper:StartGesture( RandomInt( 1, 4 ) == 1 and ACT_DOTA_IDLE_RARE or ACT_DOTA_IDLE )
+		self.keeper_idle_at = now + 4
+	end
+	if self.dialog_open then
+		self.keeper:FaceTowards( self.hero:GetAbsOrigin() )  -- turn to whoever is talking, even if approached from behind
+	end
+
 	if not self.dialog_open and dist < 320 then
 		self.dialog_open = true
+		self.keeper:FaceTowards( self.hero:GetAbsOrigin() )
+		self.keeper:RemoveGesture( ACT_DOTA_IDLE )
+		self.keeper:StartGesture( ACT_DOTA_CAST_ABILITY_1 )  -- greeting / "talking" gesture
 		CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog", {
 			action = "open", npc = self.keeper:entindex(),
 			speaker = "#mcp_lab_keeper_name", text = "#mcp_lab_keeper_greet",
@@ -422,6 +438,7 @@ function CAddonTemplateGameMode:UpdateKeeperDialog()
 		} )
 	elseif self.dialog_open and dist > 520 then
 		self.dialog_open = false
+		self.keeper_idle_at = now
 		CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog", { action = "close" } )
 	end
 	return 0.25
@@ -429,6 +446,7 @@ end
 
 function CAddonTemplateGameMode:OnDialogChoice( event_source_index, data )
 	if tonumber( data.option ) == 1 then
+		self.keeper:StartGesture( ACT_DOTA_CAST_ABILITY_4 )  -- casting the gift
 		self.hero:AddNewModifier( self.hero, nil, "modifier_mcp_rift_blessing", { duration = 15 } )
 		self.hud_energy = math.min( 100, self.hud_energy + 50 )
 		self:SendHudUpdate()

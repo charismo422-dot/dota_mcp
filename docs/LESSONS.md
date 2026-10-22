@@ -125,6 +125,12 @@ Entry format:
 - **Panorama pauses when Dota is not the foreground window:** `$.Schedule(0, ...)` loops ran 6 frames in 6 s while `Game.Time()` advanced. Autotests of client UI must not rely on per-frame animation finishing (use skip paths) and report `frames` to detect this.
 - **JS hot reload duplicates:** each on-save recompile re-runs the layout script ("world UI script loaded" several times) — old instances can keep subscriptions; relaunch the map before trusting UI autotests.
 
+### 2026-10-22 — Stage 6 playtest feedback #2 (NPC animation, overlaps, context cost)
+- **Static NPC animation:** a `npc_dota_creature` with `DOTA_UNIT_CAP_MOVE_NONE` plays its spawn animation and then freezes. Drive idle from script (`StartGesture(ACT_DOTA_IDLE)` every few seconds, sometimes `ACT_DOTA_IDLE_RARE`), turn to the speaker with `FaceTowards`, play a talk/cast gesture on dialog open and on the reward. Visual result still to be confirmed by the owner.
+- **Shopkeeper models:** `secretshopkeeper_dire.vmdl` has no animations at all (`inspect_model` → empty activities). Use `models/heroes/shopkeeper_dire/shopkeeper_dire.vmdl` / `shopkeeper/shopkeeper.vmdl` (`ACT_DOTA_IDLE`). Always `inspect_model` an NPC/shop model for `ACT_DOTA_IDLE` before using it.
+- **Never let props overlap:** `add_map_entity` now returns `overlap_warning` when a model entity lands within 250 units of another model entity (caught the shopkeeper-inside-crystal case: 71 units). There is no "move" tool yet: remove + add.
+- **Context cost (why limits burn fast):** the biggest cost is the conversation itself — every turn re-sends the whole history, and this session is very long. Per-call waste found and cut: map compile response ≈ 6 K → 0.5 K chars (benign SDK lines hidden, log tail only on failure); launch response loses the `PR:*` / game-state lines; the 600-char hero slot print was removed. Rule: start a NEW chat per stage / feature — `.private/STATUS.md`, `docs/LESSONS.md` and memory carry the knowledge over cheaply.
+
 ### 2026-10-22 — Commit messages from PowerShell
 - **Doesn't work:** `git commit -F - @'...'@` in Windows PowerShell 5.1 — the here-string is passed as a pathspec, not stdin.
 - **Solution / Rule:** write the message to a temp file and use `git commit -F <file>`.

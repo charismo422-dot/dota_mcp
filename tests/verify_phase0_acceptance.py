@@ -158,12 +158,9 @@ def main() -> None:
         comp_1 = compile_addon_resource(TEST_ADDON, f"maps/{TEST_MAP}.vmap")
         print("  resourcecompiler return_code:", comp_1["return_code"])
         print("  compiled_outputs:", comp_1["compiled_outputs"])
-        print(
-            "  compiled_map_vpk_entries (.vmap_c, .gnv, etc.):",
-            comp_1["compiled_map_vpk_entries"],
-        )
+        print("  compiled map entries:", comp_1["compiled_map_entries_count"], comp_1["summary"])
         assert comp_1["return_code"] == 0
-        assert f"maps/{TEST_MAP}.vmap_c" in comp_1["compiled_map_vpk_entries"]
+        assert comp_1["compiled_map_has_vmap_c"]
 
         print("\n=== STEP D: Call remove_map_entity ===")
         rem_res = remove_map_entity(TEST_ADDON, TEST_MAP, "mcp_test_marker")
