@@ -81,8 +81,14 @@ def create_or_configure_addon(
 
 
 @mcp.tool()
+def get_addon_paths(addon_name: str) -> dict[str, Any]:
+    """Return exact canonical directories for game/ (runtime Lua, KV, localization) vs content/ (source .vmap, .xml/.css/.js Panorama, .png spellicons/items requiring resourcecompiler.exe)."""
+    return addon_manager.get_addon_paths(addon_name=addon_name)
+
+
+@mcp.tool()
 def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
-    """Validate syntax of all Valve KeyValues (.txt/.kv) files, verify every referenced .vmdl/.vpcf/.vsndevts exists in VPK, and auto-generate Precache in addon_game_mode.lua."""
+    """Validate syntax of all Valve KeyValues (.txt/.kv) files, detect misplaced files between game/ and content/ (including obsolete flash3 paths), auto-compile custom .png icons to .vtex_c, verify every referenced .vmdl/.vpcf/.vsndevts exists in VPK, and auto-generate Precache in addon_game_mode.lua."""
     return addon_manager.validate_and_sync_precache(addon_name=addon_name)
 
 
@@ -174,6 +180,18 @@ def run_console_command(command: str, wait_response_ms: int = 1200) -> dict[str,
     return netcon_bridge.run_console_command(
         command=command, wait_response_ms=wait_response_ms
     )
+
+
+@mcp.tool()
+def verify_vscript_api(search_term: str) -> dict[str, Any]:
+    """Query the live Dota 2 engine (7.41+) via 'script_help2 <search_term>' to verify real Lua functions, classes, and modifier constants directly from the game binary."""
+    return netcon_bridge.verify_vscript_api(search_term=search_term)
+
+
+@mcp.tool()
+def read_latest_console_log(tail_lines: int = 80) -> dict[str, Any]:
+    """Read the latest lines and Lua errors from game/dota/console.log on disk (when Dota 2 is launched with -condebug)."""
+    return netcon_bridge.read_latest_console_log(tail_lines=tail_lines)
 
 
 # ---------------------------------------------------------------------------

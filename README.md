@@ -15,7 +15,7 @@
 3. Агент автоматически прочитает [GEMINI.md](./GEMINI.md) и [docs/TECHNICAL_SPEC.md](./docs/TECHNICAL_SPEC.md), сам создаст `.venv`, установит библиотеки, скачает `Decompiler.exe`, пропишет сервер в `mcp_config.json` и запустит самодиагностику `run_mcp_self_test()`.
 4. Для живого управления игрой и чтения ошибок Lua запускайте Dota 2 Workshop Tools с параметрами запуска Steam:
    ```text
-   -tools -netconport 29000 -console
+   -tools -netconport 29000 -console -condebug
    ```
 
 ---

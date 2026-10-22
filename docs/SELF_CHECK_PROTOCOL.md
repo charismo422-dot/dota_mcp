@@ -18,21 +18,31 @@
 
 ---
 
-## 2. Самопроверка при написании Valve KeyValues (`.txt` / `.kv`)
+## 2. Самопроверка при написании Valve KeyValues (`.txt` / `.kv`) и Иконок (`spellicons` / `items`)
 
-- **Вопрос 1: Актуален ли формат параметров способностей для Dota 2 (7.3x+)?**
-  - *Проверка:* В современных версиях Dota 2 блок `AbilitySpecial` устарел. Для новых способностей (`ability_lua` и `ability_datadriven`) использовать актуальный блок `AbilityValues` (или точно следовать структуре базовой способности из `get_base_dota_definition`).
-- **Вопрос 2: Совпадает ли `BaseClass` с типом сущности?**
+- **Вопрос 1: Актуален ли формат параметров способностей для Dota 2 (7.41+ / 2026)?**
+  - *Проверка:* Блок `AbilitySpecial` устарел. Для новых способностей (`ability_lua` и `ability_datadriven`) использовать актуальный блок `AbilityValues` (или точно следовать структуре базовой способности из `get_base_dota_definition`, который автоматически сканирует и `npc_abilities.txt`, и `scripts/npc/heroes/npc_dota_hero_*.txt`).
+  - *Проверка героев (7.41+):* Учитывать наличие врожденных способностей (`Innate`) и 4-го атрибута (`DOTA_ATTRIBUTE_ALL`).
+- **Вопрос 2: Куда положены кастомные иконки скиллов и предметов (`.png`) и файлы Panorama?**
+  - *Категорически запрещено:* Использовать устаревшую папку Source 1 `game/.../resource/flash3/images/` или класть сырые `.png`, `.xml`, `.css`, `.js` в `game/`.
+  - *Обязательно:*
+    - Иконки способностей класть в `content/dota_addons/<addon>/panorama/images/spellicons/<name>.png` и компилировать в `.vtex_c` (вызовом `validate_and_sync_precache` или `compile_addon_resource`).
+    - Иконки предметов класть в `content/dota_addons/<addon>/panorama/images/items/<name>.png`, а в `npc_items_custom.txt` указывать `"AbilityTextureName" "item_<name>"` (с обязательным префиксом `item_`).
+    - Всегда проверять маршрутизацию папок через инструмент `get_addon_paths(addon_name)`.
+- **Вопрос 3: Совпадает ли `BaseClass` с типом сущности?**
   - *Проверка:*
     - Кастомный скилл на Lua -> `"BaseClass" "ability_lua"` + обязательный `"ScriptFile"`.
     - Кастомный юнит -> `"BaseClass" "npc_dota_creature"` (или `npc_dota_building`).
     - Кастомный предмет на Lua -> `"BaseClass" "item_lua"` + `"ScriptFile"`.
-- **Вопрос 3: Валиден ли синтаксис KV и добавлен ли `Precache`?**
-  - *Обязательно:* После любого изменения файлов в `scripts/npc/` или `scripts/vscripts/` запускать инструмент `validate_and_sync_precache(addon_name)`.
+- **Вопрос 4: Валиден ли синтаксис KV и добавлен ли `Precache`?**
+  - *Обязательно:* После любого изменения файлов в `scripts/npc/`, `scripts/vscripts/` или `panorama/images/` запускать инструмент `validate_and_sync_precache(addon_name)`.
 
 ---
 
 ## 3. Самопроверка при написании Lua VScripts (`scripts/vscripts/`)
+
+- **Вопрос 0: Существует ли вызываемая функция Lua в актуальном движке Dota 2 7.41+?**
+  - *Проверка:* При малейшем сомнении в точном названии метода `CDOTA_BaseNPC`, `CDOTABaseAbility`, `GameRules` или константы `MODIFIER_PROPERTY_*` вызвать инструмент `verify_vscript_api(search_term)` (обращается напрямую к `script_help2` запущенного движка Доты).
 
 - **Вопрос 1: Разделен ли серверный и клиентский контекст (`IsServer()`)?**
   - *Проверка:* В модификаторах (`CDOTA_Modifier_Lua`) методы `OnCreated`, `OnIntervalThink`, `OnDestroy` вызываются и на клиенте, и на сервере. Все изменения состояния игры (`ApplyDamage`, `AddNewModifier`, `CreateUnitByName`, манипуляции со здоровьем/золотом) обязаны находиться внутри блока `if IsServer() then ... end`.

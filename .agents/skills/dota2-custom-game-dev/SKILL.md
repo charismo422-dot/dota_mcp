@@ -12,9 +12,10 @@ description: >-
 This skill enforces the mandatory architecture and step-by-step workflow for building Dota 2 custom games via the `dota_mcp` MCP server.
 
 ## Full Technical Specification & Self-Check Protocol
-For complete architecture details, tool signatures, self-check questions, and bug logs, consult:
+For complete architecture details, tool signatures, self-check questions, 7.41+ paths/icons/Lua reference, and bug logs, consult:
 - [TECHNICAL_SPEC.md](../../../docs/TECHNICAL_SPEC.md)
 - [SELF_CHECK_PROTOCOL.md](../../../docs/SELF_CHECK_PROTOCOL.md)
+- [DOTA2_741_REFERENCE.md](./references/DOTA2_741_REFERENCE.md)
 - [BUG_LOG.md](../../../docs/BUG_LOG.md)
 
 ## Windows Environment Bootstrap (When asked to set up on Windows PC)

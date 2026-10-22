@@ -7,6 +7,8 @@ import socket
 import time
 from typing import Any
 
+from .config import CONFIG
+
 
 DEFAULT_NETCON_HOST = "127.0.0.1"
 DEFAULT_NETCON_PORT = int(os.environ.get("DOTA2_NETCON_PORT", "29000"))
@@ -84,4 +86,65 @@ def run_console_command(
                 f"Could not connect to Dota 2 NetCon at {host}:{port} ({exc}). "
                 "Ensure Dota 2 Workshop Tools is launched with: -tools -netconport 29000 -console"
             ),
+            "disk_console_log_fallback": read_latest_console_log(tail_lines=40),
         }
+
+
+def verify_vscript_api(search_term: str) -> dict[str, Any]:
+    """Query the live Dota 2 engine (7.41+) via 'script_help2 <search_term>' to verify exact Lua API signatures and constants."""
+    term = search_term.strip()
+    if not term:
+        return {"ok": False, "error": "Empty search_term."}
+
+    res = run_console_command(f"script_help2 {term}", wait_response_ms=1500)
+    if not res.get("ok"):
+        return {
+            "ok": False,
+            "search_term": term,
+            "error": (
+                "Dota 2 must be running with -netconport 29000 (and a map loaded) "
+                "to query live VScript API via script_help2."
+            ),
+            "details": res,
+        }
+
+    return {
+        "ok": True,
+        "search_term": term,
+        "live_engine_matches": res.get("console_tail", []),
+    }
+
+
+def read_latest_console_log(tail_lines: int = 80) -> dict[str, Any]:
+    """Read the tail of game/dota/console.log on disk (useful if NetCon is closed or game crashed)."""
+    if not CONFIG.game_dir:
+        return {"ok": False, "error": "Dota 2 game_dir not found."}
+
+    log_path = CONFIG.game_dir / "dota" / "console.log"
+    if not log_path.exists():
+        return {
+            "ok": False,
+            "error": f"No console.log found at {log_path}. Add '-condebug' to Dota 2 launch options to enable disk logging.",
+        }
+
+    try:
+        text = log_path.read_text(encoding="utf-8", errors="replace")
+        all_lines = [l.rstrip() for l in text.splitlines() if l.strip()]
+        n = max(10, min(tail_lines, 300))
+        tail = all_lines[-n:]
+        errors = [
+            l
+            for l in tail
+            if any(
+                w in l.lower()
+                for w in ("error", "script runtime error", "stack traceback", "failed")
+            )
+        ]
+        return {
+            "ok": True,
+            "log_file": str(log_path),
+            "errors_and_warnings": errors[-40:],
+            "tail": tail,
+        }
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}

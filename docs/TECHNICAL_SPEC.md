@@ -68,7 +68,7 @@ dota_mcp/
    - **Фильтры `asset_type`:** `"model"` (`.vmdl`), `"particle"` (`.vpcf`), `"sound"` (`.vsnd` / `.vsndevts`), `"material"` (`.vmat`), `"panorama"` (`.png` / `.vsvg`), `"script"` (`.txt` / `.lua`), `"all"`.
    - **Особенность:** Автоматически убирает суффикс `_c` у возвращаемых путей, чтобы пути сразу подходили для вставки в Lua, KV и `.vmap`.
 2. `get_base_dota_definition(category: str, name: str) -> dict`
-   - **Описание:** Извлекает из `pak01_dir.vpk` (`scripts/npc/npc_heroes.txt`, `npc_abilities.txt`, `npc_units.txt`, `items.txt`) точный блок настроек стандартного героя, способности, юнита или предмета Доты.
+   - **Описание:** Извлекает из `pak01_dir.vpk` (`scripts/npc/npc_heroes.txt`, `npc_abilities.txt`, `scripts/npc/heroes/npc_dota_hero_*.txt`, `npc_units.txt`, `items.txt`) точный блок настроек стандартного героя, способности, юнита или предмета актуальной Dota 2 (7.41+).
    - **Параметр `category`:** `"hero"`, `"ability"`, `"unit"`, `"item"`.
 
 ### Модуль 2: Глубокая инспекция моделей и партиклов (`asset_inspector.py`)
@@ -81,40 +81,47 @@ dota_mcp/
 
 ### Модуль 3: Управление аддоном, KV, Precache и локализацией (`addon_manager.py`)
 5. `create_or_configure_addon(addon_name: str, maps: list[str], max_players: int = 10, team_count: int = 2) -> dict`
-   - **Описание:** Создает структуру нового аддона в `content/dota_addons/<addon_name>` и `game/dota_addons/<addon_name>` на базе штатного `addon_template` (если аддон еще не создан) и настраивает `addoninfo.txt`.
-6. `validate_and_sync_precache(addon_name: str) -> dict`
+   - **Описание:** Создает структуру нового аддона в `content/dota_addons/<addon_name>` и `game/dota_addons/<addon_name>` на базе штатного `addon_template` (если аддон еще не создан), настраивает `addoninfo.txt` и возвращает таблицу маршрутизации папок.
+6. `get_addon_paths(addon_name: str) -> dict`
+   - **Описание:** Возвращает точные канонические пути для `game/` (исполняемые файлы Lua, KV, локализация) и `content/` (исходники `.vmap`, Panorama `.xml`/`.css`/`.js`, кастомные иконки `.png` в `spellicons/` и `items/`).
+7. `validate_and_sync_precache(addon_name: str) -> dict`
    - **Описание:**
-     1. Проверяет все `.txt` / `.kv` файлы в `game/dota_addons/<addon_name>/scripts/npc/` через парсер `vdf` на синтаксические ошибки (незакрытые кавычки, скобки).
-     2. Сканирует все `.lua` и `.txt` файлы аддона на наличие путей `.vmdl`, `.vpcf`, `.vsndevts`.
-     3. Проверяет существование каждого найденного ассета в `pak01_dir.vpk` или папке аддона (ловит выдуманные или битые пути).
-     4. Автоматически формирует/обновляет список `PrecacheResource` в `addon_game_mode.lua`.
-7. `upsert_localization(addon_name: str, language: str, tokens: dict[str, str]) -> dict`
+     1. Проверяет все `.txt` / `.kv` файлы в `game/dota_addons/<addon_name>/scripts/npc/` через парсер `vdf` на синтаксические ошибки и правильность префиксов `AbilityTextureName` (`item_` для предметов).
+     2. Ловит ошибочно размещенные файлы (например, устаревшую папку `resource/flash3`, сырые `.png`/`.xml`/`.css`/`.js` в `game/` или `.lua` в `content/`).
+     3. Автоматически компилирует новые `.png` иконки из `content/.../panorama/images/` в `.vtex_c` через `resourcecompiler.exe`.
+     4. Сканирует все `.lua` и `.txt` файлы аддона на наличие путей `.vmdl`, `.vpcf`, `.vsndevts` и проверяет их существование в `pak01_dir.vpk`.
+     5. Автоматически формирует/обновляет список `PrecacheResource` в `auto_precache.lua` и подключает его к `addon_game_mode.lua`.
+8. `upsert_localization(addon_name: str, language: str, tokens: dict[str, str]) -> dict`
    - **Описание:** Добавляет или обновляет ключи локализации (названия скиллов, описания, модификаторы, UI-тексты) в `game/dota_addons/<addon_name>/resource/addon_<language>.txt` с соблюдением структуры `Tokens`.
 
 ### Модуль 4: Конструктор карт `.vmap` и Компилятор (`vmap_builder.py`)
-8. `prepare_map_from_template(addon_name: str, map_name: str, source_template: str = "template_map") -> dict`
+9. `prepare_map_from_template(addon_name: str, map_name: str, source_template: str = "template_map") -> dict`
    - **Описание:** Копирует базовый `.vmap` из шаблона и переводит его через `dmxconvert.exe -oe keyvalues2 -of vmap` в текстовый формат, готовый к программному редактированию.
-9. `list_map_entities(addon_name: str, map_name: str, classname_filter: str = "") -> dict`
-   - **Описание:** Читает текстовый `.vmap` и возвращает компактный список всех сущностей (`CMapEntity`) на карте: их `id`, `classname`, `targetname`, `origin` (координаты `x y z`), `angles` и ключевые свойства (без выгрузки гигабайтных полигональных мешей в контекст ИИ).
-10. `add_map_entity(addon_name: str, map_name: str, classname: str, origin: str, targetname: str = "", angles: str = "0 0 0", scales: str = "1 1 1", properties: dict = None) -> dict`
+10. `list_map_entities(addon_name: str, map_name: str, classname_filter: str = "") -> dict`
+    - **Описание:** Читает текстовый `.vmap` и возвращает компактный список всех сущностей (`CMapEntity`) на карте: их `id`, `classname`, `targetname`, `origin` (координаты `x y z`), `angles` и ключевые свойства (без выгрузки гигабайтных полигональных мешей в контекст ИИ).
+11. `add_map_entity(addon_name: str, map_name: str, classname: str, origin: str, targetname: str = "", angles: str = "0 0 0", scales: str = "1 1 1", properties: dict = None) -> dict`
     - **Описание:** Добавляет в `.vmap` новую сущность (`info_player_start_goodguys`, `info_player_start_badguys`, `npc_dota_spawner`, `ent_dota_tree`, `prop_dynamic`, `info_target`, `trigger_multiple` и др.) с валидным UUID и структурой `CMapEntity` в формате KeyValues2.
-11. `remove_map_entity(addon_name: str, map_name: str, targetname_or_id: str) -> dict`
+12. `remove_map_entity(addon_name: str, map_name: str, targetname_or_id: str) -> dict`
     - **Описание:** Удаляет сущность из `.vmap` по её `targetname` или внутреннему `id`.
-12. `compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict`
+13. `compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict`
     - **Описание:** Запускает `resourcecompiler.exe -i "<content_path>/<resource_rel_path>" -v` для компиляции карты (`maps/<name>.vmap`), Panorama UI (`panorama/layout/custom_game/...`), материалов или звуков. Возвращает статус сборки и отфильтрованный лог ошибок.
 
 ### Модуль 5: Управление игрой и живая отладка (`netcon_bridge.py`)
-13. `run_console_command(command: str, wait_response_ms: int = 1000) -> dict`
+14. `run_console_command(command: str, wait_response_ms: int = 1200) -> dict`
     - **Описание:** Отправляет консольную команду в запущенную Dota 2 по TCP (`127.0.0.1:29000`), например:
       - `dota_launch_custom_game <addon_name> <map_name>` — запуск карты.
       - `script_reload` — горячая перезагрузка Lua-скриптов без перезапуска карты.
       - `dota_dev forcegamestart` — принудительный старт игры.
     - **Возвращает:** Ответ консоли и свежие строки лога (включая стектрейсы ошибок VScript/Lua).
+15. `verify_vscript_api(search_term: str) -> dict`
+    - **Описание:** Запрашивает у живого движка Dota 2 (7.41+) через `script_help2 <search_term>` реальные сигнатуры функций Lua и константы модификаторов.
+16. `read_latest_console_log(tail_lines: int = 80) -> dict`
+    - **Описание:** Читает последние строки и ошибки из `game/dota/console.log` на диске (резервный канал, если Дота запущена с `-condebug`).
 
 ### Модуль 6: Самодиагностика и Журнал багов (`diagnostics.py`)
-14. `run_mcp_self_test() -> dict`
-    - **Описание:** Проверяет готовность всей инфраструктуры на ПК: найден ли путь к Dota 2, открывается ли `pak01_dir.vpk`, доступны ли `dmxconvert.exe`, `resourcecompiler.exe`, `Decompiler.exe` (если нет — может автоматически скачать последний релиз `cli-windows-x64.zip` из `ValveResourceFormat`), и слушает ли Dota 2 порт `netconport`.
-15. `log_bug_report(component: str, symptom: str, root_cause: str, fix_applied: str, prevention_rule: str) -> dict`
+17. `run_mcp_self_test() -> dict`
+    - **Описание:** Проверяет готовность всей инфраструктуры на ПК: найден ли путь к Dota 2, открывается ли `pak01_dir.vpk`, доступны ли `dmxconvert.exe`, `resourcecompiler.exe`, `Decompiler.exe` (если нет — автоматически скачивает последний релиз `cli-windows-x64.zip` из `ValveResourceFormat`), и слушает ли Dota 2 порт `netconport`.
+18. `log_bug_report(component: str, symptom: str, root_cause: str, fix_applied: str, prevention_rule: str) -> dict`
     - **Описание:** Автоматически добавляет структурированную запись об обнаруженном и исправленном баге в `docs/BUG_LOG.md`.
 
 ---

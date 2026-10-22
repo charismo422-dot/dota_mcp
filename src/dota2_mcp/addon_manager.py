@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -97,27 +98,176 @@ def create_or_configure_addon(
         "content_addon_path": str(content_addon),
         "addoninfo_path": str(addoninfo_path),
         "maps": maps,
+        "directory_routing": get_addon_paths(addon_name),
+    }
+
+
+def get_addon_paths(addon_name: str) -> dict[str, Any]:
+    """Return exact canonical paths for game/ (runtime scripts/KV) vs content/ (source assets requiring compilation)."""
+    if not CONFIG.is_valid or not CONFIG.game_addons_dir or not CONFIG.content_addons_dir:
+        return {"ok": False, "error": "Dota 2 root directory not found."}
+
+    game_base = CONFIG.game_addons_dir / addon_name
+    content_base = CONFIG.content_addons_dir / addon_name
+
+    return {
+        "ok": True,
+        "addon_name": addon_name,
+        "GAME_RUNTIME_DIRS (NO resourcecompiler needed)": {
+            "root": str(game_base),
+            "vscripts_lua": str(game_base / "scripts" / "vscripts"),
+            "npc_keyvalues": str(game_base / "scripts" / "npc"),
+            "localization": str(game_base / "resource"),
+            "compiled_spellicons_output": str(
+                game_base / "panorama" / "images" / "spellicons"
+            ),
+            "compiled_itemicons_output": str(
+                game_base / "panorama" / "images" / "items"
+            ),
+        },
+        "CONTENT_SOURCE_DIRS (MUST compile via resourcecompiler.exe -> generates _c in game/)": {
+            "root": str(content_base),
+            "maps_vmap": str(content_base / "maps"),
+            "panorama_xml_layout": str(
+                content_base / "panorama" / "layout" / "custom_game"
+            ),
+            "panorama_js_scripts": str(
+                content_base / "panorama" / "scripts" / "custom_game"
+            ),
+            "panorama_css_styles": str(
+                content_base / "panorama" / "styles" / "custom_game"
+            ),
+            "custom_ability_icons_png_src": str(
+                content_base / "panorama" / "images" / "spellicons"
+            ),
+            "custom_item_icons_png_src": str(
+                content_base / "panorama" / "images" / "items"
+            ),
+            "sounds_src": str(content_base / "sounds"),
+            "soundevents_src": str(content_base / "soundevents"),
+            "materials_src": str(content_base / "materials"),
+            "particles_src": str(content_base / "particles"),
+        },
     }
 
 
 def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
-    """Validate KV syntax, check all referenced assets in VPK/addon, and sync Precache in addon_game_mode.lua."""
-    if not CONFIG.is_valid or not CONFIG.game_addons_dir:
+    """Validate KV syntax, detect misplaced files between game/ and content/, auto-compile custom icons, verify VPK assets, and sync Precache."""
+    if not CONFIG.is_valid or not CONFIG.game_addons_dir or not CONFIG.content_addons_dir:
         return {"ok": False, "error": "Dota 2 root directory not found."}
     if vdf is None:
         return {"ok": False, "error": "Python library 'vdf' is not installed."}
 
     game_addon = CONFIG.game_addons_dir / addon_name
+    content_addon = CONFIG.content_addons_dir / addon_name
     if not game_addon.exists():
         return {"ok": False, "error": f"Addon '{addon_name}' does not exist at {game_addon}"}
 
+    # 1. Detect misplaced files (e.g. raw .png/.xml/.css/.js/.vmap in game/, or .lua in content/)
+    misplaced_files: list[dict[str, str]] = []
+    legacy_flash3 = game_addon / "resource" / "flash3"
+    if legacy_flash3.exists():
+        misplaced_files.append(
+            {
+                "path": str(legacy_flash3),
+                "issue": "OBSOLETE Source 1 'resource/flash3' directory detected in game/! Dota 2 7.41+ ignores flash3.",
+                "fix": f"Move all .png icons to {content_addon / 'panorama/images/spellicons'} (or items/) and compile via resourcecompiler.exe.",
+            }
+        )
+
+    for bad_ext, dest_hint in (
+        ("*.xml", "content/.../panorama/layout/custom_game/"),
+        ("*.css", "content/.../panorama/styles/custom_game/"),
+        ("*.js", "content/.../panorama/scripts/custom_game/"),
+        ("*.vmap", "content/.../maps/"),
+        ("*.png", "content/.../panorama/images/spellicons/ (or items/)"),
+    ):
+        for f in game_addon.rglob(bad_ext):
+            # Ignore addon_template default files if any, but warn on custom ones
+            if f.name in ("addon_icon.png",):
+                continue
+            misplaced_files.append(
+                {
+                    "path": str(f.relative_to(game_addon)),
+                    "issue": f"Raw source file '{f.name}' placed inside game/ directory. Source 2 only reads compiled (*_c) assets in game/.",
+                    "fix": f"Move to {dest_hint} inside content/dota_addons/{addon_name}/ and run compile_addon_resource.",
+                }
+            )
+
+    if content_addon.exists():
+        for lua_f in content_addon.rglob("*.lua"):
+            misplaced_files.append(
+                {
+                    "path": str(lua_f.relative_to(content_addon)),
+                    "issue": f"Lua script '{lua_f.name}' placed in content/ instead of game/.",
+                    "fix": f"Move to game/dota_addons/{addon_name}/scripts/vscripts/.",
+                }
+            )
+
+    # 2. Auto-compile any raw .png icons in content/.../panorama/images/ that lack a compiled _png.vtex_c in game/
+    auto_compiled_icons: list[str] = []
+    icon_compile_errors: list[str] = []
+    content_images_dir = content_addon / "panorama" / "images"
+    if (
+        content_images_dir.exists()
+        and CONFIG.resourcecompiler_exe
+        and CONFIG.resourcecompiler_exe.exists()
+    ):
+        for png_file in content_images_dir.rglob("*.png"):
+            rel_png = png_file.relative_to(content_addon)
+            expected_vtex = (
+                game_addon
+                / rel_png.parent
+                / f"{png_file.stem}_png.vtex_c"
+            )
+            if not expected_vtex.exists():
+                proc = subprocess.run(
+                    [str(CONFIG.resourcecompiler_exe), "-i", str(png_file)],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=60,
+                )
+                if proc.returncode == 0 and expected_vtex.exists():
+                    auto_compiled_icons.append(str(rel_png))
+                else:
+                    icon_compile_errors.append(
+                        f"Failed to compile {rel_png}: {proc.stdout} {proc.stderr}"
+                    )
+
+    # 3. Validate KV syntax and check AbilityTextureName in items/abilities
     kv_errors: list[dict[str, str]] = []
+    icon_warnings: list[str] = []
     npc_dir = game_addon / "scripts" / "npc"
     if npc_dir.exists():
         for kv_file in sorted(npc_dir.rglob("*.txt")) + sorted(npc_dir.rglob("*.kv")):
             try:
                 text = kv_file.read_text(encoding="utf-8", errors="replace")
-                vdf.loads(text)
+                parsed_kv = vdf.loads(text)
+                root_block = next(iter(parsed_kv.values())) if parsed_kv else {}
+                if isinstance(root_block, dict):
+                    is_item_file = "item" in kv_file.name.lower()
+                    for entry_name, entry_data in root_block.items():
+                        if not isinstance(entry_data, dict):
+                            continue
+                        tex_name = entry_data.get("AbilityTextureName")
+                        if tex_name and is_item_file:
+                            # If using a custom png in panorama/images/items/<x>.png, remind about item_ prefix convention
+                            clean_tex = tex_name.removeprefix("item_")
+                            custom_item_png = (
+                                content_addon
+                                / "panorama"
+                                / "images"
+                                / "items"
+                                / f"{clean_tex}.png"
+                            )
+                            if custom_item_png.exists() and not tex_name.startswith("item_"):
+                                icon_warnings.append(
+                                    f"In {kv_file.name} -> '{entry_name}': AbilityTextureName is '{tex_name}', "
+                                    f"but for items with custom PNG '{custom_item_png.name}' in panorama/images/items/, "
+                                    f"Dota 2 requires 'AbilityTextureName' to be 'item_{clean_tex}'."
+                                )
             except Exception as exc:
                 kv_errors.append({"file": str(kv_file.relative_to(game_addon)), "error": str(exc)})
 
@@ -174,8 +324,17 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
             game_mode_lua.write_text(gm_text, encoding="utf-8")
 
     return {
-        "ok": len(kv_errors) == 0 and len(missing_assets) == 0,
+        "ok": (
+            len(kv_errors) == 0
+            and len(missing_assets) == 0
+            and len(misplaced_files) == 0
+            and len(icon_compile_errors) == 0
+        ),
         "kv_syntax_errors": kv_errors,
+        "misplaced_files_game_vs_content": misplaced_files,
+        "auto_compiled_icons": auto_compiled_icons,
+        "icon_compile_errors": icon_compile_errors,
+        "icon_naming_warnings": icon_warnings,
         "valid_assets_precached": len(valid_assets),
         "missing_or_hallucinated_assets": missing_assets,
         "auto_precache_file": str(auto_precache_file),

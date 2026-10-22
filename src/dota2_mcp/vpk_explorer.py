@@ -135,8 +135,25 @@ def extract_vpk_file_to_cache(vpk_or_engine_path: str, dest_dir: Path) -> Path:
     raise FileNotFoundError(f"Asset '{vpk_or_engine_path}' not found inside pak01_dir.vpk")
 
 
+def _load_vpk_kv_dict(pak: Any, kv_rel_path: str) -> dict[str, Any]:
+    """Read and parse a KeyValues file from pak01_dir.vpk or local game/dota fallback."""
+    if kv_rel_path in pak:
+        raw_bytes = pak.get_file(kv_rel_path).read()
+        raw_text = raw_bytes.decode("utf-8", errors="replace")
+    else:
+        local_kv = CONFIG.game_dir / "dota" / kv_rel_path if CONFIG.game_dir else None
+        if local_kv and local_kv.exists():
+            raw_text = local_kv.read_text(encoding="utf-8", errors="replace")
+        else:
+            return {}
+
+    parsed = vdf.loads(raw_text)
+    root_dict = next(iter(parsed.values())) if parsed else {}
+    return root_dict if isinstance(root_dict, dict) else {}
+
+
 def get_base_dota_definition(category: str, name: str) -> dict[str, Any]:
-    """Read standard hero, ability, unit, or item definition from pak01_dir.vpk."""
+    """Read standard hero, ability, unit, or item definition from pak01_dir.vpk (supports 7.41+ split hero ability files)."""
     cat = category.lower().strip()
     if cat not in BASE_KV_FILES:
         return {
@@ -149,47 +166,62 @@ def get_base_dota_definition(category: str, name: str) -> dict[str, Any]:
     kv_rel_path = BASE_KV_FILES[cat]
     try:
         pak = _get_vpk()
-        if kv_rel_path not in pak:
-            # Fallback to unpacked file in game/dota/scripts/npc if present
-            local_kv = CONFIG.game_dir / "dota" / kv_rel_path if CONFIG.game_dir else None
-            if local_kv and local_kv.exists():
-                raw_text = local_kv.read_text(encoding="utf-8", errors="replace")
-            else:
-                return {"ok": False, "error": f"File '{kv_rel_path}' not found in pak01_dir.vpk"}
-        else:
-            raw_bytes = pak.get_file(kv_rel_path).read()
-            raw_text = raw_bytes.decode("utf-8", errors="replace")
+        root_dict = _load_vpk_kv_dict(pak, kv_rel_path)
 
-        parsed = vdf.loads(raw_text)
-        root_dict = next(iter(parsed.values())) if parsed else {}
-        if not isinstance(root_dict, dict):
-            return {"ok": False, "error": f"Unexpected root structure in {kv_rel_path}"}
+        # In modern Dota 2 (7.33 - 7.41+), hero abilities are split into scripts/npc/heroes/npc_dota_hero_*.txt
+        if cat == "ability" and name not in root_dict:
+            assert _VPK_FILE_LIST is not None
+            hero_prefix = name.split("_")[0].lower() if "_" in name else ""
+            hero_files = [
+                f
+                for f in _VPK_FILE_LIST
+                if f.startswith("scripts/npc/heroes/") and f.endswith(".txt")
+            ]
+            # Prioritize matching hero filename first for speed
+            hero_files.sort(key=lambda p: 0 if hero_prefix and hero_prefix in p else 1)
+            for hf in hero_files:
+                hf_dict = _load_vpk_kv_dict(pak, hf)
+                if name in hf_dict:
+                    return {
+                        "ok": True,
+                        "category": cat,
+                        "source_file": hf,
+                        "name": name,
+                        "definition": hf_dict[name],
+                    }
+                root_dict.update(hf_dict)
 
-        # Exact match first
+        # Exact match
         if name in root_dict:
             return {
                 "ok": True,
                 "category": cat,
+                "source_file": kv_rel_path,
                 "name": name,
                 "definition": root_dict[name],
             }
 
         # Case-insensitive or substring match
         name_lower = name.lower()
-        similar_keys = [k for k in root_dict.keys() if name_lower in k.lower()]
+        similar_keys = [
+            k
+            for k in root_dict.keys()
+            if isinstance(k, str) and name_lower in k.lower()
+        ]
         if len(similar_keys) == 1:
             matched_key = similar_keys[0]
             return {
                 "ok": True,
                 "category": cat,
+                "source_file": kv_rel_path,
                 "name": matched_key,
                 "definition": root_dict[matched_key],
             }
 
         return {
             "ok": False,
-            "error": f"Entry '{name}' not found in {kv_rel_path}.",
-            "similar_names": similar_keys[:25],
+            "error": f"Entry '{name}' not found in {kv_rel_path} (or scripts/npc/heroes/*.txt).",
+            "similar_names": similar_keys[:30],
         }
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
