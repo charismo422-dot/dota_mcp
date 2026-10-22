@@ -124,16 +124,16 @@ dota_mcp/
     - **Описание:** Запускает `resourcecompiler.exe` для компиляции карты (`maps/<name>.vmap` с флагами `-fshallow -v -world -phys -gridnav -entities -nolightmaps`), Panorama UI (`panorama/layout/custom_game/...`), материалов или звуков. Возвращает статус сборки, список файлов в `maps/<map>.vpk` и отфильтрованный лог ошибок.
 
 ### Модуль 5: Управление игрой и живая отладка (`netcon_bridge.py`)
-15. `run_console_command(command: str, wait_response_ms: int = 1200) -> dict`
+15. `run_console_command(command: str, wait_response_ms: int = 1200, verbose: bool = False) -> dict`
     - **Описание:** Отправляет консольную команду в запущенную Dota 2 по TCP (`127.0.0.1:2121`), например:
       - `dota_launch_custom_game <addon_name> <map_name>` — запуск карты.
       - `script_reload` — горячая перезагрузка Lua-скриптов без перезапуска карты.
       - `ent_find <substring>` — проверка сущностей на загруженной карте.
-    - **Возвращает:** Ответ консоли и свежие строки лога (включая стектрейсы ошибок VScript/Lua).
-16. `verify_vscript_api(search_term: str) -> dict`
-    - **Описание:** Запрашивает у живого движка Dota 2 (7.41+) через `script_help2 <search_term>` реальные сигнатуры функций Lua и фильтрует весь буфер ответа на стороне Python до обрезки.
-17. `read_latest_console_log(tail_lines: int = 80) -> dict`
-    - **Описание:** Читает последние строки и ошибки из `game/dota/console.log` на диске (при запуске Доты с `-condebug`).
+    - **Возвращает:** Ответ консоли и свежие строки лога (включая стектрейсы ошибок VScript/Lua). Известный шум движка (служебная информация сервера, Steam/GC, сетевые сообщения, отсутствующие стандартные ресурсы, дамп `script_help2`) скрывается и считается в `noise_lines_hidden`; метки времени убираются. `verbose=True` — сырой вывод.
+16. `verify_vscript_api(search_term: str, refresh: bool = False, limit: int = 20) -> dict`
+    - **Описание:** Ищет функции, классы и константы Lua в кэше `.cache/vscript_api/build_<ClientVersion>.txt`. Кэш строится один раз на билд Доты: команда `script_help2` (полный дамп ~12 000 строк), полный текст читается из `console.log` (NetCon обрезает вывод). Дальше поиск работает без запущенной игры и не пишет в консоль. Если билд сменился, а игра не запущена, используется последний кэш (`source: stale_cache`). Ответ компактный: `сигнатура -- описание` для функций, строка `ИМЯ = число -- ...` для констант.
+17. `read_latest_console_log(tail_lines: int = 40, grep: str = "", only_errors: bool = False, verbose: bool = False) -> dict`
+    - **Описание:** Читает последний 1 МБ `game/dota/console.log` (при запуске Доты с `-condebug`), скрывает шум как `run_console_command`, `grep` оставляет строки с подстрокой, `only_errors` — только ошибки. Максимум 200 строк.
 
 ### Модуль 6: Самодиагностика и Журнал багов (`diagnostics.py`)
 18. `run_mcp_self_test() -> dict`

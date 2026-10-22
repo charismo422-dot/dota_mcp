@@ -4,8 +4,27 @@ if CAddonTemplateGameMode == nil then
 	CAddonTemplateGameMode = class({})
 end
 
+-- Debug console commands are registered at file load so that script_reload picks up new ones
+Convars:RegisterCommand( "mcp_lab_status", function()
+	local hero = GameRules.AddonTemplate and GameRules.AddonTemplate.hero
+	if not hero then print( "[MCP_LAB] status: no hero" ) return end
+	local o = hero:GetAbsOrigin()
+	print( string.format( "[MCP_LAB] status: hero at %d %d", o.x, o.y ) )
+	local units = FindUnitsInRadius( hero:GetTeamNumber(), o, nil, FIND_UNITS_EVERYWHERE, DOTA_UNIT_TARGET_TEAM_ENEMY,
+		DOTA_UNIT_TARGET_BASIC, DOTA_UNIT_TARGET_FLAG_INVULNERABLE + DOTA_UNIT_TARGET_FLAG_FOW_VISIBLE, 0, false )
+	print( "[MCP_LAB] status: visible enemies=" .. #units )
+	local all = FindUnitsInRadius( hero:GetTeamNumber(), o, nil, FIND_UNITS_EVERYWHERE, DOTA_UNIT_TARGET_TEAM_ENEMY,
+		DOTA_UNIT_TARGET_BASIC, DOTA_UNIT_TARGET_FLAG_INVULNERABLE, 0, false )
+	for _, u in ipairs( all ) do
+		local p = u:GetAbsOrigin()
+		print( string.format( "[MCP_LAB] status: %s at %d %d dist=%d", u:GetUnitName(), p.x, p.y, ( p - o ):Length2D() ) )
+	end
+end, "MCP Lab: print hero and enemy positions", 0 )
+
 function Precache( context )
 	xpcall(function() require("auto_precache")(context) end, function(err) print("[MCP Precache Error] " .. tostring(err)) end)
+	-- Units spawned from Lua are invisible unless their model is precached
+	PrecacheUnitByNameSync( "npc_dota_creep_badguys_melee", context )
 end
 
 function Activate()

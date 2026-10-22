@@ -10,7 +10,7 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 1. **Scaffold from description** — one call creates ability/item/hero/modifier KV + Lua + localization + precache from a short spec — `idea`
 2. **Cross-reference validator** — before launch, detect broken links: abilities referenced by heroes/units that don't exist, missing `ScriptFile` Lua files, unknown modifiers, missing localization keys — `idea`
-3. **Offline VScript API cache** — dump `script_help2` once, then verify Lua calls without a running game — `idea`
+3. **Offline VScript API cache** — dump `script_help2` once, then verify Lua calls without a running game — `done` (2026-10-22, in `verify_vscript_api`)
 4. **Automated mechanic tests** — Lua harness spawns hero/targets, casts the ability, asserts damage/effects via console log — `idea`
 5. **In-game screenshots** — capture a screenshot so the agent can visually check particles and UI (console command to be verified) — `idea`
 6. **Custom sounds & music** — add own audio files, generate `.vsndevts`, compile — `idea`
@@ -22,10 +22,11 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 ## Improvements to existing tools
 
 - **Resolve sound events in precache** — `validate_and_sync_precache` maps sound event names used in Lua/KV to their `.vsndevts` (cached event index built once from the VPK) and precaches them; currently sounds silently go un-precached. High priority — `idea`
-- **`verify_vscript_api` from a cached dump** — run `script_help2` once per game build, then answer from the cache; avoids flooding `console.log` and duplicate matches — `idea` (overlaps with feature #3)
+- **`verify_vscript_api` from a cached dump** — run `script_help2` once per game build, then answer from the cache; avoids flooding `console.log` and duplicate matches — `done` (also covers feature #3)
+- **Precache units created from Lua** — detect `CreateUnitByName("x", ...)` literals and add `PrecacheUnitByNameSync` to `auto_precache.lua`; otherwise spawned units are invisible — `idea`
 - **Compact `list_map_entities`** — default to id/classname/targetname/origin only, full properties on request; saves context — `idea`
 
-- **Filter console noise** — split `errors_and_warnings` into addon errors (Lua, own assets) vs known base-game noise; trim server-info dumps from `read_latest_console_log` — `idea`
+- **Filter console noise** — split `errors_and_warnings` into addon errors (Lua, own assets) vs known base-game noise; trim server-info dumps from `read_latest_console_log` — `done` (noise filter, `grep`, `only_errors`)
 
 ## Verification gaps
 

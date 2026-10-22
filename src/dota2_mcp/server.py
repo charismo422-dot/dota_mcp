@@ -188,23 +188,36 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
 
 
 @mcp.tool()
-def run_console_command(command: str, wait_response_ms: int = 1200) -> dict[str, Any]:
-    """Send a console command to running Dota 2 via NetCon TCP port 2121 (e.g. 'dota_launch_custom_game <addon> <map>', 'script_reload') and read console logs/errors."""
+def run_console_command(
+    command: str, wait_response_ms: int = 1200, verbose: bool = False
+) -> dict[str, Any]:
+    """Send a console command to running Dota 2 via NetCon TCP port 2121 (e.g. 'dota_launch_custom_game <addon> <map>', 'script_reload') and read console logs/errors.
+    Known engine noise is hidden; pass verbose=True for raw output.
+    """
     return netcon_bridge.run_console_command(
-        command=command, wait_response_ms=wait_response_ms
+        command=command, wait_response_ms=wait_response_ms, verbose=verbose
     )
 
 
 @mcp.tool()
-def verify_vscript_api(search_term: str) -> dict[str, Any]:
-    """Query the live Dota 2 engine (7.41+) via 'script_help2 <search_term>' to verify real Lua functions, classes, and modifier constants directly from the game binary."""
-    return netcon_bridge.verify_vscript_api(search_term=search_term)
+def verify_vscript_api(search_term: str, refresh: bool = False, limit: int = 20) -> dict[str, Any]:
+    """Verify real Lua VScript functions, classes and enum constants (7.41+) against a per-build cache of the engine's 'script_help2' dump.
+    The cache is built once per Dota 2 build (game running with a map loaded); afterwards lookups work offline.
+    Pass refresh=True to rebuild the cache.
+    """
+    return netcon_bridge.verify_vscript_api(search_term=search_term, refresh=refresh, limit=limit)
 
 
 @mcp.tool()
-def read_latest_console_log(tail_lines: int = 80) -> dict[str, Any]:
-    """Read the latest lines and Lua errors from game/dota/console.log on disk (when Dota 2 is launched with -condebug)."""
-    return netcon_bridge.read_latest_console_log(tail_lines=tail_lines)
+def read_latest_console_log(
+    tail_lines: int = 40, grep: str = "", only_errors: bool = False, verbose: bool = False
+) -> dict[str, Any]:
+    """Read the latest lines and Lua errors from game/dota/console.log on disk (when Dota 2 is launched with -condebug).
+    Known engine noise is hidden (verbose=True to show); 'grep' keeps only lines containing the text; only_errors=True returns just errors.
+    """
+    return netcon_bridge.read_latest_console_log(
+        tail_lines=tail_lines, grep=grep, only_errors=only_errors, verbose=verbose
+    )
 
 
 # ---------------------------------------------------------------------------
