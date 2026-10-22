@@ -23,6 +23,8 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 - **Compact `list_map_entities`** — default to id/classname/targetname/origin only, full properties on request; saves context — `idea`
 
+- **Filter console noise** — split `errors_and_warnings` into addon errors (Lua, own assets) vs known base-game noise; trim server-info dumps from `read_latest_console_log` — `idea`
+
 ## Verification gaps
 
 - **Verify `.png` icon compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 4 — `idea`

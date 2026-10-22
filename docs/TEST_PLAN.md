@@ -8,7 +8,7 @@ Every stage also checks the error channel: after each change, `script_reload` (o
 
 | # | Stage | What is verified | Status |
 |---|---|---|---|
-| 0 | Setup | `create_or_configure_addon`, `prepare_map_from_template`, `compile_addon_resource` (map), `dota_launch_custom_game` | offline part done (2026-10-22); in-game launch pending |
+| 0 | Setup | `create_or_configure_addon`, `prepare_map_from_template`, `compile_addon_resource` (map), `dota_launch_custom_game` | done (2026-10-22) |
 | 1 | Ability | Lua ability + modifier + particle + sound: `search_dota_assets`, `inspect_particle` (CPs), `search_sound_events`, `verify_vscript_api`, `validate_and_sync_precache`, hot reload via `script_reload` | todo |
 | 2 | Hero | Custom hero based on a stock one: `get_base_dota_definition`, `inspect_model` (activities/attachments), 4 abilities, hero pick | todo |
 | 3 | Creeps & AI | Timed creep waves, spawn points via `add_map_entity`, simple AI | todo |
