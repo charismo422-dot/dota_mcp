@@ -193,7 +193,9 @@ def _merge_mcp_server_entry(config_path: Path, server_entry: dict[str, Any]) -> 
     config_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def configure_agents(venv_python: Path, home_dir: Path, dota_root: str) -> None:
+def configure_agents(
+    venv_python: Path, home_dir: Path, dota_root: str, force_antigravity: bool
+) -> dict[str, Any]:
     print("[5/6] Generating MCP configurations and syncing agent skills...")
     server_entry: dict[str, Any] = {
         "command": str(venv_python.resolve()),
@@ -205,24 +207,15 @@ def configure_agents(venv_python: Path, home_dir: Path, dota_root: str) -> None:
         },
     }
 
-    # 1. Antigravity MCP configs (~/.gemini/antigravity/mcp_config.json and ~/.gemini/config/mcp_config.json)
-    ag_paths = [
-        home_dir / ".gemini" / "antigravity" / "mcp_config.json",
-        home_dir / ".gemini" / "config" / "mcp_config.json",
-    ]
-    resolved_seen: set[Path] = set()
-    for cfg_path in ag_paths:
-        cfg_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            real_target = cfg_path.resolve()
-        except OSError:
-            real_target = cfg_path
-        if real_target in resolved_seen and cfg_path.exists():
-            print(f"  OK: Antigravity config (linked): {cfg_path}")
-            continue
-        _merge_mcp_server_entry(cfg_path, server_entry)
-        resolved_seen.add(real_target)
-        print(f"  OK: Antigravity MCP config updated: {cfg_path}")
+    # 1. Antigravity global MCP config (~/.gemini/config/mcp_config.json, per antigravity.google/docs/mcp).
+    #    Only touched when Antigravity is present (~/.gemini exists) or --antigravity is passed.
+    gemini_dir = home_dir / ".gemini"
+    if gemini_dir.is_dir() or force_antigravity:
+        ag_config = gemini_dir / "config" / "mcp_config.json"
+        _merge_mcp_server_entry(ag_config, server_entry)
+        print(f"  OK: Antigravity MCP config updated: {ag_config}")
+    else:
+        print(f"  SKIP: Antigravity not detected ({gemini_dir} missing); pass --antigravity to configure it anyway.")
 
     # 2. Claude Code project config (.mcp.json in repo root)
     _merge_mcp_server_entry(CLAUDE_MCP_JSON, server_entry)
@@ -235,6 +228,14 @@ def configure_agents(venv_python: Path, home_dir: Path, dota_root: str) -> None:
         CLAUDE_SKILL_DST_DIR.parent.mkdir(parents=True, exist_ok=True)
         shutil.copytree(SKILL_SRC_DIR, CLAUDE_SKILL_DST_DIR)
         print(f"  OK: Skill copied to {CLAUDE_SKILL_DST_DIR}")
+
+    return server_entry
+
+
+def print_manual_config(server_entry: dict[str, Any]) -> None:
+    print("\nMCP config snippet for other agents (Cursor, Windsurf, Codex, ...):")
+    snippet = {"mcpServers": {"dota2-workshop-mcp": server_entry}}
+    print(json.dumps(snippet, indent=2, ensure_ascii=False))
 
 
 def run_final_self_test(venv_python: Path, dota_root: str) -> None:
@@ -271,6 +272,11 @@ def main() -> None:
         help="Override target user home directory for Antigravity MCP config files (useful for isolated testing).",
     )
     parser.add_argument(
+        "--antigravity",
+        action="store_true",
+        help="Write the Antigravity MCP config even if ~/.gemini does not exist yet.",
+    )
+    parser.add_argument(
         "--dota-path",
         type=str,
         default=None,
@@ -285,8 +291,11 @@ def main() -> None:
     venv_python = ensure_venv_and_deps(venv_dir)
     dota_info = check_dota_and_workshop_tools(venv_python, args.dota_path)
     ensure_decompiler(venv_python)
-    configure_agents(venv_python, target_home, str(dota_info["dota_root"]))
+    server_entry = configure_agents(
+        venv_python, target_home, str(dota_info["dota_root"]), args.antigravity
+    )
     run_final_self_test(venv_python, str(dota_info["dota_root"]))
+    print_manual_config(server_entry)
 
 
 if __name__ == "__main__":

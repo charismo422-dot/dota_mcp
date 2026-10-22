@@ -2,7 +2,9 @@
 
 > **[Русская версия документации (README.ru.md)](./README.ru.md)**
 >
-> **Project Status:** `Alpha` — Core functionality (19 MCP tools) is verified on Windows 10/11 with Dota 2 (7.41+), real `dmxconvert.exe`, `resourcecompiler.exe`, `Source2Viewer-CLI.exe`, and live NetCon TCP bridge (`127.0.0.1:2121`).
+> **Project Status:** `Alpha` — tested on a single PC (Windows 11, Dota 2 7.41+) with Google Antigravity on one test mechanic (the [`mcp_test`](./examples/mcp_test/README.md) Ring of Fire ability). See [What Has Been Verified](#what-has-been-verified) below.
+>
+> **Disclaimer:** This is an unofficial, community project. It is not affiliated with, endorsed by, or sponsored by Valve Corporation. Dota 2 is a trademark of Valve Corporation.
 
 `dota_mcp` is a specialized **Model Context Protocol (MCP)** server and agent workflow toolkit that enables AI coding agents to autonomously create, modify, compile, and live-debug **Dota 2 Custom Games** on Windows without hallucinating asset paths or Lua APIs.
 
@@ -25,6 +27,26 @@
    - `run_console_command`, `verify_vscript_api` (`script_help2`), `read_latest_console_log`: Launch custom games, hot-reload Lua scripts (`script_reload`), query live engine Lua API signatures, and inspect runtime stack traces.
 6. **Self-Diagnostics & Bug Logging:**
    - `run_mcp_self_test`, `log_bug_report`.
+
+---
+
+## What Has Been Verified
+
+**Verified live** (Windows 11, Antigravity, `mcp_test` addon):
+- `setup.py` install, `run_mcp_self_test`, `pak01_dir.vpk` indexing.
+- `search_dota_assets`, `search_sound_events`, `get_base_dota_definition` (incl. 7.41+ nested `AbilityDefinitions`), `inspect_model`, `inspect_particle`.
+- `create_or_configure_addon` (addon appears in the Workshop Tools UI), `prepare_map_from_template`, `add_map_entity`, `list_map_entities`, `compile_addon_resource` for `.vmap` (also covered by `tests/verify_phase0_acceptance.py`).
+- `upsert_localization`, `validate_and_sync_precache` (KV validation + `auto_precache.lua` for Lua/KV assets).
+- `run_console_command` (`dota_launch_custom_game`, `script_reload`), `verify_vscript_api`, `read_latest_console_log` over NetCon `2121`.
+- Claude Code: MCP connection (all 19 tools listed) and `run_mcp_self_test` only — no live in-game session yet.
+
+**Not verified yet:**
+- Compiling custom `.png` icons (spellicons/items) to `.vtex_c`.
+- Compiling Panorama UI (`.xml` / `.css` / `.js`) and materials via `compile_addon_resource`.
+- `remove_map_entity` on brush/mesh entities.
+- Windows 10, other PCs, non-default Steam library layouts.
+- Cursor, Windsurf, Codex and other agents.
+- Mechanics beyond the single `mcp_test` ability (heroes, items, multiplayer, Workshop publishing).
 
 ---
 
@@ -54,9 +76,11 @@
    **What `setup.py` does automatically:**
    - Creates `.venv` and installs Python dependencies (`mcp>=2.3.0,<3.0.0`, `vpk`, `vdf`, `requests`).
    - Locates your Dota 2 installation and verifies Workshop Tools binaries (`dmxconvert.exe`, `resourcecompiler.exe`, `addon_template`).
-   - Downloads the latest `Source2Viewer-CLI.exe` into `bin/`.
-   - Safely merges `dota2-workshop-mcp` into Antigravity's `mcp_config.json` (preserving all your existing MCP servers) and generates `.mcp.json` + `.claude/skills/` for Claude Code.
+   - Downloads the latest `Source2Viewer-CLI.exe` into `bin/` (**~110 MB**; ~120 MB on disk with its DLLs).
+   - If Antigravity is installed (`~/.gemini` exists) or `--antigravity` is passed, safely merges `dota2-workshop-mcp` into `~/.gemini/config/mcp_config.json` (preserving your existing MCP servers). Otherwise `~/.gemini` is not created.
+   - Generates `.mcp.json` + `.claude/skills/` for Claude Code.
    - Runs `run_mcp_self_test` to confirm readiness.
+   - Prints a ready-to-paste MCP config snippet (`command`, `args`, `cwd`, `env` with `PYTHONPATH`) for manually connecting other agents.
 
 3. **Restart or refresh your AI agent** so it loads the `dota2-workshop-mcp` server and project rules.
 
@@ -81,9 +105,9 @@
 
 | Agent | Support Status | How Rules & MCP Are Loaded |
 | :--- | :--- | :--- |
-| **Google Antigravity** | **Verified & Tested** | Reads `GEMINI.md` -> `@[AGENTS.md](./AGENTS.md)`, skill in `.agents/skills/dota2-custom-game-dev/`, and MCP config in `~/.gemini/antigravity/mcp_config.json` (`~/.gemini/config/mcp_config.json`). |
-| **Claude Code** | **Configured (Unverified)** | Reads `CLAUDE.md` -> `@AGENTS.md`, skill copied to `.claude/skills/dota2-custom-game-dev/`, and MCP config generated in `.mcp.json`. |
-| **Other Agents (Cursor, Windsurf, Codex)** | **Compatible via `AGENTS.md`** | Rules in `AGENTS.md`; point your agent's MCP settings to `.venv\Scripts\python.exe -m src.dota2_mcp.server`. |
+| **Google Antigravity** | **Verified** (one PC, one test mechanic) | Reads `GEMINI.md` -> `@[AGENTS.md](./AGENTS.md)`, skill in `.agents/skills/dota2-custom-game-dev/`, and MCP config in `~/.gemini/config/mcp_config.json`. |
+| **Claude Code** | **Verified: connection & self-test** | Reads `CLAUDE.md` -> `@AGENTS.md`, skill copied to `.claude/skills/dota2-custom-game-dev/`, and MCP config generated in `.mcp.json`. |
+| **Other Agents (Cursor, Windsurf, Codex)** | **Unverified** | Rules in `AGENTS.md`; paste the MCP config snippet printed at the end of `python setup.py` into your agent's MCP settings. |
 
 ---
 
@@ -113,3 +137,13 @@ To run the automated acceptance test suite for `.vmap` editing and compilation a
 - [Self-Check Protocol (`docs/SELF_CHECK_PROTOCOL.md`)](./docs/SELF_CHECK_PROTOCOL.md)
 - [Bug & Fix Log (`docs/BUG_LOG.md`)](./docs/BUG_LOG.md)
 - [Reference Format Samples (`docs/reference_samples/`)](./docs/reference_samples/)
+
+---
+
+## License
+
+No license has been chosen yet. Until one is added, all rights are reserved by the author.
+
+## Disclaimer
+
+`dota_mcp` is an unofficial project and is not affiliated with or endorsed by Valve Corporation. Dota 2, Steam, and Source 2 are trademarks of Valve Corporation.
