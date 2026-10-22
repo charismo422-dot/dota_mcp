@@ -40,6 +40,26 @@
 	}
 
 	//=================================================================================
+	// MCP Lab (stage 5b): Rift Keeper — friendly static NPC that talks through a Panorama dialog
+	//=================================================================================
+	"npc_mcp_rift_keeper"
+	{
+		"Model"						"models/heroes/oracle/oracle.vmdl"
+		"BaseClass"					"npc_dota_creature"
+		"Level"						"1"
+		"ModelScale"				"1.0"
+		"AttackCapabilities"		"DOTA_UNIT_CAP_NO_ATTACK"
+		"MovementCapabilities"		"DOTA_UNIT_CAP_MOVE_NONE"
+		"RingRadius"				"60"
+		"HealthBarOffset"			"220"
+		"StatusHealth"				"1000"
+		"VisionDaytimeRange"		"400"
+		"VisionNighttimeRange"		"400"
+		"TeamName"					"DOTA_TEAM_GOODGUYS"
+		"UnitRelationshipClass"		"DOTA_NPC_UNIT_RELATIONSHIP_TYPE_DEFAULT"
+	}
+
+	//=================================================================================
 	// MCP Lab (stage 3): Rift Giant — elite with a telegraphed ground slam (custom AI casts it)
 	//=================================================================================
 	"npc_mcp_rift_giant"

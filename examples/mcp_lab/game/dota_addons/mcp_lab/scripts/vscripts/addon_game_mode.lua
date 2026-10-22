@@ -4,8 +4,7 @@ if CAddonTemplateGameMode == nil then
 	CAddonTemplateGameMode = class({})
 end
 
-LinkLuaModifier( "modifier_mcp_damage_meter", "modifiers/modifier_mcp_damage_meter", LUA_MODIFIER_MOTION_NONE )
-LinkLuaModifier( "modifier_mcp_wave_ai", "modifiers/modifier_mcp_wave_ai", LUA_MODIFIER_MOTION_NONE )
+require( "mcp_lab_links" )
 
 local WAVE_SPAWNERS = { "lab_spawn_west", "lab_spawn_east" }  -- info_target entities placed with add_map_entity
 
@@ -124,6 +123,60 @@ Convars:RegisterCommand( "mcp_lab_autotest5", function()
 	end, 1.5 )
 end, "MCP Lab: stage 5 autotest (Panorama HUD events)", 0 )
 
+-- Stage 5b: world-space Panorama — floating damage numbers, overhead charges, NPC dialog with a choice
+Convars:RegisterCommand( "mcp_lab_autotest5b", function()
+	local gm = GameRules.AddonTemplate
+	local hero = gm.hero
+	local checks = {}
+	local home = hero:GetAbsOrigin()
+	local function probe( tag )
+		local ping = RandomInt( 1000, 999999 )
+		CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_world_probe", { ping = ping } )
+		return tostring( ping )
+	end
+
+	-- 1) hit a dummy -> floating numbers must appear; overhead charges must track the hero
+	local dummy = CreateUnitByName( "npc_dota_hero_target_dummy", home + Vector( 250, 0, 0 ), true, nil, nil, DOTA_TEAM_NEUTRALS )
+	dummy:SetIdleAcquire( false )
+	dummy:AddNewModifier( dummy, nil, "modifier_mcp_damage_meter", {} )
+	hero:SetContextThink( "MCPLab5bHit", function()
+		ApplyDamage({ victim = dummy, attacker = hero, damage = 123, damage_type = DAMAGE_TYPE_MAGICAL })
+		local p1 = probe()
+		hero:SetContextThink( "MCPLab5bProbe1", function()
+			local a = ( gm.world_acks or {} )[ p1 ]
+			checks.floating_numbers = a ~= nil and a.floats > 0
+			checks.overhead = a ~= nil and a.overhead == 1
+
+			-- 2) walk up to the keeper -> dialog opens; JS simulates pressing option 1
+			FindClearSpaceForUnit( hero, gm.keeper:GetAbsOrigin() + Vector( 150, -100, 0 ), true )
+			hero:SetContextThink( "MCPLab5bDialog", function()
+				local p2 = probe()
+				hero:SetContextThink( "MCPLab5bProbe2", function()
+					local b = ( gm.world_acks or {} )[ p2 ]
+					checks.dialog_open = b ~= nil and b.dialog == 1
+					CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog_autochoose", { option = 1 } )
+					hero:SetContextThink( "MCPLab5bChoice", function()
+						checks.choice_applied = hero:HasModifier( "modifier_mcp_rift_blessing" )
+						FindClearSpaceForUnit( hero, home, true )
+						UTIL_Remove( dummy )
+						local all_ok, parts = true, {}
+						for _, name in ipairs({ "floating_numbers", "overhead", "dialog_open", "choice_applied" }) do
+							all_ok = all_ok and checks[name]
+							table.insert( parts, name .. "=" .. tostring( checks[name] ) )
+						end
+						print( "[MCP_LAB] AUTOTEST stage5b " .. ( all_ok and "PASS" or "FAIL" ) .. ": " .. table.concat( parts, " " ) )
+						return nil
+					end, 1.0 )
+					return nil
+				end, 0.4 )
+				return nil
+			end, 0.8 )
+			return nil
+		end, 0.4 )
+		return nil
+	end, 0.3 )
+end, "MCP Lab: stage 5b autotest (world-space Panorama)", 0 )
+
 Convars:RegisterCommand( "mcp_lab_autotest4", function()
 	GameRules.AddonTemplate:RunItemTest( GameRules.AddonTemplate.hero )
 end, "MCP Lab: stage 4 autotest (custom item: stats, rift pull, silence)", 0 )
@@ -139,6 +192,7 @@ function Precache( context )
 	PrecacheUnitByNameSync( "npc_mcp_void_imp", context )
 	PrecacheUnitByNameSync( "npc_mcp_rift_giant", context )
 	PrecacheUnitByNameSync( "npc_dota_hero_enigma", context )
+	PrecacheUnitByNameSync( "npc_mcp_rift_keeper", context )
 end
 
 function Activate()
@@ -153,6 +207,7 @@ function CAddonTemplateGameMode:InitGameMode()
 	GameRules:EnableCustomGameSetupAutoLaunch( true )
 	GameRules:LockCustomGameSetupTeamAssignment( true )
 	GameRules:SetPreGameTime( 600 )
+	GameRules:SetStartingGold( 99999 )  -- playtest: every custom item must be buyable right away
 
 	GameRules:GetGameModeEntity():SetCustomGameForceHero( "npc_dota_hero_crystal_maiden" )
 
@@ -163,6 +218,8 @@ function CAddonTemplateGameMode:InitGameMode()
 	self.hud_kills, self.hud_energy, self.hud_acks = 0, 0, {}
 	CustomGameEventManager:RegisterListener( "mcp_lab_summon_wave", function(...) return self:OnHudSummonWave( ... ) end )
 	CustomGameEventManager:RegisterListener( "mcp_lab_hud_ack", function(...) return self:OnHudAck( ... ) end )
+	CustomGameEventManager:RegisterListener( "mcp_lab_dialog_choice", function(...) return self:OnDialogChoice( ... ) end )
+	CustomGameEventManager:RegisterListener( "mcp_lab_world_ack", function(...) return self:OnWorldAck( ... ) end )
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLabHud", function()
 		self:SendHudUpdate()
 		return 0.5
@@ -204,6 +261,12 @@ function CAddonTemplateGameMode:OnHudAck( event_source_index, data )
 	self.hud_acks[ tostring( data.ping ) ] = true
 end
 
+-- World-space UI script reports what it currently shows (used by the stage 5b autotest)
+function CAddonTemplateGameMode:OnWorldAck( event_source_index, data )
+	self.world_acks = self.world_acks or {}
+	self.world_acks[ tostring( data.ping ) ] = data
+end
+
 function CAddonTemplateGameMode:SpawnTargets( center )
 	local targets = {}
 	for _, offset in ipairs({ Vector( 150, 0, 0 ), Vector( -150, 0, 0 ), Vector( 0, 150, 0 ) }) do
@@ -243,6 +306,52 @@ function CAddonTemplateGameMode:OnNPCSpawned( event )
 	-- Autotests are NOT started here: a manual playtest must begin with a clean arena.
 	-- The agent runs them on demand ("mcp_lab_autotest" = all stages, "mcp_lab_autotest3/4" = single stage).
 	self.hero = hero
+	self:SpawnRiftKeeper( hero:GetAbsOrigin() + Vector( -500, 350, 0 ) )
+end
+
+--------------------------------------------------------------------------------
+-- Stage 5b: Rift Keeper NPC with a Panorama dialog (opens when the hero walks up to it)
+--------------------------------------------------------------------------------
+
+function CAddonTemplateGameMode:SpawnRiftKeeper( pos )
+	local keeper = CreateUnitByName( "npc_mcp_rift_keeper", pos, true, nil, nil, DOTA_TEAM_GOODGUYS )
+	keeper:AddNewModifier( keeper, nil, "modifier_invulnerable", {} )
+	keeper:SetForwardVector( Vector( 1, -1, 0 ):Normalized() )
+	self.keeper = keeper
+	self.dialog_open = false
+	GameRules:GetGameModeEntity():SetContextThink( "MCPLabKeeperDialog", function()
+		return self:UpdateKeeperDialog()
+	end, 0.25 )
+end
+
+function CAddonTemplateGameMode:UpdateKeeperDialog()
+	if not IsValidEntity( self.keeper ) or not IsValidEntity( self.hero ) then return nil end
+	local dist = ( self.hero:GetAbsOrigin() - self.keeper:GetAbsOrigin() ):Length2D()
+	if not self.dialog_open and dist < 320 then
+		self.dialog_open = true
+		CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog", {
+			action = "open", npc = self.keeper:entindex(),
+			speaker = "#mcp_lab_keeper_name", text = "#mcp_lab_keeper_greet",
+			opt1 = "#mcp_lab_keeper_opt_gift", opt2 = "#mcp_lab_keeper_opt_leave",
+		} )
+	elseif self.dialog_open and dist > 520 then
+		self.dialog_open = false
+		CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog", { action = "close" } )
+	end
+	return 0.25
+end
+
+function CAddonTemplateGameMode:OnDialogChoice( event_source_index, data )
+	if tonumber( data.option ) == 1 then
+		self.hero:AddNewModifier( self.hero, nil, "modifier_mcp_rift_blessing", { duration = 15 } )
+		self.hud_energy = math.min( 100, self.hud_energy + 50 )
+		self:SendHudUpdate()
+		EmitSoundOn( "Hero_Enigma.Black_Hole.Stop", self.hero )
+		CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog", { action = "reply", text = "#mcp_lab_keeper_reply_gift" } )
+	else
+		CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_dialog", { action = "reply", text = "#mcp_lab_keeper_reply_leave" } )
+	end
+	print( "[MCP_LAB] dialog choice " .. tostring( data.option ) )
 end
 
 -- Automated check: spawn targets, cast once, verify damage + slow modifier
@@ -332,6 +441,7 @@ function CAddonTemplateGameMode:SpawnWave( wave_number, force_giant )
 				local imp = CreateUnitByName( "npc_mcp_void_imp", origin + RandomVector( 120 ), true, nil, nil, DOTA_TEAM_BADGUYS )
 				imp:SetRenderColor( 170, 60, 255 )  -- void purple, so the reused creep model reads as a new unit
 				imp:AddNewModifier( imp, nil, "modifier_mcp_wave_ai", {} )
+				imp:AddNewModifier( imp, nil, "modifier_mcp_damage_meter", {} )  -- floating damage numbers
 				table.insert( spawned, imp )
 			end
 			if force_giant or wave_number % 3 == 0 then
@@ -339,6 +449,7 @@ function CAddonTemplateGameMode:SpawnWave( wave_number, force_giant )
 				giant:SetRenderColor( 255, 90, 90 )
 				giant:FindAbilityByName( "mcp_giant_slam" ):SetLevel( 1 )
 				giant:AddNewModifier( giant, nil, "modifier_mcp_wave_ai", {} )
+				giant:AddNewModifier( giant, nil, "modifier_mcp_damage_meter", {} )
 				table.insert( spawned, giant )
 				force_giant = false  -- one giant per wave
 			end

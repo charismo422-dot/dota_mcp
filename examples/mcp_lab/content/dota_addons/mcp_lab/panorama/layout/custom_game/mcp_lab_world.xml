@@ -1,0 +1,39 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/custom_game/mcp_lab_world.css" />
+	</styles>
+	<scripts>
+		<include src="file://{resources}/scripts/custom_game/mcp_lab_world.js" />
+	</scripts>
+	<!-- Full-screen, click-through layer for UI that follows things in the 3D world -->
+	<Panel hittest="false" class="WorldLayer">
+		<Panel hittest="false" id="FloatLayer" class="FloatLayer" />
+
+		<!-- Void charges above the hero's health bar -->
+		<Panel hittest="false" id="Overhead" class="Overhead">
+			<Panel hittest="false" class="Pip" id="Pip0" />
+			<Panel hittest="false" class="Pip" id="Pip1" />
+			<Panel hittest="false" class="Pip" id="Pip2" />
+		</Panel>
+
+		<!-- NPC dialog bubble anchored above the speaker -->
+		<Panel id="Dialog" class="Dialog">
+			<Panel class="DialogHeader">
+				<Panel class="SpeakerDot" />
+				<Label id="DialogSpeaker" class="DialogSpeaker" text="" />
+			</Panel>
+			<Label id="DialogText" class="DialogText" text="" />
+			<Panel id="DialogOptions" class="DialogOptions">
+				<Button id="Option1" class="DialogOption">
+					<Label class="OptionKey" text="1" />
+					<Label id="Option1Text" class="OptionText" text="" />
+				</Button>
+				<Button id="Option2" class="DialogOption">
+					<Label class="OptionKey" text="2" />
+					<Label id="Option2Text" class="OptionText" text="" />
+				</Button>
+			</Panel>
+			<Panel class="DialogPointer" />
+		</Panel>
+	</Panel>
+</root>

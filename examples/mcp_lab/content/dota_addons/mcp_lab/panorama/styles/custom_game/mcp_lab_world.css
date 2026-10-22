@@ -1,0 +1,182 @@
+.WorldLayer, .FloatLayer
+{
+	width: 100%;
+	height: 100%;
+}
+
+/* ---------- Floating damage numbers ---------- */
+.FloatNumber
+{
+	font-size: 26px;
+	font-weight: bold;
+	letter-spacing: 1px;
+	text-shadow: 0px 2px 6px 3.0 #000000c0;
+	horizontal-align: left;
+	vertical-align: top;
+}
+
+.FloatNumber.Magical  { color: #c9a6ff; }
+.FloatNumber.Physical { color: #ffe0c2; }
+.FloatNumber.Pure     { color: #ffe27a; }
+.FloatNumber.Big      { font-size: 34px; }
+
+/* ---------- Overhead void charges ---------- */
+.Overhead
+{
+	flow-children: right;
+	horizontal-align: left;
+	vertical-align: top;
+	padding: 3px 6px;
+	border-radius: 8px;
+	background-color: #0d0618aa;
+	visibility: collapse;
+}
+
+.Overhead.Visible
+{
+	visibility: visible;
+}
+
+.Pip
+{
+	width: 12px;
+	height: 12px;
+	margin: 0px 3px;
+	border-radius: 3px;
+	pre-transform-rotate2d: 45deg;
+	background-color: #2a1747;
+	border: 1px solid #6a4aa8;
+	transition-property: background-color, box-shadow;
+	transition-duration: 0.25s;
+}
+
+.Pip.Filled
+{
+	background-color: gradient( linear, 0% 0%, 100% 100%, from( #e9a8ff ), to( #7b3cff ) );
+	border: 1px solid #f3d9ff;
+	box-shadow: #b77cffcc 0px 0px 8px 1px;
+}
+
+/* ---------- NPC dialog ---------- */
+.Dialog
+{
+	width: 400px;
+	horizontal-align: left;
+	vertical-align: top;
+	flow-children: down;
+	padding: 14px 16px 12px 16px;
+	border-radius: 12px;
+	background-color: #120a20d9;
+	background-blur: gaussian( 6 );
+	border: 1px solid #ffffff1f;
+	box-shadow: #00000099 0px 10px 30px 0px;
+	opacity: 0;
+	pre-transform-scale2d: 0.92;
+	transition-property: opacity, pre-transform-scale2d;
+	transition-duration: 0.18s;
+	transition-timing-function: ease-out;
+}
+
+.Dialog.Open
+{
+	opacity: 1;
+	pre-transform-scale2d: 1;
+}
+
+.DialogHeader
+{
+	flow-children: right;
+	margin-bottom: 6px;
+}
+
+.SpeakerDot
+{
+	width: 8px;
+	height: 8px;
+	vertical-align: center;
+	margin-right: 8px;
+	border-radius: 4px;
+	background-color: #b77cff;
+	box-shadow: #b77cffaa 0px 0px 6px 1px;
+}
+
+.DialogSpeaker
+{
+	font-size: 14px;
+	font-weight: bold;
+	letter-spacing: 2px;
+	text-transform: uppercase;
+	color: #c9a6ff;
+}
+
+.DialogText
+{
+	width: 100%;
+	font-size: 17px;
+	line-height: 24px;
+	color: #f1ecf8;
+}
+
+.DialogOptions
+{
+	width: 100%;
+	flow-children: down;
+	margin-top: 10px;
+	transition-property: opacity;
+	transition-duration: 0.2s;
+}
+
+.DialogOptions.Hidden
+{
+	opacity: 0;
+}
+
+.DialogOption
+{
+	width: 100%;
+	flow-children: right;
+	margin-top: 4px;
+	padding: 6px 8px;
+	border-radius: 6px;
+	background-color: #ffffff0a;
+	transition-property: background-color;
+	transition-duration: 0.12s;
+}
+
+.DialogOption:hover
+{
+	background-color: #b77cff33;
+}
+
+.OptionKey
+{
+	width: 20px;
+	height: 20px;
+	margin-right: 10px;
+	border-radius: 4px;
+	background-color: #ffffff1a;
+	color: #ffffffcc;
+	font-size: 13px;
+	font-weight: bold;
+	text-align: center;
+	vertical-align: center;
+}
+
+.OptionText
+{
+	font-size: 15px;
+	color: #e8defa;
+	vertical-align: center;
+}
+
+.DialogPointer
+{
+	width: 14px;
+	height: 14px;
+	horizontal-align: center;
+	margin-bottom: -20px;
+	pre-transform-rotate2d: 45deg;
+	background-color: #120a20d9;
+	border-right: 1px solid #ffffff1f;
+	border-bottom: 1px solid #ffffff1f;
+}

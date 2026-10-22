@@ -1,6 +1,8 @@
 <root>
-	<!-- MCP Lab custom UI: the rift HUD (stage 5) -->
+	<!-- MCP Lab custom UI: the rift HUD (stage 5) and world-space UI (stage 5b).
+	     Write referenced layouts BEFORE this file: Tools mode recompiles it on save. -->
 	<Panel>
 		<CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/mcp_lab_hud.xml" />
+		<CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/mcp_lab_world.xml" />
 	</Panel>
 </root>

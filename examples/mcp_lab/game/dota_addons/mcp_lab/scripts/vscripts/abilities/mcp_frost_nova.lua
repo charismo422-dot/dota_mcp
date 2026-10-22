@@ -1,4 +1,5 @@
 LinkLuaModifier( "modifier_mcp_frost_nova_slow", "abilities/mcp_frost_nova", LUA_MODIFIER_MOTION_NONE )
+require( "mcp_lab_links" )  -- ability scripts also load on the client VM, which needs these links
 
 mcp_frost_nova = class({})
 
