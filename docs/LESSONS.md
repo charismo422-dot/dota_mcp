@@ -96,6 +96,14 @@ Entry format:
 - **Debuffs on enemies are hard to see:** for player-facing checks of silence/disarm etc., add a demo command where an enemy applies the effect to the player's hero (`mcp_lab_demo_silence`).
 - **Note:** a hero created with `CreateUnitByName` (no player owner) can cast items via `CastAbilityOnPosition(pos, item, -1)`.
 
+### 2026-10-22 — Test plan stage 5 (Panorama HUD "The Rift")
+- **Works:** `content/<addon>/panorama/layout/custom_game/custom_ui_manifest.xml` with `<CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/<hud>.xml" />` (pattern from Valve's Overthrow); `compile_addon_resource` on the manifest builds the whole chain (`.vxml_c`, `.vcss_c`, `.vjs_c`). Lua→JS via `CustomGameEventManager:Send_ServerToAllClients`, JS→Lua via `GameEvents.SendCustomGameEventToServer` + `CustomGameEventManager:RegisterListener`; no event declaration file needed. `#tokens` in Panorama resolve from `resource/addon_<lang>.txt`. Autotest proves both directions: Lua sends a `ping`, JS echoes it back.
+- **JS API reference:** `cl_panorama_script_help_2` prints all Panorama JS bindings (~16 K lines, 2 169 signatures) and NetCon returns it completely — cached like the Lua API (idea logged). Also available: `cl_panorama_typescript_declarations`, `dump_panorama_css_properties`, `dump_panorama_events`, `panorama_print_cache_status` (which Panorama files are loaded — the fastest way to see whether your HUD is loaded at all).
+- **Don't include `dotastyles.css`:** standalone `resourcecompiler` fails with `File does not exist "panorama/styles/dotastyles.css"` (stock CSS has no source in the SDK).
+- **Write order matters in Tools mode:** the running game watches `content/` and recompiles on save. Writing the manifest before the layout it references made the on-demand compile fail; the game then silently kept the stock manifest from `pak01` for the session. Write child files (layout/css/js) first, the manifest last; if it already happened, re-save the manifest (triggers "Panel CustomUI is reloading layout") and relaunch the map.
+- **Events and hot reload:** `ListenToGameEvent` registrations SURVIVE `script_reload` and STACK (an `entity_killed` handler ran 4× after 3 reloads). Register at file load, keep the id on `GameRules` and `StopListeningToGameEvent(old_id)` first. Assert exact counts (`== before + 1`) to catch this.
+- **`ForceKill()` did not raise `entity_killed`** for `npc_dota_creature` units, and `MODIFIER_EVENT_ON_DEATH` on the dying unit did not fire either; killing with `ApplyDamage` raises `entity_killed` reliably (Valve's Overthrow also uses `entity_killed`).
+
 ### 2026-10-22 — Commit messages from PowerShell
 - **Doesn't work:** `git commit -F - @'...'@` in Windows PowerShell 5.1 — the here-string is passed as a pathspec, not stdin.
 - **Solution / Rule:** write the message to a temp file and use `git commit -F <file>`.

@@ -1,0 +1,6 @@
+<root>
+	<!-- MCP Lab custom UI: the rift HUD (stage 5) -->
+	<Panel>
+		<CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/mcp_lab_hud.xml" />
+	</Panel>
+</root>

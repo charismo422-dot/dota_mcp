@@ -1,0 +1,31 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/custom_game/mcp_lab_hud.css" />
+	</styles>
+	<scripts>
+		<include src="file://{resources}/scripts/custom_game/mcp_lab_hud.js" />
+	</scripts>
+	<Panel hittest="false" class="RiftHudRoot">
+		<Panel id="RiftPanel" class="RiftPanel">
+			<Label id="RiftTitle" class="RiftTitle" text="#mcp_lab_hud_title" />
+			<Panel class="RiftRow">
+				<Label class="RiftCaption" text="#mcp_lab_hud_energy" />
+				<Label id="EnergyValue" class="RiftValue" text="0%" />
+			</Panel>
+			<Panel class="EnergyTrack">
+				<Panel id="EnergyFill" class="EnergyFill" />
+			</Panel>
+			<Panel class="RiftRow">
+				<Label class="RiftCaption" text="#mcp_lab_hud_kills" />
+				<Label id="KillsValue" class="RiftValue" text="0" />
+			</Panel>
+			<Panel class="RiftRow">
+				<Label class="RiftCaption" text="#mcp_lab_hud_next_wave" />
+				<Label id="WaveValue" class="RiftValue" text="—" />
+			</Panel>
+			<Button id="SummonButton" class="SummonButton">
+				<Label text="#mcp_lab_hud_summon" />
+			</Button>
+		</Panel>
+	</Panel>
+</root>

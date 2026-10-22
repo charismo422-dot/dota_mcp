@@ -13,7 +13,7 @@ Every stage also checks the error channel: after each change, `script_reload` (o
 | 2 | Hero | Custom hero based on a stock one: `get_base_dota_definition`, `inspect_model` (activities/attachments), 4 abilities, hero pick | done (2026-10-22): autotest PASS (stats, slots, projectile+stun, aura, ultimate thinker) |
 | 3 | Creeps & AI | Timed creep waves, spawn points via `add_map_entity`, simple AI | done (2026-10-22): autotest PASS (spawners, AI attached, chase, telegraphed elite slam, wave timer) |
 | 4 | Item | Custom item with custom `.png` icon compiled to `.vtex_c` (unverified area) | done (2026-10-22): autotest PASS (stats, rift pull motion controller, silence, damage); icon compile fixed |
-| 5 | Panorama | Simple HUD panel (score/timer), Lua → JS events, `compile_addon_resource` for `.xml`/`.css`/`.js` (unverified area) | todo |
+| 5 | Panorama | Simple HUD panel (score/timer), Lua → JS events, `compile_addon_resource` for `.xml`/`.css`/`.js` (unverified area) | done (2026-10-22): autotest PASS (Lua→JS→Lua round trip, kill counter/energy); compile of manifest + layout + css + js verified |
 | 6 | Map | Trees, shop, spawns: `add_map_entity`, `list_map_entities`, `remove_map_entity`, recompile | todo |
 | 7 | Sound | Stock sound events; check whether custom sound files can be added (expected gap) | todo |
 | 8 | Localization | RU/EN strings via `upsert_localization` visible in game | todo |

@@ -14,6 +14,15 @@ local function DamageTaken( unit )
 	return meter and meter.total or 0
 end
 
+-- ListenToGameEvent registrations SURVIVE script_reload and stack up (one extra call per reload),
+-- so the previous listener id is kept on GameRules (engine object, persists) and removed before re-registering
+if GameRules.mcp_lab_kill_listener then
+	StopListeningToGameEvent( GameRules.mcp_lab_kill_listener )
+end
+GameRules.mcp_lab_kill_listener = ListenToGameEvent( "entity_killed", function( event )
+	if GameRules.AddonTemplate then GameRules.AddonTemplate:OnEntityKilled( event ) end
+end, nil )
+
 -- Debug console commands are registered at file load so that script_reload picks up new ones
 Convars:RegisterCommand( "mcp_lab_status", function()
 	local hero = GameRules.AddonTemplate and GameRules.AddonTemplate.hero
@@ -84,6 +93,37 @@ Convars:RegisterCommand( "mcp_lab_demo_silence", function()
 	print( "[MCP_LAB] demo silence: enemy Enigma spawned" )
 end, "MCP Lab: enemy uses Void Shard on the player's hero", 0 )
 
+-- Stage 5: Lua -> JS -> Lua round trip (JS acks every ping) and kill counter / energy feeding the HUD
+Convars:RegisterCommand( "mcp_lab_autotest5", function()
+	local gm = GameRules.AddonTemplate
+	local checks = {}
+	local kills_before, energy_before = gm.hud_kills, gm.hud_energy
+	local ping = RandomInt( 1000, 999999 )
+	gm:SendHudUpdate( ping )
+
+	local units = gm:SpawnWave( 1, false )
+	-- Kill with damage: ForceKill() did not raise entity_killed for these creatures
+	gm.hero:SetContextThink( "MCPLabHudKill", function()
+		ApplyDamage({ victim = units[1], attacker = gm.hero, damage = 99999, damage_type = DAMAGE_TYPE_PURE })
+		return nil
+	end, 0.5 )
+
+	gm.hero:SetContextThink( "MCPLabHudCheck", function()
+		-- Exactly +1: catches stacked listeners after script_reload
+		checks.kill_counted = gm.hud_kills == kills_before + 1 and ( gm.hud_energy > energy_before or gm.hud_energy == 100 )
+		print( string.format( "[MCP_LAB] stage5 kills %d -> %d", kills_before, gm.hud_kills ) )
+		checks.js_roundtrip = gm.hud_acks[ tostring( ping ) ] == true
+		gm:ClearWaveUnits()
+		local all_ok, parts = true, {}
+		for _, name in ipairs({ "kill_counted", "js_roundtrip" }) do
+			all_ok = all_ok and checks[name]
+			table.insert( parts, name .. "=" .. tostring( checks[name] ) )
+		end
+		print( string.format( "[MCP_LAB] AUTOTEST stage5 %s: %s kills=%d energy=%d", all_ok and "PASS" or "FAIL", table.concat( parts, " " ), gm.hud_kills, gm.hud_energy ) )
+		return nil
+	end, 1.5 )
+end, "MCP Lab: stage 5 autotest (Panorama HUD events)", 0 )
+
 Convars:RegisterCommand( "mcp_lab_autotest4", function()
 	GameRules.AddonTemplate:RunItemTest( GameRules.AddonTemplate.hero )
 end, "MCP Lab: stage 4 autotest (custom item: stats, rift pull, silence)", 0 )
@@ -118,6 +158,50 @@ function CAddonTemplateGameMode:InitGameMode()
 
 	self.hero_initialized = false
 	ListenToGameEvent( "npc_spawned", Dynamic_Wrap( CAddonTemplateGameMode, "OnNPCSpawned" ), self )
+
+	-- Stage 5: Panorama HUD (content/panorama/.../mcp_lab_hud.*), events in both directions
+	self.hud_kills, self.hud_energy, self.hud_acks = 0, 0, {}
+	CustomGameEventManager:RegisterListener( "mcp_lab_summon_wave", function(...) return self:OnHudSummonWave( ... ) end )
+	CustomGameEventManager:RegisterListener( "mcp_lab_hud_ack", function(...) return self:OnHudAck( ... ) end )
+	GameRules:GetGameModeEntity():SetContextThink( "MCPLabHud", function()
+		self:SendHudUpdate()
+		return 0.5
+	end, 1 )
+end
+
+function CAddonTemplateGameMode:SendHudUpdate( ping )
+	local next_wave = -1
+	if self.next_wave_time then
+		next_wave = math.max( 0, math.ceil( self.next_wave_time - GameRules:GetGameTime() ) )
+	end
+	CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_hud", { energy = self.hud_energy, kills = self.hud_kills, next_wave = next_wave, ping = ping } )
+end
+
+function CAddonTemplateGameMode:OnEntityKilled( event )
+	local unit = EntIndexToHScript( event.entindex_killed )
+	if unit and ( unit:GetUnitName() == "npc_mcp_void_imp" or unit:GetUnitName() == "npc_mcp_rift_giant" ) then
+		self:OnWaveUnitKilled( unit )
+	end
+end
+
+function CAddonTemplateGameMode:OnWaveUnitKilled( unit )
+	self.hud_kills = self.hud_kills + 1
+	self.hud_energy = math.min( 100, self.hud_energy + ( unit:GetUnitName() == "npc_mcp_rift_giant" and 40 or 10 ) )
+	self:SendHudUpdate()
+end
+
+-- Button in the HUD: summon a wave right now (spends the energy if it is full)
+function CAddonTemplateGameMode:OnHudSummonWave( event_source_index, data )
+	self.wave_number = ( self.wave_number or 0 ) + 1
+	self:SpawnWave( self.wave_number, self.hud_energy >= 100 )
+	if self.hud_energy >= 100 then self.hud_energy = 0 end
+	self.hud_summons = ( self.hud_summons or 0 ) + 1
+	print( "[MCP_LAB] HUD button: wave summoned" )
+	self:SendHudUpdate()
+end
+
+function CAddonTemplateGameMode:OnHudAck( event_source_index, data )
+	self.hud_acks[ tostring( data.ping ) ] = true
 end
 
 function CAddonTemplateGameMode:SpawnTargets( center )
@@ -271,13 +355,16 @@ function CAddonTemplateGameMode:SetWaveInterval( interval )
 	local ent = GameRules:GetGameModeEntity()
 	if interval <= 0 then
 		ent:SetContextThink( "MCPLabWaves", nil, 0 )
+		self.next_wave_time = nil
 		print( "[MCP_LAB] waves stopped" )
 		return
 	end
 	self.wave_number = self.wave_number or 0
+	self.next_wave_time = GameRules:GetGameTime() + interval
 	ent:SetContextThink( "MCPLabWaves", function()
 		self.wave_number = self.wave_number + 1
 		self:SpawnWave( self.wave_number, false )
+		self.next_wave_time = GameRules:GetGameTime() + interval
 		return interval
 	end, interval )
 	print( "[MCP_LAB] waves every " .. interval .. "s" )
