@@ -23,9 +23,16 @@ function OnSummonPressed()
 	GameEvents.SendCustomGameEventToServer( "mcp_lab_summon_wave", {} );
 }
 
+// Client -> server: stage 7 button plays the custom rift sounds (synthesized .wav + own .vsndevts)
+function OnSoundPressed()
+{
+	GameEvents.SendCustomGameEventToServer( "mcp_lab_play_sound", {} );
+}
+
 ( function ()
 {
 	GameEvents.Subscribe( "mcp_lab_hud", OnHudUpdate );
 	$( "#SummonButton" ).SetPanelEvent( "onactivate", OnSummonPressed );
+	$( "#SoundButton" ).SetPanelEvent( "onactivate", OnSoundPressed );
 	$.Msg( "[MCP_LAB] HUD script loaded" );
 } )();

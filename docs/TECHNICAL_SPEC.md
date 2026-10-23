@@ -82,7 +82,7 @@ dota_mcp/
    - **Фильтры `asset_type`:** `"model"` (`.vmdl`), `"particle"` (`.vpcf`), `"sound"` (`.vsnd` / `.vsndevts`), `"material"` (`.vmat`), `"panorama"` (`.png` / `.vsvg`), `"script"` (`.txt` / `.lua`), `"all"`.
    - **Особенность:** Автоматически убирает суффикс `_c` у возвращаемых путей, чтобы пути сразу подходили для вставки в Lua, KV и `.vmap`.
 2. `search_sound_events(query: str, file_filter: str = "", limit: int = 30) -> dict`
-   - **Описание:** Ищет внутри `soundevents/**/*.vsndevts_c` в `pak01_dir.vpk` (через `Source2Viewer-CLI.exe -b DATA` или поиск строк) точные имена звуковых событий (например, `Hero_Pudge.Attack`) для использования в `EmitSoundOn` / `StopSoundOn`, а также возвращает путь к файлу `.vsndevts` для предзагрузки (`PrecacheResource("soundfile", ...)`).
+   - **Описание:** Ищет по кэшированному индексу всех звуковых событий (`vpk_explorer.get_sound_event_index`: один вызов `Source2Viewer-CLI.exe -i pak01_dir.vpk -f soundevents/ -e vsndevts_c -d` декомпилирует все ~946 файлов за ~2 с, индекс «имя → файл» хранится в `.cache/sound_events/` и пересобирается при смене версии VPK; запасной путь — старый пофайловый поиск) точные имена звуковых событий (например, `Hero_Pudge.Attack`) для использования в `EmitSoundOn` / `StopSoundOn`, а также возвращает путь к файлу `.vsndevts` для предзагрузки (`PrecacheResource("soundfile", ...)`).
 3. `get_base_dota_definition(category: str, name: str) -> dict`
    - **Описание:** Извлекает из `pak01_dir.vpk` (`scripts/npc/npc_heroes.txt`, `npc_abilities.txt`, `scripts/npc/heroes/npc_dota_hero_*.txt`, `npc_units.txt`, `items.txt`) точный блок настроек стандартного героя, способности, юнита или предмета актуальной Dota 2 (7.41+).
    - **Параметр `category`:** `"hero"`, `"ability"`, `"unit"`, `"item"`.
@@ -105,6 +105,7 @@ dota_mcp/
    - **Описание:**
      1. Проверяет все `.txt` / `.kv` файлы в `game/dota_addons/<addon_name>/scripts/npc/` через парсер `vdf` на синтаксические ошибки и правильность префиксов `AbilityTextureName` (`item_` для предметов).
      2. Ловит ошибочно размещенные файлы (например, устаревшую папку `resource/flash3`, сырые `.png`/`.xml`/`.css`/`.js` в `game/` или `.lua` в `content/`).
+     2a. Звуки по имени: каждая строка вида `Xxx.Yyy` в `.lua`/`.txt` сверяется с индексом стандартных событий и с событиями аддона из `content/<addon>/soundevents/**/*.vsndevts`; найденные `.vsndevts` попадают в `auto_precache.lua` (`soundfile`). Имена в вызовах `EmitSound*`/`StopSound*`/`StartSoundEvent*`, которых нет нигде, возвращаются в `unknown_sound_events` (`ok: false`). Поля ответа: `sound_events_resolved`, `sound_files_from_events`, `custom_sound_events`, `unknown_sound_events`.
      3. Автоматически компилирует новые и изменённые `.png` иконки из `content/.../panorama/images/` в `<name>_png.vtex_c`: генерирует скрытый макет `panorama/layout/custom_game/mcp_auto_icons.xml` со ссылками на все иконки и компилирует его `resourcecompiler.exe` (голый `.png` компилятор не принимает, картинки собираются только как зависимости макета).
      4. Сканирует все `.lua` и `.txt` файлы аддона на наличие путей `.vmdl`, `.vpcf`, `.vsndevts` и проверяет их существование в `pak01_dir.vpk`.
      5. Автоматически формирует/обновляет список `PrecacheResource` в `auto_precache.lua` и подключает его к `addon_game_mode.lua` через `xpcall` с логированием ошибок.
@@ -121,7 +122,7 @@ dota_mcp/
 13. `remove_map_entity(addon_name: str, map_name: str, targetname_or_id: str) -> dict`
     - **Описание:** Удаляет точечную сущность из `.vmap` по её `targetname` или внутреннему `id` вместе со ссылками в `children` и `CVisibilityMgr`.
 14. `compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict`
-    - **Описание:** Запускает `resourcecompiler.exe` для компиляции карты (`maps/<name>.vmap` с флагами `-fshallow -v -world -phys -gridnav -entities -nolightmaps`), Panorama UI (`panorama/layout/custom_game/...`), материалов или звуков. Возвращает статус сборки, список файлов в `maps/<map>.vpk` и отфильтрованный лог ошибок.
+    - **Описание:** Запускает `resourcecompiler.exe` для компиляции карты (`maps/<name>.vmap` с флагами `-fshallow -v -world -phys -gridnav -entities -nolightmaps`), Panorama UI (`panorama/layout/custom_game/...`), материалов или звуков. Для `.vsndevts` дополнительно компилирует каждый упомянутый `sounds/....vsnd` из исходника `.wav`/`.mp3` в `content/` (сам компилятор этого не делает) — поля `sound_sources_compiled`, `missing_sound_sources`. Возвращает статус сборки, список файлов в `maps/<map>.vpk` и отфильтрованный лог ошибок.
 
 ### Модуль 5: Управление игрой и живая отладка (`netcon_bridge.py`)
 15. `run_console_command(command: str, wait_response_ms: int = 1200, verbose: bool = False) -> dict`

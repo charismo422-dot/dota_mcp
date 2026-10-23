@@ -13,7 +13,7 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 3. **Offline VScript API cache** — dump `script_help2` once, then verify Lua calls without a running game — `done` (2026-10-22, in `verify_vscript_api`)
 4. **Automated mechanic tests** — Lua harness spawns hero/targets, casts the ability, asserts damage/effects via console log — `idea`
 5. **In-game screenshots** — capture a screenshot so the agent can visually check particles and UI (console command to be verified) — `idea`
-6. **Custom sounds & music** — add own audio files, generate `.vsndevts`, compile — `idea`
+6. **Custom sounds & music** — add own audio files, generate `.vsndevts`, compile — `partly done` (manual pipeline verified in stage 7; a one-call `add_custom_sound` tool — wav → `sounds/`, upsert event in `.vsndevts`, compile — is the next step)
 7. **Particle recolor/resize** — copy a stock `.vpcf` and change color/size without the particle editor — `idea`
 8. **Multiplayer test with bots / fake clients** — launch with extra players to test team logic (commands to be verified) — `idea`
 9. **Custom model import** — compile own 3D models (e.g. FBX) into `.vmdl` (voxel/"Minecraft-like" blocks) — `idea`
@@ -21,7 +21,7 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 ## Improvements to existing tools
 
-- **Resolve sound events in precache** — `validate_and_sync_precache` maps sound event names used in Lua/KV to their `.vsndevts` (cached event index built once from the VPK) and precaches them; currently sounds silently go un-precached. High priority — `idea`
+- **Resolve sound events in precache** — `validate_and_sync_precache` maps sound event names used in Lua/KV to their `.vsndevts` (cached event index built once from the VPK) and precaches them; currently sounds silently go un-precached. High priority — `done` (stage 7; also flags unknown names)
 - **`verify_vscript_api` from a cached dump** — run `script_help2` once per game build, then answer from the cache; avoids flooding `console.log` and duplicate matches — `done` (also covers feature #3)
 - **Filter `compile_addon_resource` noise** — collapse repeated `generic.vfx` shader errors and known missing base files; keep only real failures — `idea`
 - **`verify_vscript_api` live fallback for constants** — when the cache has no match, ask the running game for `type(<name>)`/value (constants like `FIND_CLOSEST` are not in the dump) — `idea`

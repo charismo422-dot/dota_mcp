@@ -255,6 +255,16 @@ Convars:RegisterCommand( "mcp_lab_autotest3", function()
 	GameRules.AddonTemplate:RunWaveTest( GameRules.AddonTemplate.hero )
 end, "MCP Lab: stage 3 autotest (waves, spawners, AI, elite slam)", 0 )
 
+-- Stage 7: custom sounds (soundevents/mcp_lab_sounds.vsndevts, audio synthesized by tools/make_lab_sounds.py)
+-- "mcp_lab_sound" plays the full rift sequence; "mcp_lab_sound chime|zap|stock" plays one sound
+Convars:RegisterCommand( "mcp_lab_sound", function( _, which )
+	GameRules.AddonTemplate:PlayRiftSound( which )
+end, "MCP Lab: play the custom rift sounds", 0 )
+
+Convars:RegisterCommand( "mcp_lab_autotest7", function()
+	GameRules.AddonTemplate:RunSoundTest( GameRules.AddonTemplate.hero )
+end, "MCP Lab: stage 7 autotest (custom + stock sound events known to the engine)", 0 )
+
 function Precache( context )
 	xpcall(function() require("auto_precache")(context) end, function(err) print("[MCP Precache Error] " .. tostring(err)) end)
 	-- Units spawned from Lua are invisible unless their model is precached
@@ -290,6 +300,7 @@ function CAddonTemplateGameMode:InitGameMode()
 	CustomGameEventManager:RegisterListener( "mcp_lab_hud_ack", function(...) return self:OnHudAck( ... ) end )
 	CustomGameEventManager:RegisterListener( "mcp_lab_dialog_choice", function(...) return self:OnDialogChoice( ... ) end )
 	CustomGameEventManager:RegisterListener( "mcp_lab_world_ack", function(...) return self:OnWorldAck( ... ) end )
+	CustomGameEventManager:RegisterListener( "mcp_lab_play_sound", function() return self:PlayRiftSound() end )
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLabHud", function()
 		self:SendHudUpdate()
 		return 0.5
@@ -325,6 +336,46 @@ function CAddonTemplateGameMode:OnHudSummonWave( event_source_index, data )
 	self.hud_summons = ( self.hud_summons or 0 ) + 1
 	print( "[MCP_LAB] HUD button: wave summoned" )
 	self:SendHudUpdate()
+end
+
+-- HUD button / console: custom 8-bit chime for everyone, then a custom laser zap on the hero, then a stock rune sound
+function CAddonTemplateGameMode:PlayRiftSound( which )
+	local hero = self.hero
+	if which == "chime" then
+		EmitGlobalSound( "MCP_Lab.RiftChime" )
+	elseif which == "zap" then
+		if hero then EmitSoundOn( "MCP_Lab.RiftZap", hero ) end
+	elseif which == "stock" then
+		EmitGlobalSound( "Rune.Arcane" )
+	else
+		EmitGlobalSound( "MCP_Lab.RiftChime" )
+		GameRules:GetGameModeEntity():SetContextThink( "MCPLabZap", function()
+			if hero then EmitSoundOn( "MCP_Lab.RiftZap", hero ) end
+		end, 1.2 )
+		GameRules:GetGameModeEntity():SetContextThink( "MCPLabStockSound", function()
+			EmitGlobalSound( "Rune.Arcane" )
+		end, 2.0 )
+	end
+	print( "[MCP_LAB] sound: " .. tostring( which or "rift sequence" ) )
+end
+
+-- The engine reports a duration only for sound events it knows and whose audio is loaded
+function CAddonTemplateGameMode:RunSoundTest( hero )
+	local checks = {
+		{ "MCP_Lab.RiftChime", 0.9, 1.4 },   -- synthesized: 3 x 0.16 s + 0.6 s
+		{ "MCP_Lab.RiftZap", 0.3, 0.6 },     -- synthesized: 0.45 s
+		{ "Rune.Arcane", 0.05, 30 },         -- stock
+		{ "MCP_Lab.NoSuchSound", -1, 0 },    -- unknown name must report 0
+	}
+	local ok = true
+	for _, c in ipairs( checks ) do
+		local d = hero:GetSoundDuration( c[1], "" )
+		local pass = d >= c[2] and d <= c[3]
+		ok = ok and pass
+		print( string.format( "[MCP_LAB] AUTOTEST7 %s duration=%.3f %s", c[1], d, pass and "PASS" or "FAIL" ) )
+	end
+	print( "[MCP_LAB] AUTOTEST7 " .. ( ok and "PASS" or "FAIL" ) )
+	self:PlayRiftSound()
 end
 
 function CAddonTemplateGameMode:OnHudAck( event_source_index, data )

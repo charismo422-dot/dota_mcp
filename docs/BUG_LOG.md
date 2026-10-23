@@ -124,3 +124,21 @@
 - **Корневая причина:** items.txt uses CRLF line endings; the multiline-scalar fix regex ('$' after the value) never matched before '\r', so python-vdf failed on '"ItemRequirements"\n""' and the parse error was swallowed (empty dict).
 - **Примененное решение:** Normalize CRLF to LF before applying the multiline-scalar regex in _load_vpk_kv_dict.
 - **Правило предотвращения:** Normalize line endings before regex-based KV cleanup; never silently return {} on a parse error of a stock file — check all four categories with a known name after parser changes.
+
+### [2026-10-23 11:27:51] Компонент: `src/dota2_mcp/addon_manager.py (validate_and_sync_precache, sound events)`
+- **Симптом / Ошибка:** Sound events used by name in Lua/KV (EmitSoundOn("Hero_X.Y"), custom events) were never precached; typos in sound names went unnoticed. Abilities needed a manual KV "precache" soundfile block.
+- **Корневая причина:** The precache scanner only matched literal .vmdl/.vpcf/.vsndevts paths; there was no mapping from an event name to its .vsndevts file.
+- **Примененное решение:** vpk_explorer.get_sound_event_index decompiles all 946 stock soundevents/*.vsndevts_c in one Source2Viewer-CLI call (~2 s) and caches name->file JSON per VPK version (.cache/sound_events). validate_and_sync_precache resolves every Lua/KV string literal against this index plus the addon's own content/soundevents/*.vsndevts, precaches the files, and reports unknown_sound_events (names passed to EmitSound*/StopSound* found nowhere; ok:false).
+- **Правило предотвращения:** Every resource referenced by name (sounds, units) must be resolved to a file by the precache tool; unresolvable names inside Emit/Stop sound calls are errors, not silence.
+
+### [2026-10-23 11:27:51] Компонент: `src/dota2_mcp/vmap_builder.py (compile_addon_resource, .vsndevts)`
+- **Симптом / Ошибка:** compile_addon_resource on a custom soundevents/*.vsndevts reported 'OK: 1 compiled' but no sounds/*.vsnd_c was produced; the referenced .wav files stayed uncompiled.
+- **Корневая причина:** resourcecompiler.exe does not compile audio referenced by a .vsndevts as dependencies (unlike Panorama layouts/images). A .wav compiles fine when passed directly.
+- **Примененное решение:** After compiling a .vsndevts, compile_addon_resource compiles every referenced "sounds/....vsnd" from its .wav/.mp3 source in content/ and returns sound_sources_compiled; missing sources give ok:false with missing_sound_sources.
+- **Правило предотвращения:** After compiling any resource, verify the expected compiled children exist in game/ (here sounds/*.vsnd_c); do not assume the compiler follows references.
+
+### [2026-10-23 11:27:51] Компонент: `src/dota2_mcp/vpk_explorer.py (search_sound_events)`
+- **Симптом / Ошибка:** search_sound_events could miss real events: only the first 60 of 946 .vsndevts_c files were scanned (each decompiled separately, slow).
+- **Корневая причина:** Per-file decompilation with a hard cap of 60 files to keep the call fast.
+- **Примененное решение:** search_sound_events now answers from the cached full sound event index (all 946 files, ~105 K events, lookup ~0.1 s); the old per-file scan remains as a fallback when the index cannot be built.
+- **Правило предотвращения:** Search tools must cover the whole data set; build a one-time cache instead of capping the scan.

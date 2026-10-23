@@ -348,6 +348,9 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
             for match in ASSET_REGEX.findall(text):
                 discovered_assets.add(match)
 
+    sound_report = _resolve_sound_events(scripts_dir, content_addon)
+    discovered_assets.update(sound_report.pop("soundfiles"))
+
     missing_assets: list[str] = []
     valid_assets: list[str] = []
     for asset in sorted(discovered_assets):
@@ -404,6 +407,7 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
             and len(missing_assets) == 0
             and len(misplaced_files) == 0
             and len(icon_compile_errors) == 0
+            and len(sound_report["unknown_sound_events"]) == 0
         ),
         "kv_syntax_errors": kv_errors,
         "misplaced_files_game_vs_content": misplaced_files,
@@ -412,8 +416,71 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
         "icon_naming_warnings": icon_warnings,
         "valid_assets_precached": len(valid_assets),
         "missing_or_hallucinated_assets": missing_assets,
+        **sound_report,
         "auto_precache_file": str(auto_precache_file),
     }
+
+
+# String literal that looks like a sound event name: Hero_Pudge.Attack, MCP_Lab.Chime
+SOUND_NAME_LITERAL_RE = re.compile(r'["\']([A-Za-z0-9_]+(?:\.[A-Za-z0-9_\-]+)+)["\']')
+# Lua calls whose string arguments must be sound events
+SOUND_CALL_RE = re.compile(
+    r"\b(?:EmitSound\w*|EmitGlobalSound|EmitAnnouncerSound\w*|StartSoundEvent\w*|StopSound\w*|StopGlobalSound)\s*\(([^\n]*)"
+)
+
+
+def _resolve_sound_events(scripts_dir: Path, content_addon: Path) -> dict[str, Any]:
+    """Find sound event names used in addon scripts/KV and map them to the .vsndevts files to precache.
+
+    Addon events come from content/<addon>/soundevents/**/*.vsndevts, stock events from the cached
+    VPK index (vpk_explorer.get_sound_event_index). Names passed to EmitSound*/StopSound* that exist
+    in neither are reported as unknown (likely typos or hallucinated names).
+    """
+    from .vpk_explorer import get_sound_event_index, parse_vsndevts_event_names
+
+    custom: dict[str, str] = {}
+    sev_dir = content_addon / "soundevents"
+    if sev_dir.exists():
+        for f in sev_dir.rglob("*.vsndevts"):
+            rel = f.relative_to(content_addon).as_posix()
+            for name in parse_vsndevts_event_names(f.read_text(encoding="utf-8", errors="replace")):
+                custom.setdefault(name.lower(), rel)
+
+    try:
+        stock = get_sound_event_index()["events"]
+        index_error = ""
+    except Exception as exc:
+        stock, index_error = {}, str(exc)
+
+    used: set[str] = set()
+    in_calls: set[str] = set()
+    if scripts_dir.exists():
+        for src_file in list(scripts_dir.rglob("*.lua")) + list(scripts_dir.rglob("*.txt")):
+            text = src_file.read_text(encoding="utf-8", errors="replace")
+            used.update(SOUND_NAME_LITERAL_RE.findall(text))
+            for args in SOUND_CALL_RE.findall(text):
+                in_calls.update(SOUND_NAME_LITERAL_RE.findall(args))
+
+    soundfiles: set[str] = set()
+    resolved: dict[str, str] = {}
+    for name in sorted(used | in_calls):
+        low = name.lower()
+        target = custom.get(low) or (stock.get(low) or {}).get("file")
+        if target:
+            soundfiles.add(target)
+            resolved[name] = target
+    unknown = sorted(n for n in in_calls if n not in resolved) if not index_error else []
+
+    report: dict[str, Any] = {
+        "soundfiles": soundfiles,
+        "sound_events_resolved": len(resolved),
+        "sound_files_from_events": sorted(soundfiles),
+        "custom_sound_events": sorted(n for n, f in resolved.items() if custom.get(n.lower()) == f),
+        "unknown_sound_events": unknown,
+    }
+    if index_error:
+        report["sound_index_error"] = index_error
+    return report
 
 
 def upsert_localization(

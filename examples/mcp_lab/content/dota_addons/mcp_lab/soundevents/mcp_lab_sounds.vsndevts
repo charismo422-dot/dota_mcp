@@ -1,0 +1,21 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+	MCP_Lab.RiftChime = 
+	{
+		type = "dota_src1_2d"
+		volume = 1.0
+		pitch = 1.0
+		vsnd_files = "sounds/mcp_lab/rift_chime.vsnd"
+	}
+	MCP_Lab.RiftZap = 
+	{
+		type = "dota_src1_3d"
+		volume = 1.0
+		pitch_rand_min = -0.1
+		pitch_rand_max = 0.1
+		pitch = 1.0
+		soundlevel = 81.0
+		distance_max = 2000.0
+		vsnd_files = "sounds/mcp_lab/rift_zap.vsnd"
+	}
+}

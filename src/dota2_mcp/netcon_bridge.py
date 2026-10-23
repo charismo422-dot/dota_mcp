@@ -42,6 +42,11 @@ NOISE_PATTERNS = re.compile(
             r"msec change '", r"LoopActivateAllSystems",
             r"DepthPassBatchID", r"can't solve quadratic for light", r"OnHltvReplay", r"Signon traffic",
             r"NetChan Setting Timeout", r"received full update", r"Resetting prediction state", r"non-incremental update",
+            # Client start-up noise (verified on build 6966): stock fan/econ images, staging vdata, test soundevents
+            r"dynamic_images_teamfandom_", r"_staging\.vdata_c", r"soundevents/soundevents_test\.vsndevts_c",
+            r"anim_preview_archetypes\.vdata_c", r"mutations file! scripts/battlepass", r"ILocalize::AddFile\(\) failed to load file \"\"",
+            r"failed to localize: '#DOTA_(Plus_ProfileCard|Friend_Join_Party)", r"panorama/images/econ/sets/",
+            r"dota_base_ability_png\.vtex_c",
             # script_help2 API dump lines (served from the verify_vscript_api cache instead)
             r"^(\[VScript\] ?)?(---\[\[|-- @|--- Enum|function .*\) end$|[A-Za-z_][A-Za-z0-9_]* = -?\d+( --.*)?$|$)", r"^(Server|Client):\s+(Inactive|Disconnected)", r"@ Current\s+:", r"Queued\s+:",
         ]

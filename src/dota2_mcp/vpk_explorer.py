@@ -98,18 +98,96 @@ def search_dota_assets(query: str, asset_type: str = "all", limit: int = 25) -> 
     }
 
 
+SOUND_INDEX_DIR = CACHE_DIR / "sound_events"
+
+# Top-level event header in decompiled (or hand-written source) .vsndevts KV3, e.g. `\tHero_Pudge.Attack = `
+SOUND_EVENT_HEADER_RE = re.compile(r'^\t"?([A-Za-z0-9_][A-Za-z0-9_.\-]*)"?\s*=\s*(?:\{\s*)?$', re.MULTILINE)
+
+
+def parse_vsndevts_event_names(text: str) -> list[str]:
+    """Event names defined at the top level of a text (KV3) .vsndevts file."""
+    return SOUND_EVENT_HEADER_RE.findall(text)
+
+
+def get_sound_event_index(refresh: bool = False) -> dict[str, Any]:
+    """Map every stock sound event name to its .vsndevts file.
+
+    Built once per pak01_dir.vpk version: Source2Viewer-CLI decompiles all soundevents/*.vsndevts_c
+    in one call (~946 files, a few seconds), headers are parsed and the index is cached as JSON.
+    Returns {"events": {lowercase_name: {"name": ..., "file": ...}}, "files": int, "source": ...}.
+    """
+    import json
+    import shutil
+    import tempfile
+
+    if not CONFIG.pak01_dir_vpk or not CONFIG.pak01_dir_vpk.exists():
+        raise FileNotFoundError("pak01_dir.vpk not found")
+    st = CONFIG.pak01_dir_vpk.stat()
+    cache_file = SOUND_INDEX_DIR / f"index_{st.st_size}_{int(st.st_mtime)}.json"
+    if cache_file.exists() and not refresh:
+        data = json.loads(cache_file.read_text(encoding="utf-8"))
+        data["source"] = "cache"
+        return data
+    if not CONFIG.decompiler_exe.exists():
+        raise FileNotFoundError(f"Source2Viewer-CLI not found at {CONFIG.decompiler_exe} (run setup.py)")
+
+    tmp = Path(tempfile.mkdtemp(prefix="mcp_sev_"))
+    try:
+        subprocess.run(
+            [
+                str(CONFIG.decompiler_exe), "-i", str(CONFIG.pak01_dir_vpk),
+                "-f", "soundevents/", "-e", "vsndevts_c", "-d", "--threads", "8", "-o", str(tmp),
+            ],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300,
+        )
+        events: dict[str, dict[str, str]] = {}
+        files = sorted(tmp.rglob("*.vsndevts"))
+        for f in files:
+            rel = f.relative_to(tmp).as_posix()
+            for name in parse_vsndevts_event_names(f.read_text(encoding="utf-8", errors="replace")):
+                events.setdefault(name.lower(), {"name": name, "file": rel})
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    if not events:
+        raise RuntimeError("Sound event index is empty (decompile failed?)")
+
+    data = {"events": events, "files": len(files)}
+    SOUND_INDEX_DIR.mkdir(parents=True, exist_ok=True)
+    for old in SOUND_INDEX_DIR.glob("index_*.json"):
+        old.unlink(missing_ok=True)
+    cache_file.write_text(json.dumps(data), encoding="utf-8")
+    data["source"] = "built"
+    return data
+
+
 def search_sound_events(
     query: str, file_filter: str = "", limit: int = 30
 ) -> dict[str, Any]:
     """Search inside Dota 2 .vsndevts_c files for exact Sound Event names (e.g. 'Hero_Pudge.Attack') to use in EmitSoundOn."""
+    tokens = [t.lower() for t in query.strip().split() if t]
+    flt_lower = file_filter.strip().lower()
+    max_results = max(1, min(limit, 100))
+
+    # Fast path: the cached index covers all stock .vsndevts files.
+    try:
+        index = get_sound_event_index()["events"]
+        results = [
+            {"sound_event_name": e["name"], "soundevents_file": e["file"]}
+            for low, e in index.items()
+            if (not flt_lower or flt_lower in e["file"].lower())
+            and all(tok in low or tok in e["file"].lower() for tok in tokens)
+        ]
+        results.sort(key=lambda r: (0 if any(t in r["soundevents_file"].lower() for t in tokens) else 1, r["sound_event_name"].lower()))
+        return {"ok": True, "query": query, "count": min(len(results), max_results), "total_matches": len(results), "results": results[:max_results]}
+    except Exception:
+        pass
+
     try:
         pak = _get_vpk()
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
 
     assert _VPK_FILE_LIST is not None
-    tokens = [t.lower() for t in query.strip().split() if t]
-    flt_lower = file_filter.strip().lower()
 
     vsndevts_files = [
         f
@@ -133,7 +211,6 @@ def search_sound_events(
 
     results: list[dict[str, str]] = []
     seen_events: set[str] = set()
-    max_results = max(1, min(limit, 100))
 
     for vpath in vsndevts_files[:60]:
         engine_vsndevts = strip_compiled_suffix(vpath)

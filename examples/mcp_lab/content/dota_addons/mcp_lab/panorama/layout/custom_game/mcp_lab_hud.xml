@@ -26,6 +26,9 @@
 			<Button id="SummonButton" class="SummonButton">
 				<Label text="#mcp_lab_hud_summon" />
 			</Button>
+			<Button id="SoundButton" class="SummonButton SoundButton">
+				<Label text="#mcp_lab_hud_sound" />
+			</Button>
 		</Panel>
 	</Panel>
 </root>

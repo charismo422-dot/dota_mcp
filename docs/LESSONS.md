@@ -134,3 +134,12 @@ Entry format:
 ### 2026-10-22 — Commit messages from PowerShell
 - **Doesn't work:** `git commit -F - @'...'@` in Windows PowerShell 5.1 — the here-string is passed as a pathspec, not stdin.
 - **Solution / Rule:** write the message to a temp file and use `git commit -F <file>`.
+
+### 2026-10-23 — Test plan stage 7 (stock + custom sounds)
+- **Works (custom sound pipeline):** `.wav` (16-bit mono 44.1 kHz, generated with Python `wave`) in `content/<addon>/sounds/<dir>/x.wav`; own `content/<addon>/soundevents/<name>.vsndevts` in the same KV3 text format as Valve's decompiled files (header `<!-- kv3 encoding:text:version{e21c7f3c-...} format:generic:version{7412167c-...} -->`, unquoted `Name.Event = { type = "dota_src1_2d" | "dota_src1_3d", volume, pitch, vsnd_files = "sounds/<dir>/x.vsnd" }`); compile; `PrecacheResource("soundfile", "soundevents/<name>.vsndevts", context)`; `EmitGlobalSound` / `EmitSoundOn` play it. Types seen in stock files: `dota_src1_2d` (UI/global), `dota_src1_3d` (positional, with `soundlevel`, `distance_max`).
+- **Gotcha:** compiling the `.vsndevts` does NOT compile the referenced `.wav` (fixed in `compile_addon_resource`, see BUG_LOG). A `.wav` compiles directly to `sounds/.../x.vsnd_c`.
+- **Live check without ears:** `entity:GetSoundDuration("Event", "")` returns the real audio length for a loaded event (1.080 s / 0.450 s matched the synthesized files) and `-1` for an unknown event — a cheap autotest that the event and its audio are loaded.
+- **Decompiling all stock soundevents is cheap:** `Source2Viewer-CLI -i pak01_dir.vpk -f soundevents/ -e vsndevts_c -d --threads 8 -o <dir>` → 946 files, 24 MB, ~2 s. Used for the cached name → file index (~105 K events, mostly VO).
+- **Precache by name works:** `validate_and_sync_precache` now adds the `.vsndevts` of every event name found in Lua/KV and flags typos in `EmitSound*` calls (tested: `Hero_Crystal.CrystalNovva` → `unknown_sound_events`).
+- **Log noise:** `read_latest_console_log(only_errors=True)` was full of client start-up lines (team fandom images, `*_staging.vdata_c`, `soundevents_test`); added to the noise filter (takes effect after the MCP server restarts).
+

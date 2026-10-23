@@ -647,6 +647,27 @@ def remove_map_entity(
     }
 
 
+def _compile_vsndevts_sources(addon_name: str, vsndevts: Path, result: dict[str, Any]) -> None:
+    """Compiling a .vsndevts does not compile the audio it references (verified on 7.41):
+    compile each referenced sounds/*.vsnd from its .wav/.mp3 source and report missing sources."""
+    content_addon = CONFIG.content_addons_dir / addon_name
+    refs = sorted(set(re.findall(r'"(sounds/[^"]+?)\.vsnd"', vsndevts.read_text(encoding="utf-8", errors="replace"))))
+    compiled, missing = [], []
+    for ref in refs:
+        src = next((content_addon / f"{ref}{ext}" for ext in (".wav", ".mp3") if (content_addon / f"{ref}{ext}").exists()), None)
+        if src is None:
+            missing.append(f"{ref}.wav")
+            continue
+        sub = compile_addon_resource(addon_name, src.relative_to(content_addon).as_posix())
+        compiled.append(f"{src.relative_to(content_addon).as_posix()}: {sub.get('summary') or sub.get('error', '')}")
+        if not sub.get("ok"):
+            result["ok"] = False
+    result["sound_sources_compiled"] = compiled
+    if missing:
+        result["ok"] = False
+        result["missing_sound_sources"] = missing
+
+
 def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str, Any]:
     """Compile a map (.vmap), Panorama layout, or material using resourcecompiler.exe."""
     if not CONFIG.content_addons_dir or not CONFIG.game_addons_dir:
@@ -752,6 +773,8 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
                 "Output file is locked, most likely by Dota 2 with this map loaded. "
                 "Run 'disconnect' via run_console_command, then compile again."
             )
+        if full_input.suffix.lower() == ".vsndevts":
+            _compile_vsndevts_sources(addon_name, full_input, result)
         return result
     except Exception as exc:
         return {"ok": False, "error": str(exc)}

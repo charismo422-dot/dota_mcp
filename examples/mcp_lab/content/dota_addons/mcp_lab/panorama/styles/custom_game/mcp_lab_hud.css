@@ -95,6 +95,20 @@
 	box-shadow: #c79bffaa 0px 0px 10px 1px;
 }
 
+/* Stage 7: custom sound button, teal so it stands apart from the wave button */
+.SoundButton
+{
+	margin-top: 6px;
+	background-color: #145a5a;
+	border: 1px solid #7ff5e6;
+}
+
+.SoundButton:hover
+{
+	background-color: #1f8c8c;
+	box-shadow: #7ff5e6aa 0px 0px 10px 1px;
+}
+
 /* Energy full: the panel pulses */
 .RiftPanel.EnergyFull
 {
