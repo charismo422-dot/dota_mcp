@@ -9,7 +9,7 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 ## New features (ordered by value for custom-game development)
 
 1. **Scaffold from description** — one call creates ability/item/hero/modifier KV + Lua + localization + precache from a short spec — `idea`
-2. **Cross-reference validator** — before launch, detect broken links: abilities referenced by heroes/units that don't exist, missing `ScriptFile` Lua files, unknown modifiers, missing localization keys — `idea`
+2. **Cross-reference validator** — before launch, detect broken links: abilities referenced by heroes/units that don't exist, missing `ScriptFile` Lua files, unknown modifiers, missing localization keys — `partly done` (localization part in `validate_and_sync_precache`, stage 8)
 3. **Offline VScript API cache** — dump `script_help2` once, then verify Lua calls without a running game — `done` (2026-10-22, in `verify_vscript_api`)
 4. **Automated mechanic tests** — Lua harness spawns hero/targets, casts the ability, asserts damage/effects via console log — `idea`
 5. **In-game screenshots** — capture a screenshot so the agent can visually check particles and UI (console command to be verified) — `idea`

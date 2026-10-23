@@ -401,6 +401,8 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
             )
             game_mode_lua.write_text(gm_text, encoding="utf-8")
 
+    loc_report = _check_localization(game_addon, content_addon)
+
     return {
         "ok": (
             len(kv_errors) == 0
@@ -409,6 +411,7 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
             and len(icon_compile_errors) == 0
             and len(sound_report["unknown_sound_events"]) == 0
         ),
+        "localization": loc_report,
         "kv_syntax_errors": kv_errors,
         "misplaced_files_game_vs_content": misplaced_files,
         "auto_compiled_icons": auto_compiled_icons,
@@ -418,6 +421,133 @@ def validate_and_sync_precache(addon_name: str) -> dict[str, Any]:
         "missing_or_hallucinated_assets": missing_assets,
         **sound_report,
         "auto_precache_file": str(auto_precache_file),
+    }
+
+
+def _read_loc_tokens(loc_file: Path) -> dict[str, str]:
+    """Tokens of a resource/addon_<lang>.txt (UTF-16 or UTF-8, with or without BOM)."""
+    raw = loc_file.read_bytes()
+    # BOM decides first: decoding a UTF-8 file as UTF-16 "succeeds" with garbage and parses to nothing
+    if raw.startswith(b"\xef\xbb\xbf"):
+        encodings = ("utf-8-sig",)
+    elif raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        encodings = ("utf-16",)
+    else:
+        encodings = ("utf-8", "utf-16-le")
+    for enc in encodings:
+        try:
+            parsed = vdf.loads(raw.decode(enc))
+        except Exception:
+            continue
+        lang_root = next((v for k, v in parsed.items() if k.lower() == "lang"), None)
+        if isinstance(lang_root, dict):
+            tok_block = next((v for k, v in lang_root.items() if k.lower() == "tokens"), {})
+            return dict(tok_block) if isinstance(tok_block, dict) else {}
+    return {}
+
+
+# '#token' references: XML text="#x", JS $.Localize("#x"), Lua "#x_y" (needs '_' so panel ids/colors don't match)
+LOC_XML_RE = re.compile(r'text\s*=\s*"#([A-Za-z_][A-Za-z0-9_]*)"')
+LOC_JS_RE = re.compile(r'\$\.Localize\(\s*["\']#([A-Za-z_][A-Za-z0-9_]*)["\']')
+LOC_LUA_RE = re.compile(r'["\']#([A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]*)["\']')
+# %value% in ability descriptions must name an AbilityValues key (%% is a literal percent sign)
+TOOLTIP_VAR_RE = re.compile(r"%([A-Za-z_][A-Za-z0-9_]*)%")
+LINK_MODIFIER_RE = re.compile(r'LinkLuaModifier\(\s*["\'](\w+)["\']')
+
+
+def _check_localization(game_addon: Path, content_addon: Path) -> dict[str, Any]:
+    """Find untranslated names/tooltips, tokens missing in some language, unknown '#tokens' and bad %vars%."""
+    res_dir = game_addon / "resource"
+    langs: dict[str, dict[str, str]] = {}
+    if res_dir.exists():
+        for f in sorted(res_dir.glob("addon_*.txt")):
+            langs[f.stem.removeprefix("addon_")] = _read_loc_tokens(f)
+    all_tokens = {k.lower() for toks in langs.values() for k in toks}
+
+    # Tokens the game will look up: names/descriptions of custom abilities, items, units, hero overrides
+    required: set[str] = set()
+    ability_values: dict[str, set[str]] = {}
+    npc_dir = game_addon / "scripts" / "npc"
+    for kv_name in ("npc_abilities_custom.txt", "npc_items_custom.txt", "npc_units_custom.txt", "npc_heroes_custom.txt"):
+        kv_file = npc_dir / kv_name
+        if not kv_file.exists():
+            continue
+        try:
+            parsed = vdf.loads(kv_file.read_text(encoding="utf-8", errors="replace"))
+        except Exception:
+            continue
+        root_block = next(iter(parsed.values())) if parsed else {}
+        if not isinstance(root_block, dict):
+            continue
+        for name, data in root_block.items():
+            if not isinstance(data, dict):
+                continue
+            if kv_name in ("npc_abilities_custom.txt", "npc_items_custom.txt"):
+                keys = set((data.get("AbilityValues") or {}).keys())
+                for special in (data.get("AbilitySpecial") or {}).values():
+                    if isinstance(special, dict):
+                        keys.update(k for k in special if k not in ("var_type", "LinkedSpecialBonus"))
+                ability_values[name.lower()] = {k.lower() for k in keys}
+                if "HIDDEN" in str(data.get("AbilityBehavior", "")):
+                    continue
+                required.update({f"DOTA_Tooltip_ability_{name}", f"DOTA_Tooltip_ability_{name}_Description"})
+            elif kv_name == "npc_heroes_custom.txt":
+                required.add(data.get("override_hero") or name)
+            else:
+                required.add(name)
+
+    # Lua modifiers that show an icon need a name and a description. Skipped: IsHidden returning true,
+    # and thinker modifiers (CreateModifierThinker), which live on an invisible dummy unit.
+    scripts_dir = game_addon / "scripts" / "vscripts"
+    lua_texts = {f: f.read_text(encoding="utf-8", errors="replace") for f in scripts_dir.rglob("*.lua")} if scripts_dir.exists() else {}
+    all_lua = "\n".join(lua_texts.values())
+    for mod in set(LINK_MODIFIER_RE.findall(all_lua)):
+        if re.search(rf"function\s+{mod}:IsHidden\(\)\s*return\s+true", all_lua) or re.search(
+            rf"CreateModifierThinker\([^)]*[\"']{mod}[\"']", all_lua
+        ):
+            continue
+        required.update({f"DOTA_Tooltip_{mod}", f"DOTA_Tooltip_{mod}_Description"})
+
+    # '#tokens' referenced from Panorama and Lua
+    referenced: dict[str, str] = {}
+    panorama_dir = content_addon / "panorama"
+    sources: list[tuple[Path, re.Pattern[str], str]] = []
+    if panorama_dir.exists():
+        sources += [(f, LOC_XML_RE, f.read_text(encoding="utf-8", errors="replace")) for f in panorama_dir.rglob("*.xml")]
+        sources += [(f, LOC_JS_RE, f.read_text(encoding="utf-8", errors="replace")) for f in panorama_dir.rglob("*.js")]
+    sources += [(f, LOC_LUA_RE, text) for f, text in lua_texts.items()]
+    for f, pattern, text in sources:
+        for tok in pattern.findall(text):
+            referenced.setdefault(tok, f.name)
+
+    untranslated = sorted(t for t in required if t.lower() not in all_tokens)
+    unknown_refs = sorted(f"#{t} ({src})" for t, src in referenced.items() if t.lower() not in all_tokens)
+
+    missing_in_language: dict[str, list[str]] = {}
+    for lang, toks in langs.items():
+        own = {k.lower() for k in toks}
+        missing = sorted({k for other in langs.values() for k in other if k.lower() not in own})
+        if missing:
+            missing_in_language[lang] = missing
+
+    bad_vars: list[str] = []
+    for lang, toks in langs.items():
+        for key, text in toks.items():
+            m = re.match(r"DOTA_Tooltip_ability_(\w+?)_(Description|Lore|Note\d+)$", key, re.IGNORECASE)
+            if not m or m.group(1).lower() not in ability_values:
+                continue
+            known = ability_values[m.group(1).lower()]
+            for var in TOOLTIP_VAR_RE.findall(str(text)):
+                if var.lower() not in known:
+                    bad_vars.append(f"{lang}: {key} -> %{var}% (not in AbilityValues)")
+
+    return {
+        "languages": sorted(langs),
+        "ok": not (untranslated or unknown_refs or missing_in_language or bad_vars or not langs),
+        "untranslated_names": untranslated,
+        "unknown_token_references": unknown_refs,
+        "missing_in_language": missing_in_language,
+        "bad_tooltip_variables": bad_vars,
     }
 
 
@@ -507,17 +637,7 @@ def upsert_localization(
             target_encoding = "utf-8-sig"
         elif raw_head.startswith((b"\xff\xfe", b"\xfe\xff")):
             target_encoding = "utf-16"
-        for enc in ("utf-16", "utf-8-sig", "utf-8", "utf-16-le"):
-            try:
-                raw = loc_file.read_text(encoding=enc)
-                parsed = vdf.loads(raw)
-                lang_root = parsed.get("lang") or parsed.get("Lang") or {}
-                tok_block = lang_root.get("Tokens") or lang_root.get("tokens") or {}
-                if isinstance(tok_block, dict):
-                    existing_tokens.update(tok_block)
-                break
-            except Exception:
-                continue
+        existing_tokens.update(_read_loc_tokens(loc_file))
 
     existing_tokens.update(tokens)
 
@@ -531,15 +651,35 @@ def upsert_localization(
     for k, v in existing_tokens.items():
         if k == "Language":
             continue
-        safe_v = str(v).replace('"', '\\"')
+        # vdf unescapes \n and \" on read: escape them back so a round trip keeps one-line values
+        safe_v = str(v).replace('"', '\\"').replace("\r\n", "\\n").replace("\n", "\\n")
         lines.append(f'\t\t"{k}"\t\t"{safe_v}"')
     lines.extend(["\t}", "}", ""])
 
     loc_file.write_text("\n".join(lines), encoding=target_encoding)
-    return {
+
+    # Tokens other languages have but this one does not (and vice versa): untranslated text in game
+    own = {k.lower() for k in existing_tokens if k != "Language"}
+    missing_here: set[str] = set()
+    missing_elsewhere: dict[str, list[str]] = {}
+    for other in sorted(res_dir.glob("addon_*.txt")):
+        if other == loc_file:
+            continue
+        other_tokens = _read_loc_tokens(other)
+        other_lower = {k.lower() for k in other_tokens}
+        missing_here.update(k for k in other_tokens if k.lower() not in own)
+        gap = sorted(k for k in tokens if k.lower() not in other_lower)
+        if gap:
+            missing_elsewhere[other.stem.removeprefix("addon_")] = gap
+    result: dict[str, Any] = {
         "ok": True,
         "localization_file": str(loc_file),
         "encoding": target_encoding,
         "updated_keys_count": len(tokens),
-        "total_keys_count": len(existing_tokens),
+        "total_keys_count": len(existing_tokens) - 1,
     }
+    if missing_here:
+        result["missing_in_this_language"] = sorted(missing_here)
+    if missing_elsewhere:
+        result["not_yet_in_other_languages"] = missing_elsewhere
+    return result

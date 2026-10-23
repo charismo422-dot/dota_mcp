@@ -29,9 +29,31 @@ function OnSoundPressed()
 	GameEvents.SendCustomGameEventToServer( "mcp_lab_play_sound", {} );
 }
 
+// Stage 8: localization probe — the server sends token names, the client reports which ones resolve
+// in the current UI language and what the HUD title actually shows
+function OnLocProbe( data )
+{
+	var unresolved = [];
+	var tokens = String( data.tokens ).split( "," );
+	for ( var i = 0; i < tokens.length; i++ )
+	{
+		if ( tokens[i] !== "" && !$.CanLocalize( "#" + tokens[i] ) )
+			unresolved.push( tokens[i] );
+	}
+	GameEvents.SendCustomGameEventToServer( "mcp_lab_loc_ack", {
+		ping: data.ping,
+		language: $.Language(),
+		checked: tokens.length,
+		unresolved: unresolved.join( "," ),
+		title: $( "#RiftTitle" ).text,
+		sample: $.Localize( "#mcp_lab_loc_check" )
+	} );
+}
+
 ( function ()
 {
 	GameEvents.Subscribe( "mcp_lab_hud", OnHudUpdate );
+	GameEvents.Subscribe( "mcp_lab_loc_probe", OnLocProbe );
 	$( "#SummonButton" ).SetPanelEvent( "onactivate", OnSummonPressed );
 	$( "#SoundButton" ).SetPanelEvent( "onactivate", OnSoundPressed );
 	$.Msg( "[MCP_LAB] HUD script loaded" );

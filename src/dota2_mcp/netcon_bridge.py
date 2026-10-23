@@ -47,6 +47,9 @@ NOISE_PATTERNS = re.compile(
             r"anim_preview_archetypes\.vdata_c", r"mutations file! scripts/battlepass", r"ILocalize::AddFile\(\) failed to load file \"\"",
             r"failed to localize: '#DOTA_(Plus_ProfileCard|Friend_Join_Party)", r"panorama/images/econ/sets/",
             r"dota_base_ability_png\.vtex_c",
+            # Optional lookups with no stock counterpart: resource/addon_<lang>.txt already covers Panorama
+            r"failed to load file \"panorama/localization/addon_\w+\.txt\"", r"_SummaryDescription'",
+            r"dynamic_images\w*\.vpdi_c", r"#DOTA_Tooltip_CurrentStats_Header",
             # script_help2 API dump lines (served from the verify_vscript_api cache instead)
             r"^(\[VScript\] ?)?(---\[\[|-- @|--- Enum|function .*\) end$|[A-Za-z_][A-Za-z0-9_]* = -?\d+( --.*)?$|$)", r"^(Server|Client):\s+(Inactive|Disconnected)", r"@ Current\s+:", r"Queued\s+:",
         ]

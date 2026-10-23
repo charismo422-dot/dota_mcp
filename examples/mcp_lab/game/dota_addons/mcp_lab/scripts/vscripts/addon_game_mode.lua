@@ -265,6 +265,11 @@ Convars:RegisterCommand( "mcp_lab_autotest7", function()
 	GameRules.AddonTemplate:RunSoundTest( GameRules.AddonTemplate.hero )
 end, "MCP Lab: stage 7 autotest (custom + stock sound events known to the engine)", 0 )
 
+-- Stage 8: every name/tooltip token the game will look up must resolve on the client in the current language
+Convars:RegisterCommand( "mcp_lab_autotest8", function()
+	GameRules.AddonTemplate:RunLocalizationTest()
+end, "MCP Lab: stage 8 autotest (all addon texts resolve in the current UI language)", 0 )
+
 function Precache( context )
 	xpcall(function() require("auto_precache")(context) end, function(err) print("[MCP Precache Error] " .. tostring(err)) end)
 	-- Units spawned from Lua are invisible unless their model is precached
@@ -301,9 +306,52 @@ function CAddonTemplateGameMode:InitGameMode()
 	CustomGameEventManager:RegisterListener( "mcp_lab_dialog_choice", function(...) return self:OnDialogChoice( ... ) end )
 	CustomGameEventManager:RegisterListener( "mcp_lab_world_ack", function(...) return self:OnWorldAck( ... ) end )
 	CustomGameEventManager:RegisterListener( "mcp_lab_play_sound", function() return self:PlayRiftSound() end )
+	CustomGameEventManager:RegisterListener( "mcp_lab_loc_ack", function( _, data ) self.loc_acks = self.loc_acks or {}; self.loc_acks[ tostring( data.ping ) ] = data end )
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLabHud", function()
 		self:SendHudUpdate()
 		return 0.5
+	end, 1 )
+end
+
+-- Stage 8: tokens come from the addon KV files (abilities, items, units) plus the HUD, dialog and visible modifiers
+function CAddonTemplateGameMode:RunLocalizationTest()
+	local tokens = { "addon_game_name", "npc_dota_hero_crystal_maiden", "mcp_lab_loc_check" }
+	for _, file in ipairs({ "scripts/npc/npc_abilities_custom.txt", "scripts/npc/npc_items_custom.txt" }) do
+		for name, data in pairs( LoadKeyValues( file ) or {} ) do
+			if type( data ) == "table" and not string.find( tostring( data.AbilityBehavior ), "HIDDEN" ) then
+				table.insert( tokens, "DOTA_Tooltip_ability_" .. name )
+				table.insert( tokens, "DOTA_Tooltip_ability_" .. name .. "_Description" )
+			end
+		end
+	end
+	for name, data in pairs( LoadKeyValues( "scripts/npc/npc_units_custom.txt" ) or {} ) do
+		if type( data ) == "table" then table.insert( tokens, name ) end
+	end
+	for _, mod in ipairs({ "mcp_frost_nova_slow", "mcp_ice_bolt_stun", "mcp_frost_aura_debuff", "mcp_giant_slam_stun", "item_mcp_void_shard_pull", "mcp_rift_blessing" }) do
+		table.insert( tokens, "DOTA_Tooltip_modifier_" .. mod )
+		table.insert( tokens, "DOTA_Tooltip_modifier_" .. mod .. "_Description" )
+	end
+	for _, ui in ipairs({ "hud_title", "hud_energy", "hud_kills", "hud_next_wave", "hud_seconds", "hud_summon", "hud_sound",
+		"keeper_name", "keeper_greet", "keeper_opt_gift", "keeper_opt_leave", "keeper_reply_gift", "keeper_reply_leave" }) do
+		table.insert( tokens, "mcp_lab_" .. ui )
+	end
+
+	-- Control token that does not exist: must come back unresolved, otherwise the probe proves nothing
+	local control = "mcp_lab_no_such_token_control"
+	local ping = RandomInt( 1000, 999999 )
+	CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_loc_probe", { ping = ping, tokens = table.concat( tokens, "," ) .. "," .. control } )
+	GameRules:GetGameModeEntity():SetContextThink( "MCPLabLocCheck", function()
+		local ack = ( self.loc_acks or {} )[ tostring( ping ) ]
+		local all_resolved = ack ~= nil and ack.unresolved == control
+		local control_caught = ack ~= nil and string.find( ack.unresolved, control, 1, true ) ~= nil
+		local ok = all_resolved and control_caught and ack.checked == #tokens + 1
+		if ack then
+			print( string.format( "[MCP_LAB] stage8 language=%s checked=%d title=%s sample=%s unresolved=%s",
+				ack.language, ack.checked, ack.title, ack.sample, ack.unresolved ) )
+		end
+		print( string.format( "[MCP_LAB] AUTOTEST stage8 %s: client_answered=%s all_resolved=%s control_caught=%s tokens=%d",
+			ok and "PASS" or "FAIL", tostring( ack ~= nil ), tostring( all_resolved ), tostring( control_caught ), #tokens ) )
+		return nil
 	end, 1 )
 end
 
