@@ -67,3 +67,12 @@ Always consult and follow the project's technical documentation:
    - **After a task:** append new findings (what worked, what failed, how it was fixed) to `docs/LESSONS.md`; update `.private/STATUS.md` if it exists.
    - **Ideas:** record MCP feature ideas in [docs/IDEAS.md](./docs/IDEAS.md); record custom-game ideas in `.private/IDEAS_GAMES.md` (local only, never commit).
    - `.private/`, `CLAUDE.local.md` and `.agents/rules/owner-*.md` are gitignored personal files; never commit or publish them.
+
+---
+
+## 4. Работа короткими сессиями (Short Sessions)
+
+1. **Одна сессия = одна задача:** один большой этап или несколько мелких. Не тянуть работу в длинный чат.
+2. **В конце задачи:** обновить файл текущего состояния проекта (`.private/STATUS.md`, если он есть; иначе `docs/STATUS.md` — создать, если нет), закоммитить и запушить.
+3. **Следующий шаг** оформить как самодостаточную задачу для новой сессии (цель, нужные файлы, критерий готовности) и записать в файл состояния. Не продолжать его в текущем чате.
+4. **Логи и большие файлы** читать фрагментами и с фильтрами (`grep`, `tail`, диапазоны строк). Дампы целиком не выводить.
