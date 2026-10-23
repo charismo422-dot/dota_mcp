@@ -17,6 +17,6 @@ Every stage also checks the error channel: after each change, `script_reload` (o
 | 5b | World-space UI | Floating damage numbers, charges above the hero's HP bar, NPC dialog with choices (typewriter, glass style) | done (2026-10-22): autotest PASS |
 | 6 | Map | Trees, shop, spawns: `add_map_entity`, `list_map_entities`, `remove_map_entity`, recompile | done (2026-10-22): autotest PASS (19 trees with gates, removed tree gone, trees block pathing, cut/regrow, shopkeeper + Lua shop radius, crystals); minimap re-captured |
 | 7 | Sound | Stock sound events; check whether custom sound files can be added (expected gap) | done (2026-10-23): autotest PASS (own .wav + .vsndevts compiled and played, engine reports exact durations; stock sound); sound-by-name precache gap closed |
-| 8 | Localization | RU/EN strings via `upsert_localization` visible in game | done (2026-10-23): autotest PASS in Russian (43 tokens + control token caught); English file complete by validator; visual RU/EN check by the owner |
+| 8 | Localization | RU/EN strings via `upsert_localization` visible in game | done (2026-10-23): autotest PASS in Russian (43 tokens + control token caught); English file complete by validator; owner confirmed RU and EN visually (2026-10-23) |
 
 Stage 8 of the earlier draft ("break Lua on purpose, then fix") was dropped as a separate stage: the same agent breaking and fixing proves nothing. Instead the error channel (log capture + hot reload) is checked inside every stage.
