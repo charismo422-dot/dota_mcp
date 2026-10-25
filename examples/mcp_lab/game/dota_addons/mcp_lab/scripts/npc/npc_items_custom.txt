@@ -37,4 +37,39 @@
 			"damage"					"120"
 		}
 	}
+
+	//=================================================================================================================
+	// MCP Lab (stage 12 part 5): Frost Band — own item with the stock Wraith Band icon, recipe Circlet + Mantle (free recipe)
+	//=================================================================================================================
+	"item_mcp_frost_band"
+	{
+		"BaseClass"						"item_lua"
+		"ScriptFile"					"items/item_mcp_frost_band"
+		"AbilityTextureName"			"item_wraith_band"
+		"AbilityBehavior"				"DOTA_ABILITY_BEHAVIOR_PASSIVE"
+		"ItemCost"						"330"
+		"ItemShopTags"					"int"
+		"ItemQuality"					"component"
+		"ItemPurchasable"				"1"
+		"ItemSellable"					"1"
+		"ItemDroppable"					"1"
+		"AbilityValues"
+		{
+			"bonus_intellect"			"9"
+			"bonus_mana_regen"			"1.5"
+		}
+	}
+	"item_recipe_mcp_frost_band"
+	{
+		"BaseClass"						"item_datadriven"
+		"AbilityTextureName"			"item_recipe"
+		"ItemCost"						"0"
+		"ItemShopTags"					""
+		"ItemRecipe"					"1"
+		"ItemResult"					"item_mcp_frost_band"
+		"ItemRequirements"
+		{
+			"01"						"item_circlet;item_mantle"
+		}
+	}
 }

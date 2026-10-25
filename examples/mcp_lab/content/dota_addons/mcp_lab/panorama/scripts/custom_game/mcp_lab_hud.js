@@ -62,8 +62,36 @@ function OnLocProbe( data )
 	} );
 }
 
+// Stage 12 part 2: polygon zone line ("inside" / "pushed back") in the rift panel
+function OnZone( data )
+{
+	var text = "—";
+	if ( data.state === "inside" ) text = $.Localize( "#mcp_lab_hud_zone_inside" );
+	else if ( data.state === "pushed" ) text = $.Localize( "#mcp_lab_hud_zone_pushed" ) + " ×" + data.pushes;
+	$( "#ZoneValue" ).text = text;
+	$( "#ZoneRow" ).SetHasClass( "ZonePushed", data.state === "pushed" );
+	GameEvents.SendCustomGameEventToServer( "mcp_lab_zone_ack", { text: text } );
+}
+
+// Stage 12 part 6: play a .webm in a Movie panel ("" hides it)
+function OnVideo( data )
+{
+	var movie = $( "#LabMovie" );
+	movie.SetHasClass( "Shown", data.src !== "" );
+	if ( data.src !== "" )
+	{
+		movie.SetMovie( data.src );
+		movie.Play();
+	}
+	else
+		movie.Stop();
+	GameEvents.SendCustomGameEventToServer( "mcp_lab_video_ack", { src: data.src, shown: movie.BHasClass( "Shown" ) ? 1 : 0 } );
+}
+
 ( function ()
 {
+	GameEvents.Subscribe( "mcp_lab_zone", OnZone );
+	GameEvents.Subscribe( "mcp_lab_video", OnVideo );
 	GameEvents.Subscribe( "mcp_lab_hud", OnHudUpdate );
 	GameEvents.Subscribe( "mcp_lab_loc_probe", OnLocProbe );
 	$( "#SummonButton" ).SetPanelEvent( "onactivate", OnSummonPressed );

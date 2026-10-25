@@ -196,3 +196,15 @@
 - **Корневая причина:** Stock sources in content/dota/maps were not searched and unknown names fell back to template_map; shutil.move on Windows = copy + unlink, the unlink of the big temp file was blocked by another process.
 - **Примененное решение:** Added content/dota/maps/<name>.vmap as a candidate, fallback to template_map only when it is requested; os.replace with 10 retries; dmxconvert timeout 600 s, map compile timeout 1800 s.
 - **Правило предотвращения:** Never fall back silently to a different template; use atomic os.replace for big files on Windows.
+
+### [2026-10-25 20:17:25] Компонент: `prepare_map_from_template (stock map copy)`
+- **Симптом / Ошибка:** m1_dota (copy of stock dota.vmap) launches, but the minimap is plain grey (owner check 2026-10-25).
+- **Корневая причина:** The minimap comes from resource/overviews/<map>.txt; a stock map copied under a new name has no overview file.
+- **Примененное решение:** prepare_map_from_template now writes game/dota_addons/<addon>/resource/overviews/<map>.txt from the stock resource/overviews/<source>.txt (root key renamed, stock materials reused). Screenshot after relaunch: full Dota minimap.
+- **Правило предотвращения:** When a map is renamed or copied, check its minimap overview .txt exists under the new map name.
+
+### [2026-10-25 20:25:14] Компонент: `mcp_lab stage 12 (Panorama events from mcp_lab_mode1.lua)`
+- **Симптом / Ошибка:** mcp_lab_zone / mcp_lab_video events sent from Lua get no JS reaction: "Зона" row stays "—", Movie panel stays hidden, no ack (3 attempts). Other HUD events (mcp_lab_hud) work.
+- **Корневая причина:** Not found yet. Fixed on the way: CustomGameEventManager:RegisterListener called while the file is required (before Activate) never fires -> moved to first use (now logged as Registered). JS was recompiled by the game; XML row appears.
+- **Примененное решение:** Open. Next: check that the running HUD JS has OnZone (e.g. $.Msg in OnZone), check custom_net/event names, try GameEvents.Subscribe inside the existing init vs a fresh Dota restart.
+- **Правило предотвращения:** Register custom game event listeners inside InitGameMode/Activate or lazily, never at require time.

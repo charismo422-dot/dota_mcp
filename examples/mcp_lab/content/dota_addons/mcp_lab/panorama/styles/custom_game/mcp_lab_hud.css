@@ -115,3 +115,8 @@
 	border: 2px solid #ff7cf0;
 	box-shadow: #ff7cf0cc 0px 0px 24px 4px;
 }
+
+/* Stage 12: zone line turns red after a knockback; test video panel (hidden until a src is sent) */
+.ZonePushed .RiftValue { color: #ff6060; }
+.LabMovie { width: 640px; height: 360px; horizontal-align: center; vertical-align: center; visibility: collapse; }
+.LabMovie.Shown { visibility: visible; }

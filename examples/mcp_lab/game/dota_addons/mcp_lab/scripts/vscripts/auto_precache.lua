@@ -23,4 +23,8 @@ return function(context)
     PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_crystalmaiden.vsndevts", context)
     PrecacheResource("soundfile", "soundevents/game_sounds_heroes/game_sounds_enigma.vsndevts", context)
     PrecacheResource("soundfile", "soundevents/mcp_lab_sounds.vsndevts", context)
+    PrecacheResource("soundfile", "soundevents/voscripts/game_sounds_vo_crystalmaiden.vsndevts", context)
+    PrecacheResource("soundfile", "soundevents/voscripts/game_sounds_vo_templar_assassin.vsndevts", context)
+    PrecacheResource("soundfile", "soundevents/voscripts/game_sounds_vo_ursa.vsndevts", context)
+    PrecacheResource("soundfile", "soundevents/voscripts/game_sounds_vo_witchdoctor.vsndevts", context)
 end

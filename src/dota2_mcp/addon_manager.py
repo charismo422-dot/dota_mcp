@@ -554,6 +554,8 @@ def _check_localization(game_addon: Path, content_addon: Path) -> dict[str, Any]
 
 # String literal that looks like a sound event name: Hero_Pudge.Attack, MCP_Lab.Chime
 SOUND_NAME_LITERAL_RE = re.compile(r'["\']([A-Za-z0-9_]+(?:\.[A-Za-z0-9_\-]+)+)["\']')
+# Dotless literal like a hero voice line (crystalmaiden_cm_laugh_01): precached only if it is a real event name
+SOUND_VO_LITERAL_RE = re.compile(r'["\']([A-Za-z0-9]+_[A-Za-z0-9_]+)["\']')
 # Lua calls whose string arguments must be sound events
 SOUND_CALL_RE = re.compile(
     r"\b(?:EmitSound\w*|EmitGlobalSound|EmitAnnouncerSound\w*|StartSoundEvent\w*|StopSound\w*|StopGlobalSound)\s*\(([^\n]*)"
@@ -589,6 +591,7 @@ def _resolve_sound_events(scripts_dir: Path, content_addon: Path) -> dict[str, A
         for src_file in list(scripts_dir.rglob("*.lua")) + list(scripts_dir.rglob("*.txt")):
             text = src_file.read_text(encoding="utf-8", errors="replace")
             used.update(SOUND_NAME_LITERAL_RE.findall(text))
+            used.update(SOUND_VO_LITERAL_RE.findall(text))
             for args in SOUND_CALL_RE.findall(text):
                 in_calls.update(SOUND_NAME_LITERAL_RE.findall(args))
 

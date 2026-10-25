@@ -39,6 +39,10 @@
 				<Label class="RiftCaption" text="#mcp_lab_hud_lives" />
 				<Label id="LivesValue" class="RiftValue" text="—" />
 			</Panel>
+			<Panel id="ZoneRow" class="RiftRow">
+				<Label class="RiftCaption" text="#mcp_lab_hud_zone" />
+				<Label id="ZoneValue" class="RiftValue" text="—" />
+			</Panel>
 			<Button id="SummonButton" class="SummonButton">
 				<Label text="#mcp_lab_hud_summon" />
 			</Button>
@@ -46,5 +50,6 @@
 				<Label text="#mcp_lab_hud_sound" />
 			</Button>
 		</Panel>
+		<Movie id="LabMovie" class="LabMovie" controls="none" repeat="true" autoplay="onload" />
 	</Panel>
 </root>

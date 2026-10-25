@@ -56,3 +56,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 - **Verify `.png` icon compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 4 — `done` (stage 4 icon, stage 10 full-screen 1920×1080 slides)
 - **Verify Panorama compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 5 — `done` (stages 5, 5b, 10)
+- MCP: `validate_and_sync_precache` could warn about `CustomGameEventManager:RegisterListener` at module top level (listener lost before Activate).

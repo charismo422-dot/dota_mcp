@@ -111,12 +111,42 @@ def prepare_map_from_template(
     except Exception as exc:
         return {"ok": False, "error": str(exc)}
 
-    return {
+    result: dict[str, Any] = {
         "ok": True,
         "addon_name": addon_name,
         "map_path": str(target_vmap),
         "encoding": "keyvalues2",
     }
+    overview = _copy_stock_overview(addon_name, map_name, tpl_clean)
+    if overview:
+        result["minimap_overview"] = overview
+    return result
+
+
+def _copy_stock_overview(addon_name: str, map_name: str, stock_map: str) -> Optional[str]:
+    """Reuse the stock minimap (resource/overviews/<stock>.txt) for a copied stock map.
+
+    A copy of dota.vmap under a new name has no overview of its own, so its minimap is plain grey.
+    The stock .txt points at stock materials (materials/overviews/dota.vmat), only the root key is renamed.
+    """
+    if not CONFIG.game_addons_dir:
+        return None
+    dest = CONFIG.game_addons_dir / addon_name / "resource" / "overviews" / f"{map_name}.txt"
+    if dest.exists():
+        return None
+    try:
+        from .vpk_explorer import _get_vpk
+        pak = _get_vpk()
+        rel = f"resource/overviews/{stock_map}.txt"
+        if rel not in pak:
+            return None
+        text = pak.get_file(rel).read().decode("utf-8", errors="replace")
+    except Exception:
+        return None
+    text = re.sub(r'^\s*"?' + re.escape(stock_map) + r'"?\s*$', map_name, text, count=1, flags=re.M)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(text, encoding="utf-8")
+    return str(dest)
 
 
 def _find_matching_brace(text: str, open_brace_idx: int) -> int:
