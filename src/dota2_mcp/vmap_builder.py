@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -52,13 +53,23 @@ def _ensure_keyvalues2_vmap(vmap_path: Path) -> None:
         text=True,
         encoding="utf-8",
         errors="replace",
-        timeout=60,
+        timeout=600,  # stock dota.vmap is ~60 MB
     )
     if proc.returncode != 0 or not tmp_out.exists():
         raise RuntimeError(
             f"dmxconvert failed (exit {proc.returncode}): {proc.stdout} {proc.stderr}"
         )
-    shutil.move(str(tmp_out), str(vmap_path))
+    # os.replace, not shutil.move: on Windows move = copy + unlink, and a 300 MB temp file is often
+    # still held by a scanner/file watcher -> WinError 32 after the copy. Retry the atomic rename instead.
+    import time
+    for attempt in range(10):
+        try:
+            os.replace(tmp_out, vmap_path)
+            break
+        except PermissionError:
+            if attempt == 9:
+                raise
+            time.sleep(1.0)
 
 
 def prepare_map_from_template(
@@ -75,8 +86,12 @@ def prepare_map_from_template(
     candidate_templates = [
         CONFIG.content_addons_dir / addon_name / "maps" / f"{tpl_clean}.vmap",
         CONFIG.content_addons_dir / "addon_template" / "maps" / f"{tpl_clean}.vmap",
-        CONFIG.content_addons_dir / "addon_template" / "maps" / "template_map.vmap",
     ]
+    if CONFIG.content_dir:
+        # Stock Valve map sources, e.g. source_template="dota" -> content/dota/maps/dota.vmap (~60 MB binary)
+        candidate_templates.append(CONFIG.content_dir / "dota" / "maps" / f"{tpl_clean}.vmap")
+    if tpl_clean == "template_map":
+        candidate_templates.append(CONFIG.content_addons_dir / "addon_template" / "maps" / "template_map.vmap")
 
     if not target_vmap.exists():
         src_found: Optional[Path] = None
@@ -715,7 +730,7 @@ def compile_addon_resource(addon_name: str, resource_rel_path: str) -> dict[str,
             text=True,
             encoding="utf-8",
             errors="replace",
-            timeout=300,
+            timeout=1800 if is_map else 300,  # a full stock-size map compiles for minutes
         )
         combined = (proc.stdout or "") + "\n" + (proc.stderr or "")
         lines = [line.strip() for line in combined.splitlines() if line.strip()]

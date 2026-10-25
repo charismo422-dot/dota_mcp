@@ -49,6 +49,9 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 - **Filter console noise** — split `errors_and_warnings` into addon errors (Lua, own assets) vs known base-game noise; trim server-info dumps from `read_latest_console_log` — `done` (noise filter, `grep`, `only_errors`)
 
+- **Language voice packs in sound search** — `search_sound_events`/`search_dota_assets` see only `game/dota/pak01`; add `game/dota_<language>/pak01` (e.g. `dota_russian`: only `sounds/vo/<hero>/` files, same event names) and report which heroes have the language's voice.
+- **Stock compiled maps in asset search** — `game/dota/maps/*.vpk` (dota_683, dota_685, …) are invisible to `search_dota_assets`; list them with their inner `maps/<name>.vmap_c` name.
+
 ## Verification gaps
 
 - **Verify `.png` icon compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 4 — `done` (stage 4 icon, stage 10 full-screen 1920×1080 slides)

@@ -116,7 +116,7 @@ dota_mcp/
 
 ### Модуль 4: Конструктор карт `.vmap` и Компилятор (`vmap_builder.py`)
 10. `prepare_map_from_template(addon_name: str, map_name: str, source_template: str = "template_map") -> dict`
-    - **Описание:** Копирует базовый `.vmap` из шаблона и переводит его через `dmxconvert.exe -oe keyvalues2 -of vmap` в текстовый формат, готовый к программному редактированию.
+    - **Описание:** Копирует базовый `.vmap` из шаблона и переводит его через `dmxconvert.exe -oe keyvalues2 -of vmap` в текстовый формат, готовый к программному редактированию. Источник ищется в `content/dota_addons/<addon>/maps/`, `addon_template/maps/`, затем среди стоковых исходников `content/dota/maps/` (например `source_template="dota"` → `dota.vmap`, ~63 МБ бинарный → ~300 МБ текстовый); подмена на `template_map` — только если запрошен сам `template_map`.
 11. `list_map_entities(addon_name: str, map_name: str, classname_filter: str = "") -> dict`
     - **Описание:** Читает текстовый `.vmap` и возвращает компактный список всех сущностей (`CMapEntity`) на карте: их `id`, `nodeID`, `classname`, `targetname`, `origin` (координаты `x y z`), `angles` и ключевые свойства (без выгрузки полигональных мешей в контекст ИИ).
 12. `add_map_entity(addon_name: str, map_name: str, classname: str, origin: str, targetname: str = "", angles: str = "0 0 0", scales: str = "1 1 1", properties: dict = None) -> dict`

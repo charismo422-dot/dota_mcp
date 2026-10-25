@@ -8,6 +8,7 @@ require( "mcp_lab_links" )
 for name, method in pairs( require( "mcp_lab_hunters" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 9: enemy heroes under Lua AI
 for name, method in pairs( require( "mcp_lab_cutscene" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 10: cutscene
 for name, method in pairs( require( "mcp_lab_flow" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 11: game flow
+require( "mcp_lab_mode1" )  -- stage 12: mode-1 checks
 
 local WAVE_SPAWNERS = { "lab_spawn_west", "lab_spawn_east" }  -- info_target entities placed with add_map_entity
 

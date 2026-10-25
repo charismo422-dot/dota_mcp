@@ -190,3 +190,9 @@
 - **Корневая причина:** LOC_JS_RE / LOC_LUA_RE treated any quoted "#token" literal as a full token, including a prefix that is concatenated with a variable.
 - **Примененное решение:** Negative lookahead: a literal followed by "+" (JS) or ".." (Lua) is ignored as a dynamic prefix. Takes effect after the MCP server restarts.
 - **Правило предотвращения:** Dynamic token names cannot be checked statically; keep every possible full token in the localization files and test them live (stage 8 probe pattern).
+
+### [2026-10-25 18:01:49] Компонент: `prepare_map_from_template (vmap_builder.py)`
+- **Симптом / Ошибка:** source_template="dota" silently copied template_map; with a real 300 MB map the conversion ended with WinError 32 and a leftover .kv2.vmap file.
+- **Корневая причина:** Stock sources in content/dota/maps were not searched and unknown names fell back to template_map; shutil.move on Windows = copy + unlink, the unlink of the big temp file was blocked by another process.
+- **Примененное решение:** Added content/dota/maps/<name>.vmap as a candidate, fallback to template_map only when it is requested; os.replace with 10 retries; dmxconvert timeout 600 s, map compile timeout 1800 s.
+- **Правило предотвращения:** Never fall back silently to a different template; use atomic os.replace for big files on Windows.
