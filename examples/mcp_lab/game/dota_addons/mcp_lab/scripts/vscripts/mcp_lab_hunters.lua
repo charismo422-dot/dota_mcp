@@ -12,7 +12,12 @@ local SKILLS = {
 	npc_dota_hero_lina = { "lina_light_strike_array", "lina_dragon_slave" },
 	npc_dota_hero_axe = { "axe_berserkers_call", "axe_battle_hunger", "axe_counter_helix" },
 }
-local ITEMS = { npc_dota_hero_sven = "item_power_treads", npc_dota_hero_lina = "item_arcane_boots", npc_dota_hero_axe = "item_heart" }
+-- First item: stock bot loadout; the rest are stock actives the AI uses by orders (names/targets from get_base_dota_definition)
+local ITEMS = {
+	npc_dota_hero_sven = { "item_power_treads", "item_blink", "item_faerie_fire" },
+	npc_dota_hero_lina = { "item_arcane_boots", "item_force_staff" },
+	npc_dota_hero_axe = { "item_heart", "item_blade_mail" },
+}
 local TROPHIES = { hunter = 5, boss = 25 }
 
 local function DamageTaken( unit )
@@ -30,7 +35,7 @@ end, "MCP Lab: phased boss at the east spawner, runs to the west spawner in phas
 
 Convars:RegisterCommand( "mcp_lab_autotest9", function()
 	GameRules.AddonTemplate:RunEnemyHeroTest( GameRules.AddonTemplate.hero )
-end, "MCP Lab: stage 9 autotest (hunter AI, retreat, killer, trophies, power, boss phases)", 0 )
+end, "MCP Lab: stage 9 autotest (hunter AI, kiting, weak target, items, retreat, killer, trophies, power, boss phases)", 0 )
 
 function CAddonTemplateGameMode:SpawnEnemyHero( name, pos, level )
 	local hero = CreateUnitByName( name, pos, true, nil, nil, DOTA_TEAM_BADGUYS )
@@ -44,7 +49,7 @@ function CAddonTemplateGameMode:SpawnEnemyHero( name, pos, level )
 		local ab = hero:FindAbilityByName( ab_name )
 		if ab then ab:SetLevel( level >= 6 and 2 or 1 ) end
 	end
-	hero:AddItemByName( ITEMS[ name ] )
+	for _, item in ipairs( ITEMS[ name ] or {} ) do hero:AddItemByName( item ) end
 	hero:SetRespawnsDisabled( true )  -- no player owner: a dead hunter is removed, not respawned
 	hero:AddNewModifier( hero, nil, "modifier_mcp_damage_meter", {} )
 	self.enemy_heroes = self.enemy_heroes or {}
@@ -146,6 +151,7 @@ function CAddonTemplateGameMode:StartHunterDemo( level )
 	self:SpawnHunters( { { pos = west, home = west }, { pos = east, home = east } }, level )
 	self:SetHunterPowerInterval( 30 )
 	print( "[MCP_LAB] hunters spawned, level " .. level .. ", power +1 every 30 s" )
+	print( "[MCP_LAB] watch: Lina steps back after hitting you up close, stuns then waves; Sven bolts, then blinks in; low HP -> they drink/push away and run home" )
 end
 
 function CAddonTemplateGameMode:StartBossDemo( level )
@@ -154,6 +160,7 @@ function CAddonTemplateGameMode:StartBossDemo( level )
 	if IsValidEntity( self.boss ) then UTIL_Remove( self.boss ) end
 	self:SpawnBoss( east, level, west )
 	print( "[MCP_LAB] boss spawned, level " .. level )
+	print( "[MCP_LAB] watch: hit the boss -> Blade Mail turns on (your damage comes back for 5.5 s)" )
 end
 
 -- Runs fn(next) steps one after another; each step calls next( delay ) to schedule the following one
@@ -170,8 +177,10 @@ local function Sequence( steps )
 	next_step( 0 )
 end
 
+-- Bypasses invulnerability: after a previous run the player's hero may stand in the fountain (modifier_fountain_invulnerability)
 local function Kill( victim, attacker )
-	ApplyDamage({ victim = victim, attacker = attacker, damage = victim:GetHealth() + 1000, damage_type = DAMAGE_TYPE_PURE })
+	ApplyDamage({ victim = victim, attacker = attacker, damage = victim:GetHealth() + 1000, damage_type = DAMAGE_TYPE_PURE,
+		damage_flags = DOTA_DAMAGE_FLAG_BYPASSES_INVULNERABILITY })
 end
 
 -- Stage 9 autotest. The player's hero is invulnerable while the AI is checked, so the hunters pick the
@@ -182,7 +191,7 @@ function CAddonTemplateGameMode:RunEnemyHeroTest( hero )
 	local r = {}
 	local base = hero:GetAbsOrigin()
 	local center = base + Vector( 0, 400, 0 )
-	hero:AddNewModifier( hero, nil, "modifier_invulnerable", { duration = 7 } )
+	hero:AddNewModifier( hero, nil, "modifier_invulnerable", { duration = 12 } )
 	local dummies = self:SpawnTargets( center )
 	local hunters = self:SpawnHunters( {
 		{ pos = center + Vector( -300, 300, 0 ), home = center + Vector( -800, 600, 0 ) },
@@ -193,7 +202,7 @@ function CAddonTemplateGameMode:RunEnemyHeroTest( hero )
 	local sven_ai = sven:FindModifierByName( "modifier_mcp_hunter_ai" )
 	local lina_ai = lina:FindModifierByName( "modifier_mcp_hunter_ai" )
 	self:SetHunterPowerInterval( 2 )
-	local boss, boss_ai, deaths_before, power_before, dist_before, hud_ping
+	local boss, boss_ai, deaths_before, power_before, dist_before, hud_ping, weak, lina_before
 
 	local function count( t ) local n = 0 for _, v in pairs( t ) do n = n + v end return n end
 	local function dummy_damage() local d = 0 for _, u in ipairs( dummies ) do d = d + DamageTaken( u ) end return d end
@@ -216,13 +225,48 @@ function CAddonTemplateGameMode:RunEnemyHeroTest( hero )
 			r.power_timer = ( self.power_raises.timer or 0 ) >= 1 and lina:FindModifierByName( "modifier_mcp_hunter_power" ):GetStackCount() == self.hunter_power
 			print( string.format( "[MCP_LAB] stage9 casts sven=%d lina=%d dummy_damage=%d power=%d",
 				count( sven_ai.casts ), count( lina_ai.casts ), dummy_damage(), self.hunter_power ) )
+			-- weak target: training dummies always heal back to full, so a stock hero with 30% HP is put
+			-- a bit further away than the dummies; both hunters must switch to it
+			weak = CreateUnitByName( BOSS, center + Vector( 0, -150, 0 ), true, nil, nil, DOTA_TEAM_NEUTRALS )
+			weak:SetIdleAcquire( false )
+			weak:Hold()
+			weak:SetHealth( weak:GetMaxHealth() * 0.3 )
+			next( 1 )
+		end,
+		function( next )
+			r.weak_target = sven_ai.target == weak and lina_ai.target == weak
+			r.kite = lina_ai.kites >= 1 and lina_ai.kite_gain >= 100
+			print( string.format( "[MCP_LAB] stage9 kites=%d kite_gain=%d combos=%d weak_picks sven=%d lina=%d weak_hp=%d targets=%s/%s weak=%d",
+				lina_ai.kites, lina_ai.kite_gain, lina_ai.combos, sven_ai.weak_picks, lina_ai.weak_picks, weak:GetHealthPercent(),
+				tostring( sven_ai.target and sven_ai.target:entindex() ), tostring( lina_ai.target and lina_ai.target:entindex() ), weak:entindex() ) )
+			UTIL_Remove( weak )
+			-- blink: Sven is moved ~1000 away from the dummies (still inside his leash)
+			FindClearSpaceForUnit( sven, center + Vector( -950, 250, 0 ), true )
+			sven:Stop()
+			next( 1.5 )
+		end,
+		function( next )
+			r.item_blink = ( sven_ai.items_used.item_blink or 0 ) >= 1 and not sven:FindItemInInventory( "item_blink" ):IsCooldownReady()
+				and ( sven:GetAbsOrigin() - center ):Length2D() < 600
 			dist_before = ( sven:GetAbsOrigin() - center ):Length2D()
+			FindClearSpaceForUnit( lina, center + Vector( -200, -100, 0 ), true )  -- far from her home, so Force Staff is worth it
+			lina_before = ( lina:GetAbsOrigin() - lina_ai.home ):Length2D()
 			sven:SetHealth( sven:GetMaxHealth() * 0.2 )
+			lina:SetHealth( lina:GetMaxHealth() * 0.25 )
+			lina:SetMana( 200 )  -- enough for Force Staff (150), below half -> Arcane Boots
 			next( 1.5 )
 		end,
 		function( next )
 			r.retreat = sven_ai.state == "retreat" and sven_ai.retreats == 1 and ( sven:GetAbsOrigin() - center ):Length2D() > dist_before + 100
+			r.item_faerie_fire = ( sven_ai.items_used.item_faerie_fire or 0 ) == 1 and not sven:HasItemInInventory( "item_faerie_fire" )
+			r.item_force_staff = ( lina_ai.items_used.item_force_staff or 0 ) == 1 and not lina:FindItemInInventory( "item_force_staff" ):IsCooldownReady()
+				and ( lina:GetAbsOrigin() - lina_ai.home ):Length2D() < lina_before - 300
+			r.item_arcane_boots = ( lina_ai.items_used.item_arcane_boots or 0 ) >= 1 and not lina:FindItemInInventory( "item_arcane_boots" ):IsCooldownReady()
+			print( string.format( "[MCP_LAB] stage9 items sven=%s lina=%s lina_home %d -> %d",
+				tostring( r.item_blink ) .. "/" .. tostring( r.item_faerie_fire ), tostring( r.item_force_staff ) .. "/" .. tostring( r.item_arcane_boots ),
+				lina_before, ( lina:GetAbsOrigin() - lina_ai.home ):Length2D() ) )
 			sven:SetHealth( sven:GetMaxHealth() )
+			lina:SetHealth( lina:GetMaxHealth() )
 			next( 1 )
 		end,
 		function( next )
@@ -259,6 +303,7 @@ function CAddonTemplateGameMode:RunEnemyHeroTest( hero )
 		end,
 		function( next )
 			local gap = note_gap( boss_ai.log, "telegraph2", "phase2" )
+			r.item_blade_mail = boss_ai.blade_mail_uses == 1 and not boss:FindItemInInventory( "item_blade_mail" ):IsCooldownReady()
 			r.phase2 = boss_ai.phase == 2 and not boss_ai.call:IsCooldownReady() and gap >= 0.95 and gap <= 1.2
 			Kill( boss, hero )
 			r.min_health = boss:IsAlive() and boss:GetHealth() == 1
@@ -286,10 +331,11 @@ function CAddonTemplateGameMode:RunEnemyHeroTest( hero )
 			r.hud = type( ack ) == "table" and tonumber( ack.trophies ) == self.trophies and ack.killer ~= ""
 			local failed = {}
 			for _, key in ipairs({ "level", "items", "casts", "dummy_hit", "power_timer", "retreat", "came_back", "killer", "trophy_hunter",
-				"power_event", "telegraph", "phase2", "min_health", "phase3_run", "arrived", "boss_dead", "trophy_boss", "hud" }) do
+				"power_event", "telegraph", "phase2", "min_health", "phase3_run", "arrived", "boss_dead", "trophy_boss", "hud",
+				"kite", "weak_target", "item_blink", "item_faerie_fire", "item_force_staff", "item_arcane_boots", "item_blade_mail" }) do
 				if not r[ key ] then table.insert( failed, key ) end
 			end
-			print( string.format( "[MCP_LAB] AUTOTEST stage9 %s: checks=18 failed=[%s] trophies=%d killer=%s hud_killer=%s",
+			print( string.format( "[MCP_LAB] AUTOTEST stage9 %s: checks=25 failed=[%s] trophies=%d killer=%s hud_killer=%s",
 				#failed == 0 and "PASS" or "FAIL", table.concat( failed, "," ), self.trophies, tostring( self.last_killer ),
 				type( ack ) == "table" and tostring( ack.killer ) or "-" ) )
 			self:ClearEnemyHeroes()

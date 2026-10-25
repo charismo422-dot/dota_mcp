@@ -1,6 +1,7 @@
 -- Stage 9: boss on a stock hero. Phase 1 -> (HP <= 60%) phase 2 -> (HP <= 30%) phase 3.
 -- Every phase change is telegraphed for 1 s (boss stops, warning ring), then the phase action happens.
 -- HP never drops below 1 until phase 3 is finished: the boss runs to a point and only then becomes killable.
+-- Blade Mail (stock item) is switched on when the boss starts taking damage, so hitting it at the wrong moment hurts.
 modifier_mcp_boss_ai = class({})
 
 local TELEGRAPH = 1.0
@@ -16,6 +17,7 @@ function modifier_mcp_boss_ai:OnCreated( kv )
 	self.phase, self.state, self.log = 1, "fight", {}
 	self.call = unit:FindAbilityByName( "axe_berserkers_call" )
 	self.hunger = unit:FindAbilityByName( "axe_battle_hunger" )
+	self.last_hp, self.blade_mail_uses = unit:GetHealth(), 0
 	self:StartIntervalThink( 0.1 )
 end
 
@@ -57,6 +59,16 @@ function modifier_mcp_boss_ai:OnIntervalThink()
 			self.state = "run"
 			unit:MoveToPosition( self.run_point )
 		end
+		return
+	end
+
+	-- Took damage since the last think -> Blade Mail (immediate item, does not interrupt the current order)
+	local blade = unit:GetHealth() < self.last_hp and unit:FindItemInInventory( "item_blade_mail" )
+	self.last_hp = unit:GetHealth()
+	if blade and blade:IsFullyCastable() then
+		unit:CastAbilityNoTarget( blade, -1 )
+		self.blade_mail_uses = self.blade_mail_uses + 1
+		self:Note( "blade_mail" )
 		return
 	end
 

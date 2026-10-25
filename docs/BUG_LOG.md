@@ -160,3 +160,9 @@
 - **Корневая причина:** Errors are collected from the whole console.log session, not from the latest game launch.
 - **Примененное решение:** Not fixed yet (logged as idea). Workaround: judge the current run by tail lines after the last '[MCP_LAB] Initializing game mode...' line.
 - **Правило предотвращения:** When reading errors after a relaunch, check that they come after the latest launch marker before treating them as current.
+
+### [2026-10-25 16:23:20] Компонент: `mcp_lab mcp_lab_autotest9 (repeat run)`
+- **Симптом / Ошибка:** Second autotest run in a row failed only 'killer': Kill(hero, lina) via ApplyDamage did nothing, hero stayed alive, no entity_killed.
+- **Корневая причина:** The previous run ends with RespawnHero, so the player's hero stands in the fountain and has modifier_fountain_invulnerability (several stacks); removing modifier_invulnerable is not enough. Also the old 7 s invulnerability ran out before the kill step once the test got longer.
+- **Примененное решение:** Test Kill() uses damage_flags = DOTA_DAMAGE_FLAG_BYPASSES_INVULNERABILITY; start-of-test invulnerability raised to 12 s.
+- **Правило предотвращения:** Autotests must pass twice in a row: run every autotest a second time without relaunch. Test kills use BYPASSES_INVULNERABILITY; protection durations must cover the whole test.

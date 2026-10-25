@@ -161,3 +161,11 @@ Entry format:
 - **Log tool gap (BUG_LOG):** `read_latest_console_log` errors include earlier launches; check they come after the latest launch marker.
 - **Russian client keeps English hero names** (`$.Localize("#npc_dota_hero_lina")` → "Lina").
 
+### 2026-10-25 — Stage 9 follow-up (smarter hunter AI, stock items by orders)
+- **Works:** item names/behaviors via `get_base_dota_definition` (`item_blink` POINT, `item_force_staff` UNIT_TARGET 150 mana, `item_faerie_fire` / `item_arcane_boots` / `item_blade_mail` IMMEDIATE NO_TARGET); `FindItemInInventory(name)` + `IsFullyCastable()` covers cooldown and mana; cast with the same `CastAbility*` orders as spells. Faerie Fire is consumed (`HasItemInInventory` false after use).
+- **One item order per think:** two orders in the same tick overwrite each other; return after each item use.
+- **Force Staff on self pushes the way the hero faces;** `SetForwardVector` right before the cast does not stick while the hero turns. Order a move to the escape point and cast once `DotProduct(GetForwardVector(), dir) > 0.9`. Pointless closer than ~300 to the destination (test must place the hero far from home).
+- **Kiting:** `MODIFIER_EVENT_ON_ATTACK` (`params.attacker == parent`) marks the attack; next think steps back to target − dir × (kite+150) for ≤ 1 s. Measured gain ≈ 280–300.
+- **Training dummies heal back to full at once** — HP-based target choice cannot be tested on them; spawn a stock hero (NEUTRALS, `SetIdleAcquire(false)`, `Hold`) with 30 % HP a bit further than the dummies.
+- **Reaction delay** (`RandomFloat(0.3, 0.6)` after each order, retreat/return exempt) keeps the stage 9 timings: all old checks still PASS.
+- **Repeat-run trap (BUG_LOG):** after `RespawnHero` the hero stands in the fountain with `modifier_fountain_invulnerability`; test kills need `DOTA_DAMAGE_FLAG_BYPASSES_INVULNERABILITY`. Run every autotest twice in a row.
