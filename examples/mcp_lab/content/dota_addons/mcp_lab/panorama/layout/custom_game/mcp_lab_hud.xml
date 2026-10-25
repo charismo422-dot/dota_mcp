@@ -35,6 +35,10 @@
 				<Label class="RiftCaption" text="#mcp_lab_hud_killer" />
 				<Label id="KillerValue" class="RiftValue" text="—" />
 			</Panel>
+			<Panel class="RiftRow">
+				<Label class="RiftCaption" text="#mcp_lab_hud_lives" />
+				<Label id="LivesValue" class="RiftValue" text="—" />
+			</Panel>
 			<Button id="SummonButton" class="SummonButton">
 				<Label text="#mcp_lab_hud_summon" />
 			</Button>

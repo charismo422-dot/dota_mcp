@@ -243,7 +243,10 @@ def _dump_vscript_api_to_cache(build: str) -> tuple[Optional[Path], str]:
             line = raw  # continuation lines of a multi-line VScript message
         api_lines.append(line.rstrip())
 
-    if sum(1 for l in api_lines if l.startswith("function ")) < 500:
+    # A dump with hundreds of functions can still miss whole classes (a cache once lacked CDOTAGameRules):
+    # require the core classes too, so a partial dump is never cached.
+    core = ("function CDOTAGameRules:", "function CDOTABaseGameMode:", "function CDOTA_BaseNPC:", "function CDOTA_PlayerResource:")
+    if sum(1 for l in api_lines if l.startswith("function ")) < 500 or not all(any(l.startswith(c) for l in api_lines) for c in core):
         return None, "script_help2 output looks incomplete (load a map first, then retry with refresh=True)."
 
     VSCRIPT_CACHE_DIR.mkdir(parents=True, exist_ok=True)

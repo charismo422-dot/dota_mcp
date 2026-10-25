@@ -7,6 +7,7 @@ end
 require( "mcp_lab_links" )
 for name, method in pairs( require( "mcp_lab_hunters" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 9: enemy heroes under Lua AI
 for name, method in pairs( require( "mcp_lab_cutscene" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 10: cutscene
+for name, method in pairs( require( "mcp_lab_flow" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 11: game flow
 
 local WAVE_SPAWNERS = { "lab_spawn_west", "lab_spawn_east" }  -- info_target entities placed with add_map_entity
 
@@ -291,10 +292,8 @@ end
 function CAddonTemplateGameMode:InitGameMode()
 	print( "[MCP_LAB] Initializing game mode..." )
 
-	GameRules:SetCustomGameSetupAutoLaunchDelay( 0 )
 	GameRules:EnableCustomGameSetupAutoLaunch( true )
 	GameRules:LockCustomGameSetupTeamAssignment( true )
-	GameRules:SetPreGameTime( 600 )
 	GameRules:SetStartingGold( 99999 )  -- playtest: every custom item must be buyable right away
 
 	GameRules:GetGameModeEntity():SetCustomGameForceHero( "npc_dota_hero_crystal_maiden" )
@@ -311,6 +310,7 @@ function CAddonTemplateGameMode:InitGameMode()
 	CustomGameEventManager:RegisterListener( "mcp_lab_play_sound", function() return self:PlayRiftSound() end )
 	CustomGameEventManager:RegisterListener( "mcp_lab_loc_ack", function( _, data ) self.loc_acks = self.loc_acks or {}; self.loc_acks[ tostring( data.ping ) ] = data end )
 	self:RegisterCutsceneListeners()
+	self:InitGameFlow()  -- stage 11: lobby countdown, pre-game 0, respawn 5 s, lives
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLabHud", function()
 		self:SendHudUpdate()
 		return 0.5
@@ -365,7 +365,8 @@ function CAddonTemplateGameMode:SendHudUpdate( ping )
 		next_wave = math.max( 0, math.ceil( self.next_wave_time - GameRules:GetGameTime() ) )
 	end
 	CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_hud", { energy = self.hud_energy, kills = self.hud_kills, next_wave = next_wave, ping = ping,
-		trophies = self.trophies or 0, hunter_power = self.hunter_power or 0, killer = self.last_killer or "" } )
+		trophies = self.trophies or 0, hunter_power = self.hunter_power or 0, killer = self.last_killer or "",
+		lives = self.lives_infinite and "inf" or ( self.lives_left or -1 ) } )
 end
 
 function CAddonTemplateGameMode:OnEntityKilled( event )
@@ -375,7 +376,10 @@ function CAddonTemplateGameMode:OnEntityKilled( event )
 	end
 	local attacker = event.entindex_attacker and EntIndexToHScript( event.entindex_attacker )
 	if unit and unit.mcp_role then self:OnEnemyHeroKilled( unit, attacker ) end
-	if unit and unit == self.hero then self:OnPlayerHeroKilled( attacker ) end
+	if unit and unit == self.hero then
+		self:OnPlayerHeroKilled( attacker )
+		self:OnFlowHeroDeath()
+	end
 end
 
 function CAddonTemplateGameMode:OnWaveUnitKilled( unit )
@@ -483,6 +487,7 @@ function CAddonTemplateGameMode:OnNPCSpawned( event )
 	-- Autotests are NOT started here: a manual playtest must begin with a clean arena.
 	-- The agent runs them on demand ("mcp_lab_autotest" = all stages, "mcp_lab_autotest3/4" = single stage).
 	self.hero = hero
+	self:ApplyGameFlow( hero )  -- stage 11: lobby settings (lives, look)
 	-- Free spot between the start and the south-west crystal (crystals sit on a 700-unit ring)
 	self:SpawnRiftKeeper( Vector( -600, -150, 128 ) )
 

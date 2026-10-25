@@ -1,9 +1,12 @@
 <root>
-	<!-- MCP Lab custom UI: the rift HUD (stage 5) and world-space UI (stage 5b), cutscene overlay (stage 10, last = drawn on top).
+	<!-- MCP Lab custom UI: the rift HUD (stage 5) and world-space UI (stage 5b), cutscene overlay (stage 10, last = drawn on top),
+	     own lobby (GameSetup) and end screen (EndScreen) of stage 11.
 	     Write referenced layouts BEFORE this file: Tools mode recompiles it on save. -->
 	<Panel>
 		<CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/mcp_lab_hud.xml" />
 		<CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/mcp_lab_world.xml" />
 		<CustomUIElement type="Hud" layoutfile="file://{resources}/layout/custom_game/mcp_lab_cutscene.xml" />
+		<CustomUIElement type="GameSetup" layoutfile="file://{resources}/layout/custom_game/mcp_lab_lobby.xml" />
+		<CustomUIElement type="EndScreen" layoutfile="file://{resources}/layout/custom_game/mcp_lab_end.xml" />
 	</Panel>
 </root>

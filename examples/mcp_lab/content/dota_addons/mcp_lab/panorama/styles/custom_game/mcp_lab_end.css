@@ -1,0 +1,239 @@
+.EndRoot
+{
+	width: 100%;
+	height: 100%;
+}
+
+/* ---------- Joke: a fake "program is not responding" window over a dimmed game ---------- */
+.JokeLayer
+{
+	width: 100%;
+	height: 100%;
+	background-color: #000000aa;
+	opacity: 0;
+	visibility: collapse;
+	transition-property: opacity;
+	transition-duration: 0.3s;
+}
+
+.JokeLayer.Shown
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.FakeWindow
+{
+	horizontal-align: center;
+	vertical-align: center;
+	width: 560px;
+	flow-children: down;
+	background-color: #f3f3f3;
+	border: 1px solid #8a8a8a;
+	box-shadow: #00000099 0px 8px 30px 4px;
+	transition-property: opacity, transform;
+	transition-duration: 0.35s;
+}
+
+.FakeTitleBar
+{
+	width: 100%;
+	height: 34px;
+	background-color: #ffffff;
+	flow-children: right;
+}
+
+.FakeTitle
+{
+	vertical-align: center;
+	margin-left: 12px;
+	width: fill-parent-flow( 1.0 );
+	font-size: 15px;
+	color: #202020;
+}
+
+.FakeClose
+{
+	vertical-align: center;
+	width: 46px;
+	text-align: center;
+	font-size: 15px;
+	color: #202020;
+}
+
+.FakeBody
+{
+	width: 100%;
+	padding: 22px 24px;
+	flow-children: right;
+}
+
+.FakeIcon
+{
+	width: 44px;
+	height: 44px;
+	border-radius: 22px;
+	background-color: #f2c400;
+	text-align: center;
+	font-size: 30px;
+	font-weight: bold;
+	color: #1a1a1a;
+	margin-right: 18px;
+}
+
+.FakeText
+{
+	width: fill-parent-flow( 1.0 );
+	vertical-align: center;
+	font-size: 16px;
+	color: #1a1a1a;
+}
+
+.FakeButtons
+{
+	width: 100%;
+	padding: 14px 18px;
+	background-color: #e8e8e8;
+	flow-children: right;
+}
+
+.FakeButton
+{
+	margin-left: 10px;
+	padding: 6px 18px;
+	background-color: #fdfdfd;
+	border: 1px solid #adadad;
+	border-radius: 3px;
+}
+
+.FakeButton:hover
+{
+	border: 1px solid #0078d4;
+	background-color: #e5f1fb;
+}
+
+.FakeButton Label
+{
+	font-size: 15px;
+	color: #1a1a1a;
+}
+
+.JokeReveal
+{
+	horizontal-align: center;
+	vertical-align: center;
+	font-size: 46px;
+	font-weight: bold;
+	color: #ffe27a;
+	text-shadow: 0px 0px 14px #ff9a2e;
+	opacity: 0;
+	pre-transform-scale2d: 0.6;
+	transition-property: opacity, pre-transform-scale2d;
+	transition-duration: 0.3s;
+}
+
+.JokeLayer.Revealed .FakeWindow
+{
+	opacity: 0;
+	transform: translateY( 60px ) rotateZ( 8deg );
+}
+
+.JokeLayer.Revealed .JokeReveal
+{
+	opacity: 1;
+	pre-transform-scale2d: 1;
+}
+
+/* ---------- Real end screen ---------- */
+.StatsLayer
+{
+	width: 100%;
+	height: 100%;
+	flow-children: down;
+	background-color: gradient( radial, 50% 40%, 0% 0%, 80% 80%, from( #3a0d2ef0 ), to( #060208f8 ) );
+	opacity: 0;
+	visibility: collapse;
+	transition-property: opacity;
+	transition-duration: 0.6s;
+}
+
+.Won .StatsLayer
+{
+	background-color: gradient( radial, 50% 40%, 0% 0%, 80% 80%, from( #0d3a3af0 ), to( #020806f8 ) );
+}
+
+.StatsLayer.Shown
+{
+	opacity: 1;
+	visibility: visible;
+}
+
+.ResultTitle
+{
+	horizontal-align: center;
+	margin-top: 330px;  /* the stock post-game explosion effect is drawn over the UI in the upper third */
+	font-size: 64px;
+	font-weight: bold;
+	letter-spacing: 8px;
+	color: #ff6a8a;
+	text-shadow: 0px 0px 20px #ff2a5a;
+}
+
+.Won .ResultTitle
+{
+	color: #8affea;
+	text-shadow: 0px 0px 20px #2affd0;
+}
+
+.ResultSubtitle
+{
+	horizontal-align: center;
+	margin-top: 6px;
+	font-size: 20px;
+	font-style: italic;
+	color: #d6c2e6;
+}
+
+.StatsCard
+{
+	horizontal-align: center;
+	width: 520px;
+	margin-top: 24px;
+	padding: 20px 28px;
+	flow-children: down;
+	background-color: #14081f99;
+	background-blur: gaussian( 6 );
+	border: 2px solid #9b5cff;
+	border-radius: 12px;
+	box-shadow: #7a3cff88 0px 0px 30px 4px;
+}
+
+.StatRow
+{
+	width: 100%;
+	flow-children: right;
+	margin-top: 6px;
+	margin-bottom: 6px;
+}
+
+.StatCaption
+{
+	width: fill-parent-flow( 1.0 );
+	font-size: 20px;
+	color: #b9a3d9;
+}
+
+.StatValue
+{
+	font-size: 20px;
+	font-weight: bold;
+	color: #ffffff;
+}
+
+.EndHint
+{
+	horizontal-align: center;
+	margin-top: 24px;
+	font-size: 15px;
+	color: #8f7fa6;
+}

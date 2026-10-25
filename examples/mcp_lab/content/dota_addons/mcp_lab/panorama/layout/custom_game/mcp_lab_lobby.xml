@@ -1,0 +1,35 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/custom_game/mcp_lab_lobby.css" />
+	</styles>
+	<scripts>
+		<include src="file://{resources}/scripts/custom_game/mcp_lab_lobby.js" />
+	</scripts>
+	<!-- Stage 11: own lobby (GameSetup). Only the host can press the option buttons; everyone sees the values. -->
+	<Panel class="LobbyRoot">
+		<Panel class="LobbyCard">
+			<Label class="LobbyTitle" text="#mcp_lab_lobby_title" />
+			<Label class="LobbySubtitle" text="#mcp_lab_lobby_subtitle" />
+
+			<Label class="LobbyCaption" text="#mcp_lab_lobby_lives" />
+			<Panel id="LivesOptions" class="LobbyOptions">
+				<Button id="Lives3" class="LobbyOption"><Label text="3" /></Button>
+				<Button id="Lives5" class="LobbyOption"><Label text="5" /></Button>
+				<Button id="Lives10" class="LobbyOption"><Label text="10" /></Button>
+				<Button id="Lives0" class="LobbyOption"><Label class="Infinity" text="∞" /></Button>
+			</Panel>
+
+			<Label class="LobbyCaption" text="#mcp_lab_lobby_look" />
+			<Panel id="LookOptions" class="LobbyOptions">
+				<Button id="Lookmage" class="LobbyOption LobbyOptionWide"><Label text="#mcp_lab_lobby_look_mage" /></Button>
+				<Button id="Lookroshan" class="LobbyOption LobbyOptionWide"><Label text="#mcp_lab_lobby_look_roshan" /></Button>
+			</Panel>
+
+			<Label id="HostNote" class="LobbyNote" text="" />
+			<Panel class="LobbyFooter">
+				<Label id="Countdown" class="LobbyCountdown" text="" />
+				<Button id="StartButton" class="LobbyStart"><Label text="#mcp_lab_lobby_start" /></Button>
+			</Panel>
+		</Panel>
+	</Panel>
+</root>

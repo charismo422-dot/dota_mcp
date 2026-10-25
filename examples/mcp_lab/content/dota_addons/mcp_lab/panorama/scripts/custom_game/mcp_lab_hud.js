@@ -15,13 +15,16 @@ function OnHudUpdate( data )
 	$( "#TrophiesValue" ).text = String( data.trophies || 0 );
 	$( "#HunterPowerValue" ).text = String( data.hunter_power || 0 );
 	$( "#KillerValue" ).text = data.killer ? $.Localize( "#" + data.killer ) : "—";
+	// Stage 11: lives left (counter set in the lobby; "inf" = infinite, -1 = not started yet)
+	$( "#LivesValue" ).text = data.lives === "inf" ? "∞" : ( data.lives >= 0 ? String( data.lives ) : "—" );
 
 	if ( data.ping !== undefined )
 	{
 		GameEvents.SendCustomGameEventToServer( "mcp_lab_hud_ack", {
 			ping: data.ping,
 			trophies: $( "#TrophiesValue" ).text,
-			killer: $( "#KillerValue" ).text
+			killer: $( "#KillerValue" ).text,
+			lives: $( "#LivesValue" ).text
 		} );
 	}
 }

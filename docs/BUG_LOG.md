@@ -178,3 +178,15 @@
 - **Корневая причина:** Stage 9 added HUD/modifier texts only to addon_russian.txt; the English pass was skipped.
 - **Примененное решение:** Added the 5 English strings via upsert_localization.
 - **Правило предотвращения:** Upsert every new token in all addon languages in the same step and read missing_in_language from validate_and_sync_precache before finishing a stage.
+
+### [2026-10-25 17:37:13] Компонент: `netcon_bridge.verify_vscript_api (API cache)`
+- **Симптом / Ошибка:** verify_vscript_api found nothing for SetGameWinner, SetPreGameTime, PlayerHasCustomGameHostPrivileges and every other CDOTAGameRules method, although they exist and work at runtime.
+- **Корневая причина:** The cached script_help2 dump for build 6967 lacked the whole CDOTAGameRules class (148 functions) while still holding 1815 functions, so the only completeness check (>= 500 functions) passed and the partial dump was cached for the build.
+- **Примененное решение:** Cache rebuilt with refresh=True (1987 functions, CDOTAGameRules present). The dump is now cached only if it also contains the core classes CDOTAGameRules, CDOTABaseGameMode, CDOTA_BaseNPC and CDOTA_PlayerResource.
+- **Правило предотвращения:** If verify_vscript_api finds no match for a well-known class or method, check the class itself (e.g. "CDOTAGameRules:") and rebuild the cache with refresh=True before concluding the API does not exist.
+
+### [2026-10-25 17:37:13] Компонент: `addon_manager.validate_and_sync_precache (localization check)`
+- **Симптом / Ошибка:** unknown_token_references reported "#mcp_lab_lobby_look_ (mcp_lab_end.js)" for $.Localize( "#mcp_lab_lobby_look_" + stats.look ), a token built at runtime.
+- **Корневая причина:** LOC_JS_RE / LOC_LUA_RE treated any quoted "#token" literal as a full token, including a prefix that is concatenated with a variable.
+- **Примененное решение:** Negative lookahead: a literal followed by "+" (JS) or ".." (Lua) is ignored as a dynamic prefix. Takes effect after the MCP server restarts.
+- **Правило предотвращения:** Dynamic token names cannot be checked statically; keep every possible full token in the localization files and test them live (stage 8 probe pattern).

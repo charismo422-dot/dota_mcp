@@ -1,0 +1,159 @@
+/* Stage 11 lobby: full-screen void with one glass card in the middle (same palette as the rift HUD) */
+.LobbyRoot
+{
+	width: 100%;
+	height: 100%;
+	background-color: gradient( radial, 50% 45%, 0% 0%, 75% 75%, from( #3a1270 ), to( #05020c ) );
+}
+
+.LobbyCard
+{
+	horizontal-align: center;
+	vertical-align: center;
+	width: 620px;
+	padding: 28px 36px;
+	flow-children: down;
+	background-color: #12062299;
+	background-blur: gaussian( 6 );
+	border: 2px solid #9b5cff;
+	border-radius: 14px;
+	box-shadow: #7a3cffaa 0px 0px 40px 6px;
+}
+
+.LobbyTitle
+{
+	horizontal-align: center;
+	font-size: 40px;
+	font-weight: bold;
+	letter-spacing: 6px;
+	color: #efe2ff;
+	text-shadow: 0px 0px 12px #b07cff;
+}
+
+.LobbySubtitle
+{
+	horizontal-align: center;
+	font-size: 17px;
+	color: #b9a3d9;
+	margin-bottom: 18px;
+}
+
+.LobbyCaption
+{
+	font-size: 19px;
+	font-weight: bold;
+	color: #d8c4ff;
+	margin-top: 14px;
+	margin-bottom: 6px;
+}
+
+.LobbyOptions
+{
+	width: 100%;
+	flow-children: right;
+}
+
+.LobbyOption
+{
+	width: 100px;
+	height: 48px;
+	margin-right: 12px;
+	background-color: #24103f;
+	border: 1px solid #5d3a99;
+	border-radius: 8px;
+	transition-property: background-color, box-shadow, border;
+	transition-duration: 0.2s;
+}
+
+.LobbyOptionWide
+{
+	width: 260px;
+}
+
+.LobbyOption Label
+{
+	horizontal-align: center;
+	vertical-align: center;
+	font-size: 20px;
+	font-weight: bold;
+	color: #cbb7ee;
+}
+
+.LobbyOption Label.Infinity
+{
+	font-size: 34px;
+}
+
+.IsHost .LobbyOption:hover
+{
+	background-color: #3d1a6e;
+	box-shadow: #c79bff66 0px 0px 10px 1px;
+}
+
+.LobbyOption.Selected
+{
+	background-color: #6a2fe0;
+	border: 2px solid #f0d9ff;
+	box-shadow: #c79bffcc 0px 0px 16px 2px;
+}
+
+.LobbyOption.Selected Label
+{
+	color: #ffffff;
+}
+
+/* Non-hosts: buttons are disabled (panel.enabled = false) and look dimmed */
+.LobbyOption:disabled
+{
+	opacity: 0.55;
+}
+
+.LobbyOption.Selected:disabled
+{
+	opacity: 1;
+}
+
+.LobbyNote
+{
+	horizontal-align: center;
+	margin-top: 22px;
+	font-size: 16px;
+	font-style: italic;
+	color: #ffcf7a;
+}
+
+.LobbyFooter
+{
+	width: 100%;
+	margin-top: 16px;
+	flow-children: right;
+}
+
+.LobbyCountdown
+{
+	vertical-align: center;
+	width: fill-parent-flow( 1.0 );
+	font-size: 18px;
+	color: #e6d4ff;
+}
+
+.LobbyStart
+{
+	padding: 10px 28px;
+	background-color: gradient( linear, 0% 0%, 0% 100%, from( #8b4cff ), to( #4b1f8a ) );
+	border: 1px solid #f0d9ff;
+	border-radius: 8px;
+}
+
+.LobbyStart Label
+{
+	font-size: 20px;
+	font-weight: bold;
+	color: #ffffff;
+	letter-spacing: 2px;
+}
+
+.LobbyStart:hover
+{
+	box-shadow: #e0b8ffcc 0px 0px 16px 2px;
+}

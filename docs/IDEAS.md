@@ -44,6 +44,8 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - **Cutscene template** — reusable Lua timeline + Panorama overlay from stage 10 (camera thinker path, HUD hide/restore, slides with zoom/shake, subtitles, hold-to-skip, sound length from `GetSoundDuration`); the agent fills shots/images/texts — `idea`
 - **`take_game_screenshot` options** — downscale (`screenshot_width`/`screenshot_height`) or crop a region to save image tokens; wait N seconds before the shot; a burst of shots for animations — `idea`
 - **Panorama edit guard** — after a `.xml`/`.js` change in a running game warn that hot reload keeps the old JS context (stale probes, frozen animation) and suggest relaunching the map before tests — `idea`
+- **Bring Dota to the foreground for screenshots** — `take_game_screenshot` option that focuses the Dota window first (and back afterwards): an unfocused window is not redrawn, the shot repeats a stale frame — `idea` (stage 11)
+- **Game-flow template** — reusable lobby (host-only settings via net table, countdown, start button) + lives counter + EndScreen with stats from stage 11; the agent fills settings and stats — `idea`
 
 - **Filter console noise** — split `errors_and_warnings` into addon errors (Lua, own assets) vs known base-game noise; trim server-info dumps from `read_latest_console_log` — `done` (noise filter, `grep`, `only_errors`)
 

@@ -448,8 +448,9 @@ def _read_loc_tokens(loc_file: Path) -> dict[str, str]:
 
 # '#token' references: XML text="#x", JS $.Localize("#x"), Lua "#x_y" (needs '_' so panel ids/colors don't match)
 LOC_XML_RE = re.compile(r'text\s*=\s*"#([A-Za-z_][A-Za-z0-9_]*)"')
-LOC_JS_RE = re.compile(r'\$\.Localize\(\s*["\']#([A-Za-z_][A-Za-z0-9_]*)["\']')
-LOC_LUA_RE = re.compile(r'["\']#([A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]*)["\']')
+# A literal followed by concatenation ("#prefix_" + x / "#prefix_" .. x) is a dynamic token prefix, not a token
+LOC_JS_RE = re.compile(r'\$\.Localize\(\s*["\']#([A-Za-z_][A-Za-z0-9_]*)["\'](?!\s*\+)')
+LOC_LUA_RE = re.compile(r'["\']#([A-Za-z][A-Za-z0-9]*_[A-Za-z0-9_]*)["\'](?!\s*\.\.)')
 # %value% in ability descriptions must name an AbilityValues key (%% is a literal percent sign)
 TOOLTIP_VAR_RE = re.compile(r"%([A-Za-z_][A-Za-z0-9_]*)%")
 LINK_MODIFIER_RE = re.compile(r'LinkLuaModifier\(\s*["\'](\w+)["\']')

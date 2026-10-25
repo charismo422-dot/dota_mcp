@@ -1,0 +1,43 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/custom_game/mcp_lab_end.css" />
+	</styles>
+	<scripts>
+		<include src="file://{resources}/scripts/custom_game/mcp_lab_end.js" />
+	</scripts>
+	<!-- Stage 11: own EndScreen. First a fake "the program is not responding" window (joke), then the real stats. -->
+	<Panel class="EndRoot">
+		<Panel id="JokeLayer" class="JokeLayer">
+			<Panel class="FakeWindow">
+				<Panel class="FakeTitleBar">
+					<Label class="FakeTitle" text="#mcp_lab_end_joke_title" />
+					<Label class="FakeClose" text="X" />
+				</Panel>
+				<Panel class="FakeBody">
+					<Label class="FakeIcon" text="!" />
+					<Label class="FakeText" text="#mcp_lab_end_joke_text" />
+				</Panel>
+				<Panel class="FakeButtons">
+					<Button id="JokeClose" class="FakeButton"><Label text="#mcp_lab_end_joke_close" /></Button>
+					<Button id="JokeWait" class="FakeButton"><Label text="#mcp_lab_end_joke_wait" /></Button>
+				</Panel>
+			</Panel>
+			<Label id="JokeReveal" class="JokeReveal" text="#mcp_lab_end_joke_reveal" />
+		</Panel>
+
+		<Panel id="StatsLayer" class="StatsLayer">
+			<Label id="ResultTitle" class="ResultTitle" text="" />
+			<Label id="ResultSubtitle" class="ResultSubtitle" text="" />
+			<Panel id="StatsCard" class="StatsCard">
+				<Panel class="StatRow"><Label class="StatCaption" text="#mcp_lab_end_time" /><Label id="StatTime" class="StatValue" text="" /></Panel>
+				<Panel class="StatRow"><Label class="StatCaption" text="#mcp_lab_end_lives" /><Label id="StatLives" class="StatValue" text="" /></Panel>
+				<Panel class="StatRow"><Label class="StatCaption" text="#mcp_lab_end_deaths" /><Label id="StatDeaths" class="StatValue" text="" /></Panel>
+				<Panel class="StatRow"><Label class="StatCaption" text="#mcp_lab_end_creeps" /><Label id="StatCreeps" class="StatValue" text="" /></Panel>
+				<Panel class="StatRow"><Label class="StatCaption" text="#mcp_lab_end_trophies" /><Label id="StatTrophies" class="StatValue" text="" /></Panel>
+				<Panel class="StatRow"><Label class="StatCaption" text="#mcp_lab_end_killer" /><Label id="StatKiller" class="StatValue" text="" /></Panel>
+				<Panel class="StatRow"><Label class="StatCaption" text="#mcp_lab_end_look" /><Label id="StatLook" class="StatValue" text="" /></Panel>
+			</Panel>
+			<Label class="EndHint" text="#mcp_lab_end_hint" />
+		</Panel>
+	</Panel>
+</root>
