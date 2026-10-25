@@ -5,6 +5,7 @@ if CAddonTemplateGameMode == nil then
 end
 
 require( "mcp_lab_links" )
+for name, method in pairs( require( "mcp_lab_hunters" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 9: enemy heroes under Lua AI
 
 local WAVE_SPAWNERS = { "lab_spawn_west", "lab_spawn_east" }  -- info_target entities placed with add_map_entity
 
@@ -278,6 +279,7 @@ function Precache( context )
 	PrecacheUnitByNameSync( "npc_mcp_rift_giant", context )
 	PrecacheUnitByNameSync( "npc_dota_hero_enigma", context )
 	PrecacheUnitByNameSync( "npc_mcp_rift_keeper", context )
+	for _, name in ipairs({ "npc_dota_hero_sven", "npc_dota_hero_lina", "npc_dota_hero_axe" }) do PrecacheUnitByNameSync( name, context ) end
 end
 
 function Activate()
@@ -327,11 +329,11 @@ function CAddonTemplateGameMode:RunLocalizationTest()
 	for name, data in pairs( LoadKeyValues( "scripts/npc/npc_units_custom.txt" ) or {} ) do
 		if type( data ) == "table" then table.insert( tokens, name ) end
 	end
-	for _, mod in ipairs({ "mcp_frost_nova_slow", "mcp_ice_bolt_stun", "mcp_frost_aura_debuff", "mcp_giant_slam_stun", "item_mcp_void_shard_pull", "mcp_rift_blessing" }) do
+	for _, mod in ipairs({ "mcp_frost_nova_slow", "mcp_ice_bolt_stun", "mcp_frost_aura_debuff", "mcp_giant_slam_stun", "item_mcp_void_shard_pull", "mcp_rift_blessing", "mcp_hunter_power" }) do
 		table.insert( tokens, "DOTA_Tooltip_modifier_" .. mod )
 		table.insert( tokens, "DOTA_Tooltip_modifier_" .. mod .. "_Description" )
 	end
-	for _, ui in ipairs({ "hud_title", "hud_energy", "hud_kills", "hud_next_wave", "hud_seconds", "hud_summon", "hud_sound",
+	for _, ui in ipairs({ "hud_title", "hud_energy", "hud_kills", "hud_next_wave", "hud_seconds", "hud_summon", "hud_sound", "hud_trophies", "hud_hunter_power", "hud_killer",
 		"keeper_name", "keeper_greet", "keeper_opt_gift", "keeper_opt_leave", "keeper_reply_gift", "keeper_reply_leave" }) do
 		table.insert( tokens, "mcp_lab_" .. ui )
 	end
@@ -360,7 +362,8 @@ function CAddonTemplateGameMode:SendHudUpdate( ping )
 	if self.next_wave_time then
 		next_wave = math.max( 0, math.ceil( self.next_wave_time - GameRules:GetGameTime() ) )
 	end
-	CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_hud", { energy = self.hud_energy, kills = self.hud_kills, next_wave = next_wave, ping = ping } )
+	CustomGameEventManager:Send_ServerToAllClients( "mcp_lab_hud", { energy = self.hud_energy, kills = self.hud_kills, next_wave = next_wave, ping = ping,
+		trophies = self.trophies or 0, hunter_power = self.hunter_power or 0, killer = self.last_killer or "" } )
 end
 
 function CAddonTemplateGameMode:OnEntityKilled( event )
@@ -368,6 +371,9 @@ function CAddonTemplateGameMode:OnEntityKilled( event )
 	if unit and ( unit:GetUnitName() == "npc_mcp_void_imp" or unit:GetUnitName() == "npc_mcp_rift_giant" ) then
 		self:OnWaveUnitKilled( unit )
 	end
+	local attacker = event.entindex_attacker and EntIndexToHScript( event.entindex_attacker )
+	if unit and unit.mcp_role then self:OnEnemyHeroKilled( unit, attacker ) end
+	if unit and unit == self.hero then self:OnPlayerHeroKilled( attacker ) end
 end
 
 function CAddonTemplateGameMode:OnWaveUnitKilled( unit )
@@ -427,7 +433,7 @@ function CAddonTemplateGameMode:RunSoundTest( hero )
 end
 
 function CAddonTemplateGameMode:OnHudAck( event_source_index, data )
-	self.hud_acks[ tostring( data.ping ) ] = true
+	self.hud_acks[ tostring( data.ping ) ] = data  -- stage 9 reads back what the HUD shows (trophies, killer)
 end
 
 -- World-space UI script reports what it currently shows (used by the stage 5b autotest)
@@ -456,7 +462,7 @@ end
 
 function CAddonTemplateGameMode:OnNPCSpawned( event )
 	local hero = EntIndexToHScript( event.entindex )
-	if not hero or not hero:IsRealHero() or self.hero_initialized then
+	if not hero or not hero:IsRealHero() or hero:GetTeamNumber() ~= DOTA_TEAM_GOODGUYS or self.hero_initialized then
 		return
 	end
 	self.hero_initialized = true

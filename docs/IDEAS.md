@@ -36,6 +36,9 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - **`create_minimap` tool** — one call: add/update `dota_minimap_boundary` pair, disconnect, compile map, relaunch, clear units, run `dota_minimap_create`, verify `resource/overviews/<map>.txt` — `idea`
 - **Compact `get_base_dota_definition`** — optional `fields` filter / summary mode (abilities, stats only) instead of the full ≈ 10 KB hero block with bot builds and item slots — `idea`
 - **Precache units created from Lua** — detect `CreateUnitByName("x", ...)` literals and add `PrecacheUnitByNameSync` to `auto_precache.lua`; otherwise spawned units are invisible — `idea`
+- **Scope console errors to the latest launch** — `read_latest_console_log` / `run_console_command` should report only errors after the last `dota_launch_custom_game` / VM init; old errors look current and waste context — `idea`
+- **Enemy hero helper** — template/tool that spawns a stock hero for the enemy team with level, items and leveled abilities (names validated via the hero KV) plus an order-based AI skeleton (attack, cast, retreat) — `idea`
+- **Precache stock heroes created from Lua** — detect `CreateUnitByName("npc_dota_hero_*")` literals (extension of the unit precache idea) — `idea`
 - **Compact `list_map_entities`** — default to id/classname/targetname/origin only, full properties on request; saves context — `idea`
 
 - **Filter console noise** — split `errors_and_warnings` into addon errors (Lua, own assets) vs known base-game noise; trim server-info dumps from `read_latest_console_log` — `done` (noise filter, `grep`, `only_errors`)

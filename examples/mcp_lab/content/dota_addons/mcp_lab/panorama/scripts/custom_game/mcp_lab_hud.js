@@ -11,9 +11,18 @@ function OnHudUpdate( data )
 	$( "#WaveValue" ).text = data.next_wave >= 0 ? data.next_wave + " " + $.Localize( "#mcp_lab_hud_seconds" ) : "—";
 	$( "#RiftPanel" ).SetHasClass( "EnergyFull", energy >= 100 );
 
+	// Stage 9: own currency, hunters' power level and who killed the player last (unit name -> localized hero name)
+	$( "#TrophiesValue" ).text = String( data.trophies || 0 );
+	$( "#HunterPowerValue" ).text = String( data.hunter_power || 0 );
+	$( "#KillerValue" ).text = data.killer ? $.Localize( "#" + data.killer ) : "—";
+
 	if ( data.ping !== undefined )
 	{
-		GameEvents.SendCustomGameEventToServer( "mcp_lab_hud_ack", { ping: data.ping } );
+		GameEvents.SendCustomGameEventToServer( "mcp_lab_hud_ack", {
+			ping: data.ping,
+			trophies: $( "#TrophiesValue" ).text,
+			killer: $( "#KillerValue" ).text
+		} );
 	}
 }
 

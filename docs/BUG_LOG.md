@@ -148,3 +148,15 @@
 - **Корневая причина:** Encoding chosen by trial order instead of the BOM; the first parse without exception was accepted even when no "lang" block was found; only quotes were escaped on write; no cross-language comparison.
 - **Примененное решение:** New _read_loc_tokens: encoding by BOM (UTF-8 BOM / UTF-16 BOM, else UTF-8 then UTF-16-LE) and a result is accepted only when a "lang" block exists. Write escapes newlines as \n. Response adds missing_in_this_language / not_yet_in_other_languages. validate_and_sync_precache got a 'localization' section (untranslated names, unknown #tokens, missing per language, bad %vars%). Tested on synthetic files and on mcp_lab.
 - **Правило предотвращения:** When reading text files with several possible encodings, pick by BOM and validate the parsed structure before trusting it; never rewrite a file from a parse that found nothing. After adding strings, check the localization section of validate_and_sync_precache.
+
+### [2026-10-25 16:01:13] Компонент: `mcp_lab addon_game_mode.lua + require of a module defining game mode methods`
+- **Симптом / Ошибка:** Script Runtime Error: mcp_lab_hunters.lua:32: attempt to index global 'CAddonTemplateGameMode' (a nil value); whole addon_game_mode failed to load.
+- **Корневая причина:** addon_game_mode.lua runs in its own script scope: globals it defines (the game mode class) are not visible to files loaded with require.
+- **Примененное решение:** The module builds a local method table and returns it; addon_game_mode.lua copies the methods onto CAddonTemplateGameMode (for name, method in pairs(require("mcp_lab_hunters")) do ... end).
+- **Правило предотвращения:** Never reference addon_game_mode globals from a required file; pass them in or return a table to merge. Engine globals (GameRules, Convars, LinkLuaModifier) are fine.
+
+### [2026-10-25 16:01:13] Компонент: `src/dota2_mcp read_latest_console_log (errors_and_warnings)`
+- **Симптом / Ошибка:** After a relaunch, errors_and_warnings still listed a Lua error from the previous (already fixed) launch, also in grep mode; looks like the current run is broken and costs context.
+- **Корневая причина:** Errors are collected from the whole console.log session, not from the latest game launch.
+- **Примененное решение:** Not fixed yet (logged as idea). Workaround: judge the current run by tail lines after the last '[MCP_LAB] Initializing game mode...' line.
+- **Правило предотвращения:** When reading errors after a relaunch, check that they come after the latest launch marker before treating them as current.
