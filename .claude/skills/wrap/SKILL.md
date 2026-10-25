@@ -1,0 +1,19 @@
+---
+name: wrap
+description: Close the current stage — update LESSONS/BUG_LOG/IDEAS/TEST_PLAN and .private/STATUS.md, commit, push, short report, stop. Call it yourself at the end of every stage or when the budget hook says so.
+disable-model-invocation: false
+---
+
+# /wrap — закрыть этап
+
+1. `docs/LESSONS.md` — допиши коротко: что сработало, что нет, как починено (только новое).
+2. `docs/BUG_LOG.md` — новые баги (`log_bug_report`), если были.
+3. `docs/IDEAS.md` — отложенные идеи и улучшения, по одной строке.
+4. `docs/TEST_PLAN.md` — статус этапа (done / partial / blocked).
+5. `.private/STATUS.md` (если есть; файл не коммитить):
+   - строка о сделанном в «## В работе»;
+   - раздел «## Следующий шаг» — заменить целиком: номер этапа по плану, нужные файлы, критерий готовности; ≤ 15 строк; брать только из плана, не придумывать;
+   - раздел «## Проверить глазами» — заменить целиком: что владельцу посмотреть/послушать и какой командой.
+6. Коммит (без `.private/` и личных путей) и `git push`.
+7. Отчёт владельцу ≤ 10 строк, по-русски и просто: что сделано, хэш коммита, что проверить глазами.
+8. СТОП: без вопросов и без предложений новых задач.

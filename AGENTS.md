@@ -58,21 +58,27 @@ Always consult and follow the project's technical documentation:
 
 4. **Self-Check, Live Verification & Bug Logging:**
    - Before generating KV or Lua code, verify against [docs/SELF_CHECK_PROTOCOL.md](./docs/SELF_CHECK_PROTOCOL.md).
-   - Test changes live in Dota 2 using `run_console_command` (`dota_launch_custom_game <addon> <map>` or `script_reload`) and check `read_latest_console_log` to confirm zero Lua runtime errors. For anything visual (HUD, Panorama, cutscenes, effects) take `take_game_screenshot` and look at the image.
+   - Test changes live in Dota 2 using `run_console_command` (`dota_launch_custom_game <addon> <map>` or `script_reload`) and check `read_latest_console_log` to confirm zero Lua runtime errors. For anything visual (HUD, Panorama, cutscenes, effects) take `take_game_screenshot` and look at the image (≤ 3 per stage, see §4).
    - Record any discovered MCP or custom game bug into [docs/BUG_LOG.md](./docs/BUG_LOG.md) via `log_bug_report`.
    - Keep [docs/TECHNICAL_SPEC.md](./docs/TECHNICAL_SPEC.md) synchronized whenever tool signatures or architecture in `src/dota2_mcp/` change.
 
 5. **Working Memory Protocol:**
-   - **Before a task:** read [docs/LESSONS.md](./docs/LESSONS.md) and, if present, the owner's local files (`.agents/rules/owner-*.md`, `.private/STATUS.md`).
+   - **Before a task:** grep the relevant sections of [docs/LESSONS.md](./docs/LESSONS.md) and, if present, the owner's local files (`.agents/rules/owner-*.md`, `.private/STATUS.md`).
    - **After a task:** append new findings (what worked, what failed, how it was fixed) to `docs/LESSONS.md`; update `.private/STATUS.md` if it exists.
    - **Ideas:** record MCP feature ideas in [docs/IDEAS.md](./docs/IDEAS.md); record custom-game ideas in `.private/IDEAS_GAMES.md` (local only, never commit).
    - `.private/`, `CLAUDE.local.md` and `.agents/rules/owner-*.md` are gitignored personal files; never commit or publish them.
 
 ---
 
-## 4. Работа короткими сессиями (Short Sessions)
+## 4. Бюджет сессии (обязательно)
 
-1. **Одна сессия = одна задача:** один большой этап или несколько мелких. Не тянуть работу в длинный чат.
-2. **В конце задачи:** обновить файл текущего состояния проекта (`.private/STATUS.md`, если он есть; иначе `docs/STATUS.md` — создать, если нет), закоммитить и запушить.
-3. **Следующий шаг** оформить как самодостаточную задачу для новой сессии (цель, нужные файлы, критерий готовности) и записать в файл состояния. Не продолжать его в текущем чате.
-4. **Логи и большие файлы** читать фрагментами и с фильтрами (`grep`, `tail`, диапазоны строк). Дампы целиком не выводить.
+1. **Одна сессия = один этап.** Старт: `/stage`. Конец: `/wrap`. Потом СТОП — без вопросов и без предложений новых задач. Следующий шаг берётся только из плана (`docs/TEST_PLAN.md` / `STATUS.md`), не придумывается.
+2. **Минимум:** делать только то, что проверяет пункт плана. Варианты, улучшения, «умнее», доп. настройки — одной строкой в `docs/IDEAS.md`, не делать.
+3. **`mcp_lab` — песочница:** не полировать вёрстку и вид.
+4. **Автотест:** PASS один раз; повтор только после правки кода.
+5. **Скриншоты:** не больше 3 за этап; перед снимком вывести окно Доты на передний план.
+6. **Язык игры** до релиза только русский; EN-строки не писать, пропуски EN игнорировать.
+7. **Логи, LESSONS, большие файлы** — только `grep`/`tail`/диапазоны строк. Из LESSONS читать только нужные разделы.
+8. **3 неудачные попытки на одной ошибке** — стоп, запись в `STATUS.md` и `docs/BUG_LOG.md`.
+9. **Контекст:** при предупреждении хука (> 150k) — закончить текущий пункт и сделать `/wrap`. Новых пунктов не начинать.
+10. **Владелец не пишет в законченную сессию;** результат его проверки приходит первой строкой новой сессии (`/stage <результат>`).
