@@ -208,3 +208,9 @@ Entry format:
 - **Part 6:** own webm (0.2 MB and 29 MB, ffmpeg libvpx) placed loose in `game/dota_addons/<addon>/panorama/videos/` (no compile); playback not confirmed because the JS event did not arrive (same bug as part 2).
 - **Part 7:** `EmitSoundOnClient("crystalmaiden_cm_laugh_01", player)` runs without errors; precache check missed dotless VO names → `validate_and_sync_precache` now also resolves dotless literals that are real event names (adds `soundevents/voscripts/game_sounds_vo_<hero>.vsndevts`). Russian audio — owner checks by ear.
 - **Localization** strings added during a running session show as `failed to localize` until the next map launch.
+
+### 2026-10-25 — Test plan stage 12 part 3 (fixes + recipe + old maps)
+- **Zone HUD line / webm fixed:** after a fresh Dota restart the `mcp_lab_zone` / `mcp_lab_video` events reach JS (`$.Msg` in OnZone confirms); code also got a nil-hero guard and fallback knock-out directions (first free side outside the polygon). Zone autotest PASS, row shows "внутри" / "выход! откинут ×N"; stock, 0.2 MB and 29 MB webm play (screenshots). Exact root cause not isolated — likely the stale HUD JS of the running session.
+- **Free recipe steals stock items:** `item_recipe_*` with `ItemCost 0` auto-combines Circlet + Mantle, so Null Talisman can never be built. Make the recipe paid (`ItemCost 150`) when parts are shared with stock items. Autotest checks "no combine before the recipe": PASS.
+- **Autotest timing on maps with a lobby:** commands that use `HeroList:GetHero(0)` fail with nil until the lobby countdown ends (~15–25 s after launch) — wait for `game flow: lives=` in the log.
+- **Old maps dota_683 / dota_685: do not use.** dota_683 crashed the client right after the match started; dota_685 was not found by name. Marked "не работает", not retried.

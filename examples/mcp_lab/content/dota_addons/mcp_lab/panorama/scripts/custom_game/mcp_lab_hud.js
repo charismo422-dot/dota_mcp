@@ -65,6 +65,11 @@ function OnLocProbe( data )
 // Stage 12 part 2: polygon zone line ("inside" / "pushed back") in the rift panel
 function OnZone( data )
 {
+	$.Msg( "[MCP_LAB] OnZone " + JSON.stringify( data ) );
+	OnZoneBody( data );
+}
+function OnZoneBody( data )
+{
 	var text = "—";
 	if ( data.state === "inside" ) text = $.Localize( "#mcp_lab_hud_zone_inside" );
 	else if ( data.state === "pushed" ) text = $.Localize( "#mcp_lab_hud_zone_pushed" ) + " ×" + data.pushes;

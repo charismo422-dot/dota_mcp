@@ -83,6 +83,7 @@ end
 Convars:RegisterCommand( "mcp_lab_zone", function( _, arg )
 	Listen()
 	local hero = HeroList:GetHero( 0 )
+	if not hero then print( "[MCP_LAB] zone: no hero yet" ) return end
 	StopZone( hero )
 	if arg ~= "0" then StartZone( hero ) end
 end, "MCP Lab: polygon zone + invisible obstacles around the hero (0 = off)", 0 )
@@ -97,7 +98,10 @@ Convars:RegisterCommand( "mcp_lab_autotest12_zone", function()
 		if GridNav:IsBlocked( o.pos ) or not GridNav:IsTraversable( o.pos ) then blocked = blocked + 1 end
 	end
 	local c = zone.center
-	FindClearSpaceForUnit( hero, c + Vector( -900, 0, 0 ), true )  -- outside the pentagon, away from the obstacles
+	for _, dir in ipairs( { Vector( -900, 0, 0 ), Vector( 0, -900, 0 ), Vector( 0, 900, 0 ), Vector( -640, -640, 0 ) } ) do
+		FindClearSpaceForUnit( hero, c + dir, true )  -- outside the pentagon, away from the obstacles (first free side)
+		if not PointInPolygon( hero:GetAbsOrigin(), zone.poly ) then break end
+	end
 	local d0 = ( hero:GetAbsOrigin() - c ):Length2D()
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLab12ZoneCheck", function()
 		local d1 = ( hero:GetAbsOrigin() - c ):Length2D()
@@ -152,6 +156,8 @@ Convars:RegisterCommand( "mcp_lab_autotest12_item", function()
 	for slot = 0, 8 do local it = hero:GetItemInSlot( slot ); if it then hero:RemoveItem( it ) end end
 	hero:AddItemByName( "item_circlet" )
 	hero:AddItemByName( "item_mantle" )
+	local early = hero:FindItemInInventory( "item_mcp_frost_band" ) ~= nil  -- paid recipe: must not combine yet
+	hero:AddItemByName( "item_recipe_mcp_frost_band" )
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLab12ItemCheck", function()
 		local band = hero:FindItemInInventory( "item_mcp_frost_band" )
 		local parts_left = hero:FindItemInInventory( "item_circlet" ) or hero:FindItemInInventory( "item_mantle" )
@@ -160,9 +166,9 @@ Convars:RegisterCommand( "mcp_lab_autotest12_item", function()
 		local extra = hero:AddItemByName( "item_mcp_frost_band" )   -- 7th item -> backpack (slots 6..8)
 		local extra_slot = extra and extra:GetItemSlot() or -1
 		local texture = GetAbilityTextureNameForAbility( "item_mcp_frost_band" ) or "-"
-		local ok = band ~= nil and parts_left == nil and has_mod and extra_slot >= 6 and extra_slot <= 8 and texture == "item_wraith_band"
-		print( string.format( "[MCP_TEST12] item combined=%s parts_left=%s modifier=%s texture=%s backpack_slot=%d -> %s",
-			tostring( band ~= nil ), tostring( parts_left ~= nil ), tostring( has_mod ), texture, extra_slot, ok and "PASS" or "FAIL" ) )
+		local ok = not early and band ~= nil and parts_left == nil and has_mod and extra_slot >= 6 and extra_slot <= 8 and texture == "item_wraith_band"
+		print( string.format( "[MCP_TEST12] item early=%s combined=%s parts_left=%s modifier=%s texture=%s backpack_slot=%d -> %s",
+			tostring( early ), tostring( band ~= nil ), tostring( parts_left ~= nil ), tostring( has_mod ), texture, extra_slot, ok and "PASS" or "FAIL" ) )
 	end, 0.5 )
 end, "MCP Lab: stage 12 part 5 (own item, stock icon, 2-part recipe, backpack)", 0 )
 

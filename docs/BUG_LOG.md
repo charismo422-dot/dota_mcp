@@ -208,3 +208,21 @@
 - **Корневая причина:** Not found yet. Fixed on the way: CustomGameEventManager:RegisterListener called while the file is required (before Activate) never fires -> moved to first use (now logged as Registered). JS was recompiled by the game; XML row appears.
 - **Примененное решение:** Open. Next: check that the running HUD JS has OnZone (e.g. $.Msg in OnZone), check custom_net/event names, try GameEvents.Subscribe inside the existing init vs a fresh Dota restart.
 - **Правило предотвращения:** Register custom game event listeners inside InitGameMode/Activate or lazily, never at require time.
+
+### [2026-10-25 20:54:17] Компонент: `mcp_lab stage 12 (Panorama events from mcp_lab_mode1.lua) — FIXED`
+- **Симптом / Ошибка:** Follow-up to the 20:25:14 entry: "Зона" row stayed "—", webm not shown.
+- **Корневая причина:** Not isolated; after a fresh Dota restart events arrive (likely stale HUD JS in the running session). Zone code also could run before the hero existed.
+- **Примененное решение:** $.Msg in OnZone, nil-hero guard, fallback knock-out directions; restart Dota. Zone autotest PASS, row updates, stock/small/29 MB webm play (screenshots).
+- **Правило предотвращения:** If a custom game event reaches Lua listeners but not JS, first restart Dota and log with $.Msg in the JS handler before changing code.
+
+### [2026-10-25 20:54:17] Компонент: `mcp_lab stage 12 part 7 (Russian stock hero VO from Lua)`
+- **Симптом / Ошибка:** Owner: mcp_lab_voice runs without Lua errors, but the heroes' laughs (CM, TA, WD, Ursa) are not heard.
+- **Корневая причина:** Open. Candidates: EmitSoundOnClient with a VO line name not resolved on the client, VO volume/channel, Russian VO pack not mounted in Tools mode.
+- **Примененное решение:** Open — not fixed.
+- **Правило предотвращения:** For sound checks require an owner ear test; "no Lua errors" does not mean the sound played.
+
+### [2026-10-25 20:54:17] Компонент: `mcp_lab stage 12 part 3 (old maps dota_683 / dota_685)`
+- **Симптом / Ошибка:** dota_launch_custom_game with dota_683: Dota client crashed right after the match started. dota_685: map not found by name.
+- **Корневая причина:** Old 6.83/6.85 maps are not compatible with the current client (683) / not shipped under that name (685).
+- **Примененное решение:** None; marked "не работает", not retried to avoid crashes.
+- **Правило предотвращения:** Do not launch old patch maps (dota_683/685) in live tests; use the stock dota map copy.

@@ -63,7 +63,7 @@
 	{
 		"BaseClass"						"item_datadriven"
 		"AbilityTextureName"			"item_recipe"
-		"ItemCost"						"0"
+		"ItemCost"						"150"		// paid recipe: Circlet + Mantle alone stay free for Null Talisman
 		"ItemShopTags"					""
 		"ItemRecipe"					"1"
 		"ItemResult"					"item_mcp_frost_band"
