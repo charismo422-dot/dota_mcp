@@ -38,6 +38,7 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - **Precache units created from Lua** — detect `CreateUnitByName("x", ...)` literals and add `PrecacheUnitByNameSync` to `auto_precache.lua`; otherwise spawned units are invisible — `idea`
 - **Scope console errors to the latest launch** — `read_latest_console_log` / `run_console_command` should report only errors after the last `dota_launch_custom_game` / VM init; old errors look current and waste context — `idea`
 - **Enemy hero helper** — template/tool that spawns a stock hero for the enemy team with level, items and leveled abilities (names validated via the hero KV) plus an order-based AI skeleton (attack, cast, retreat) — `idea`
+- **AI profiles for any stock hero** — the stage 9 hunter AI has hand-written profiles only for Sven, Lina, Axe; for a real project generate a per-hero profile (which spells to combo, range/kite, escape and self-help items) from the hero's ability KV (`AbilityBehavior`, cast range, damage/stun values) and let the agent tune it per hero — `idea` (owner request, 2026-10-25)
 - **Precache stock heroes created from Lua** — detect `CreateUnitByName("npc_dota_hero_*")` literals (extension of the unit precache idea) — `idea`
 - **Compact `list_map_entities`** — default to id/classname/targetname/origin only, full properties on request; saves context — `idea`
 
