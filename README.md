@@ -23,6 +23,7 @@
    - `prepare_map_from_template`, `list_map_entities`, `add_map_entity`, `remove_map_entity`, `compile_addon_resource`: Convert binary `.vmap` maps via `dmxconvert.exe`, add/remove point entities with valid UUIDs and `CVisibilityMgr` links without overflowing the LLM context window, and compile maps into `.vpk` (`.vmap_c`, `.gnv`) via `resourcecompiler.exe`.
 4. **Addon Management, Localization & Auto-Precache:**
    - `create_or_configure_addon`, `get_addon_paths`, `upsert_localization` (`UTF-16`), `validate_and_sync_precache`: Validate Valve KeyValues syntax, catch misplaced files, compile custom `.png` icons to `.vtex_c`, and automatically generate `auto_precache.lua`.
+   - `scaffold_game_element`: One call creates an ability, item or Lua modifier from a short spec (KV, Lua, localization, precache; particle and sound names checked against the VPK).
 5. **Live Engine Bridge (`NetCon` TCP port `2121`):**
    - `run_console_command`, `verify_vscript_api` (`script_help2`), `read_latest_console_log`: Launch custom games, hot-reload Lua scripts (`script_reload`), query live engine Lua API signatures, and inspect runtime stack traces.
    - `take_game_screenshot`: Save a `.jpg` of the running game (world + custom UI) so the agent can check visuals itself.
@@ -39,7 +40,7 @@
 - `create_or_configure_addon` (addon appears in the Workshop Tools UI), `prepare_map_from_template`, `add_map_entity`, `list_map_entities`, `compile_addon_resource` for `.vmap` (also covered by `tests/verify_phase0_acceptance.py`).
 - `upsert_localization`, `validate_and_sync_precache` (KV validation + `auto_precache.lua` for Lua/KV assets).
 - `run_console_command` (`dota_launch_custom_game`, `script_reload`), `verify_vscript_api`, `read_latest_console_log` over NetCon `2121`.
-- Claude Code: staged live tests in the `mcp_lab` sandbox addon ([docs/TEST_PLAN.md](docs/TEST_PLAN.md), stages 0–10): ability, hero, waves and AI, item with own `.png` icon, Panorama HUD and world-space UI, map entities, own `.wav`/`.mp3` sounds, RU/EN localization, enemy heroes under Lua AI, cutscene with own full-screen images and `take_game_screenshot`.
+- Claude Code: staged live tests in the `mcp_lab` sandbox addon ([docs/TEST_PLAN.md](docs/TEST_PLAN.md), stages 0–10): ability, hero, waves and AI, item with own `.png` icon, Panorama HUD and world-space UI, map entities, own `.wav`/`.mp3` sounds, RU/EN localization, enemy heroes under Lua AI, cutscene with own full-screen images and `take_game_screenshot`; stage 13: ability made by `scaffold_game_element`.
 
 **Not verified yet:**
 - Compiling materials via `compile_addon_resource`.

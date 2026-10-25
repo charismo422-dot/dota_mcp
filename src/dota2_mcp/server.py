@@ -1,4 +1,4 @@
-"""Main FastMCP Server entry point exposing all 20 Dota 2 Workshop Tools functions."""
+"""Main FastMCP Server entry point exposing all 21 Dota 2 Workshop Tools functions."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from . import (
     asset_inspector,
     diagnostics,
     netcon_bridge,
+    scaffold,
     vmap_builder,
     vpk_explorer,
 )
@@ -254,6 +255,50 @@ def log_bug_report(
         root_cause=root_cause,
         fix_applied=fix_applied,
         prevention_rule=prevention_rule,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Module 7: Scaffold from a short spec
+# ---------------------------------------------------------------------------
+
+
+@mcp.tool()
+def scaffold_game_element(
+    addon_name: str,
+    kind: str,
+    name: str,
+    title: str,
+    description: str,
+    behavior: str = "no_target",
+    effects: Optional[list[str]] = None,
+    values: Optional[dict[str, str]] = None,
+    texture: str = "",
+    particle: str = "",
+    sound: str = "",
+    cooldown: str = "10",
+    mana_cost: str = "50",
+    cast_range: str = "600",
+    item_cost: int = 500,
+    cast_animation: str = "ACT_DOTA_CAST_ABILITY_1",
+    language: str = "russian",
+    overwrite: bool = False,
+) -> dict[str, Any]:
+    """One call: create an ability, item or standalone Lua modifier in the addon from a short spec —
+    KV block (npc_abilities_custom.txt / npc_items_custom.txt), Lua (with modifier links for both VMs),
+    localization (title, description, value labels) and precache (runs validate_and_sync_precache).
+    kind: 'ability' | 'item' (name starts with item_) | 'modifier' (name starts with modifier_).
+    behavior: 'no_target' (area around caster) | 'unit_target' | 'point_aoe' | 'passive' (stat effects only).
+    effects: 'damage', 'stun', 'slow' (enemies hit), 'heal' (caster), 'bonus_damage', 'bonus_armor', 'bonus_movespeed' (buff on caster).
+    values: AbilityValues overrides, e.g. {"damage": "100 150 200", "radius": "350"}; missing ones get defaults.
+    particle (.vpcf path) and sound (event name) are checked against the VPK/addon — find them with search_dota_assets / search_sound_events.
+    texture: AbilityTextureName (e.g. a stock ability name). Refuses to replace an existing element unless overwrite=True.
+    """
+    return scaffold.scaffold_game_element(
+        addon_name=addon_name, kind=kind, name=name, title=title, description=description,
+        behavior=behavior, effects=effects, values=values, texture=texture, particle=particle,
+        sound=sound, cooldown=cooldown, mana_cost=mana_cost, cast_range=cast_range,
+        item_cost=item_cost, cast_animation=cast_animation, language=language, overwrite=overwrite,
     )
 
 

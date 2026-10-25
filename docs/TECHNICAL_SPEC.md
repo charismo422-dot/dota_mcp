@@ -62,19 +62,20 @@ dota_mcp/
 └── src/
     └── dota2_mcp/
         ├── __init__.py
-        ├── server.py                          # Точка входа MCPServer и регистрация всех 20 инструментов
+        ├── server.py                          # Точка входа MCPServer и регистрация всех 21 инструментов
         ├── config.py                          # Автоопределение путей Steam, Dota 2, dmxconvert, resourcecompiler
         ├── vpk_explorer.py                    # Модуль 1: Поиск ассетов, звуковых событий и чтение базовых KV в pak01_dir.vpk
         ├── asset_inspector.py                 # Модуль 2: Инспекция .vmdl_c (анимации/attachments) и .vpcf_c (CP)
         ├── addon_manager.py                   # Модуль 3: Создание аддона, валидация KV, авто-Precache, локализация
         ├── vmap_builder.py                    # Модуль 4: Чтение/модификация .vmap через dmxconvert + компиляция
         ├── netcon_bridge.py                   # Модуль 5: TCP-мост к запущенной Dota 2 (-netconport 2121)
-        └── diagnostics.py                     # Модуль 6: Самодиагностика MCP и авто-логирование багов в BUG_LOG.md
+        ├── diagnostics.py                     # Модуль 6: Самодиагностика MCP и авто-логирование багов в BUG_LOG.md
+        └── scaffold.py                        # Модуль 7: Заготовка способности/предмета/модификатора по короткому описанию
 ```
 
 ---
 
-## 4. Спецификация всех 20 инструментов MCP-сервера (Tools Reference)
+## 4. Спецификация всех 21 инструментов MCP-сервера (Tools Reference)
 
 ### Модуль 1: Поиск ассетов, звуковых событий и оригинальных скриптов (`vpk_explorer.py`)
 1. `search_dota_assets(query: str, asset_type: str = "all", limit: int = 25) -> dict`
@@ -145,6 +146,14 @@ dota_mcp/
     - **Описание:** Проверяет готовность всей инфраструктуры на ПК: найден ли путь к Dota 2, открывается ли `pak01_dir.vpk`, доступны ли `dmxconvert.exe`, `resourcecompiler.exe`, `Source2Viewer-CLI.exe` и открыт ли порт `2121` (`netcon_port_open`).
 19. `log_bug_report(component: str, symptom: str, root_cause: str, fix_applied: str, prevention_rule: str) -> dict`
     - **Описание:** Автоматически добавляет структурированную запись об обнаруженном и исправленном баге в `docs/BUG_LOG.md`.
+
+### Модуль 7: Заготовки по описанию (`scaffold.py`)
+21. `scaffold_game_element(addon_name, kind, name, title, description, behavior="no_target", effects=None, values=None, texture="", particle="", sound="", cooldown="10", mana_cost="50", cast_range="600", item_cost=500, cast_animation="ACT_DOTA_CAST_ABILITY_1", language="russian", overwrite=False) -> dict`
+    - **Описание:** Одним вызовом создаёт способность (`kind="ability"`), предмет (`"item"`, имя `item_*`) или самостоятельный Lua-модификатор (`"modifier"`, имя `modifier_*`): блок KV в `npc_abilities_custom.txt` / `npc_items_custom.txt` (`ability_lua` / `item_lua`), Lua-файл в `vscripts/abilities|items|modifiers/`, тексты (`title`, `description`, подписи значений) через `upsert_localization`, затем `validate_and_sync_precache` (частица и звук попадают в `auto_precache.lua`).
+    - `behavior`: `no_target` (область вокруг героя), `unit_target`, `point_aoe`, `passive` (только эффекты-бонусы). `effects`: `damage`, `stun` (стоковый `modifier_stunned`), `slow` (свой дебафф), `heal` (на героя), `bonus_damage`, `bonus_armor`, `bonus_movespeed` (свой бафф). `values` — переопределение `AbilityValues` (`"100 150 200"`), недостающие получают значения по умолчанию.
+    - Проверки до записи: имя, комбинации эффектов, существование `particle` в VPK/аддоне и `sound` в индексе звуковых событий; сгенерированный KV парсится до записи. Существующий элемент не перезаписывается без `overwrite=True`.
+    - Ссылки модификаторов: `LinkLuaModifier` в начале файла способности; самостоятельные модификаторы — в `vscripts/mcp_scaffold_links.lua`, который подключается из `addon_game_mode.lua` и из каждого созданного файла способности (клиентская VM).
+    - Частица создаётся только с CP0 (центр) — остальные точки управления проверять через `inspect_particle`.
 
 ---
 

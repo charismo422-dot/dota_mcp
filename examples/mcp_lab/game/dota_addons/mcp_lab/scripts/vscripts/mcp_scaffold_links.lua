@@ -1,0 +1,2 @@
+-- Lua modifier links for scaffolded standalone modifiers (scaffold_game_element).
+-- Required by addon_game_mode.lua (server) and by every scaffolded ability/item (client VM too).

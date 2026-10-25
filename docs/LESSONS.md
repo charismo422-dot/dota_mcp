@@ -214,3 +214,11 @@ Entry format:
 - **Free recipe steals stock items:** `item_recipe_*` with `ItemCost 0` auto-combines Circlet + Mantle, so Null Talisman can never be built. Make the recipe paid (`ItemCost 150`) when parts are shared with stock items. Autotest checks "no combine before the recipe": PASS.
 - **Autotest timing on maps with a lobby:** commands that use `HeroList:GetHero(0)` fail with nil until the lobby countdown ends (~15–25 s after launch) — wait for `game flow: lives=` in the log.
 - **Old maps dota_683 / dota_685: do not use.** dota_683 crashed the client right after the match started; dota_685 was not found by name. Marked "не работает", not retried.
+
+### 2026-10-25 — Test plan stage 13 (scaffold tool `scaffold_game_element`)
+- **Works:** one call made `mcp_rift_quake` (point AoE: damage + stun + slow + heal, Leshrac particle + sound): KV block appended to `npc_abilities_custom.txt` (parsed with `vdf` before writing), Lua with `LinkLuaModifier` at the top of the ability file, RU title/description/value labels, `auto_precache.lua` got the particle literal and the sound's `.vsndevts` (resolved by name). In-game `mcp_lab_autotest13` PASS 7/7 on the first run, no Lua errors.
+- **Guards work:** misspelled sound event and an already existing name are refused before anything is written.
+- **Design choice:** the agent turns the owner's free-text description into a structured spec (kind, behavior, effects, values) — the tool does not parse prose. Standalone modifiers are linked in `mcp_scaffold_links.lua`, required by `addon_game_mode.lua` (server) and by every scaffolded ability file (client VM).
+- **Test trap:** expected slow 30 % but the creep's speed fell 40 % — the Frost Mage's own frost aura adds 10 %. Check "slowed" as `<`, not an exact value, when the caster has auras.
+- **Not checked in game:** `kind="item"` and `kind="modifier"`.
+- **Log trap (known idea):** `read_latest_console_log(only_errors)` showed a Lua error from the previous session; confirm by timestamp against the last `Initializing game mode`.

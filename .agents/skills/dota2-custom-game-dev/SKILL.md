@@ -45,6 +45,7 @@ If the environment is not yet initialized on a Windows PC:
 3. **KV Validation & Precache Sync:**
    - Before launching or reloading a custom game, ALWAYS run `validate_and_sync_precache` to verify Valve KeyValues syntax and register all models/particles/sounds in `auto_precache.lua`.
    - Always add human-readable names and descriptions via `upsert_localization`.
+   - For a typical ability/item/modifier (damage, stun, slow, heal, stat buffs) start with `scaffold_game_element` (one call: KV + Lua + texts + precache), then edit the generated Lua.
 
 4. **Live Testing via NetCon:**
    - Use `run_console_command` to launch the map (`dota_launch_custom_game <addon> <map>`) or hot-reload scripts (`script_reload`) and check `read_latest_console_log` to ensure zero Lua errors. For anything visual (HUD, Panorama, cutscenes, effects) take `take_game_screenshot` and look at the image.

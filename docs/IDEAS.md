@@ -8,7 +8,7 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 ## New features (ordered by value for custom-game development)
 
-1. **Scaffold from description** — one call creates ability/item/hero/modifier KV + Lua + localization + precache from a short spec — `idea`
+1. **Scaffold from description** — one call creates ability/item/hero/modifier KV + Lua + localization + precache from a short spec — `done` (2026-10-25, `scaffold_game_element`: ability/item/modifier; hero not covered)
 2. **Cross-reference validator** — before launch, detect broken links: abilities referenced by heroes/units that don't exist, missing `ScriptFile` Lua files, unknown modifiers, missing localization keys — `partly done` (localization part in `validate_and_sync_precache`, stage 8)
 3. **Offline VScript API cache** — dump `script_help2` once, then verify Lua calls without a running game — `done` (2026-10-22, in `verify_vscript_api`)
 4. **Automated mechanic tests** — Lua harness spawns hero/targets, casts the ability, asserts damage/effects via console log — `idea`
@@ -51,6 +51,9 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 - **Language voice packs in sound search** — `search_sound_events`/`search_dota_assets` see only `game/dota/pak01`; add `game/dota_<language>/pak01` (e.g. `dota_russian`: only `sounds/vo/<hero>/` files, same event names) and report which heroes have the language's voice.
 - **Stock compiled maps in asset search** — `game/dota/maps/*.vpk` (dota_683, dota_685, …) are invisible to `search_dota_assets`; list them with their inner `maps/<name>.vmap_c` name.
+
+- **Scaffold: more effects** — `scaffold_game_element`: projectile (tracking/linear), DoT, silence/root/disarm, auras, charges, hero kind; set known particle CPs (radius) from `inspect_particle` — `idea`
+- **Scaffold: autotest stub** — generate a console-command autotest for each scaffolded element (spawn target, cast, assert effects) — `idea`
 
 ## Verification gaps
 
