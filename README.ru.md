@@ -10,7 +10,7 @@
 
 ---
 
-## Возможности (19 инструментов MCP)
+## Возможности (20 инструментов MCP)
 
 1. **Поиск реальных ассетов и звуков без галлюцинаций (`pak01_dir.vpk`):**
    - `search_dota_assets`: Поиск моделей (`.vmdl`), партиклов (`.vpcf`), материалов (`.vmat`), иконок Panorama (`.vtex`) и скриптов в `pak01_dir.vpk`.
@@ -25,6 +25,7 @@
    - `create_or_configure_addon`, `get_addon_paths`, `upsert_localization` (`UTF-16`), `validate_and_sync_precache`: Проверка синтаксиса Valve KeyValues, поиск файлов в неправильных папках, авто-компиляция `.png` иконок в `.vtex_c` и генерация `auto_precache.lua`.
 5. **Живая связь с запущенной Dota 2 (`NetCon` TCP порт `2121`):**
    - `run_console_command`, `verify_vscript_api` (`script_help2`), `read_latest_console_log`: Запуск кастомки из консоли, горячая перезагрузка скриптов (`script_reload`), проверка реальных функций Lua API в запущенном движке и чтение логов/ошибок.
+   - `take_game_screenshot`: Снимок экрана запущенной игры (мир + свой интерфейс) в `.jpg`, чтобы агент сам проверял визуал.
 6. **Самодиагностика и журнал багов:**
    - `run_mcp_self_test`, `log_bug_report`.
 
@@ -38,15 +39,14 @@
 - `create_or_configure_addon` (аддон виден в Workshop Tools), `prepare_map_from_template`, `add_map_entity`, `list_map_entities`, `compile_addon_resource` для `.vmap` (также покрыто `tests/verify_phase0_acceptance.py`).
 - `upsert_localization`, `validate_and_sync_precache` (проверка KV и генерация `auto_precache.lua` для ассетов из Lua/KV).
 - `run_console_command` (`dota_launch_custom_game`, `script_reload`), `verify_vscript_api`, `read_latest_console_log` через NetCon `2121`.
-- Claude Code: только подключение MCP (видны все 19 инструментов) и `run_mcp_self_test`, без живой сессии в игре.
+- Claude Code: поэтапные живые проверки в аддоне-песочнице `mcp_lab` ([docs/TEST_PLAN.md](docs/TEST_PLAN.md), этапы 0–10): способность, герой, волны и ИИ, предмет со своей `.png` иконкой, Panorama HUD и интерфейс в мире, сущности карты, свои звуки `.wav`/`.mp3`, локализация RU/EN, вражеские герои под Lua-ИИ, кат-сцена со своими полноэкранными картинками и `take_game_screenshot`.
 
 **Пока не проверено:**
-- Компиляция своих `.png` иконок (spellicons/items) в `.vtex_c`.
-- Компиляция Panorama UI (`.xml` / `.css` / `.js`) и материалов через `compile_addon_resource`.
+- Компиляция материалов через `compile_addon_resource`.
 - `remove_map_entity` для брашевых/меш-сущностей.
 - Windows 10, другие ПК, нестандартные библиотеки Steam.
 - Cursor, Windsurf, Codex и другие агенты.
-- Механики помимо одной способности `mcp_test` (герои, предметы, мультиплеер, публикация в Workshop).
+- Мультиплеер и публикация в Workshop.
 
 ---
 

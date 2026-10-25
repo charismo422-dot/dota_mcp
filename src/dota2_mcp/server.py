@@ -1,4 +1,4 @@
-"""Main FastMCP Server entry point exposing all 19 Dota 2 Workshop Tools functions."""
+"""Main FastMCP Server entry point exposing all 20 Dota 2 Workshop Tools functions."""
 
 from __future__ import annotations
 
@@ -218,6 +218,14 @@ def read_latest_console_log(
     return netcon_bridge.read_latest_console_log(
         tail_lines=tail_lines, grep=grep, only_errors=only_errors, verbose=verbose
     )
+
+
+@mcp.tool()
+def take_game_screenshot(name: str = "mcp_shot", quality: int = 60) -> dict[str, Any]:
+    """Save a .jpg screenshot of the running game (world + custom UI) via NetCon and return its absolute path.
+    Use it to check visuals (HUD, cutscenes, effects placement) yourself; open the file with an image-capable reader.
+    """
+    return netcon_bridge.take_game_screenshot(name=name, quality=quality)
 
 
 # ---------------------------------------------------------------------------

@@ -159,6 +159,35 @@ def run_console_command(
         }
 
 
+SCREENSHOT_RE = re.compile(r"Screenshot written to:\s*(.+?)\s*$")
+
+
+def take_game_screenshot(name: str = "mcp_shot", quality: int = 60) -> dict[str, Any]:
+    """Save a .jpg of the current Dota 2 frame (game world + Panorama UI) via the engine's 'jpeg_screenshot'.
+
+    Verified on 7.41: works over NetCon while the game window is not focused; files land in
+    game/dota/screenshots/<name>_NNNN.jpg (NNNN increments when the name repeats).
+    """
+    clean = re.sub(r"[^A-Za-z0-9_]", "_", name.strip()) or "mcp_shot"
+    quality = max(1, min(100, int(quality)))
+    try:
+        lines = _send_netcon_raw(f"jpeg_screenshot {clean} {quality}", wait_response_ms=2500)
+    except OSError as exc:
+        return {"ok": False, "error": f"Could not connect to Dota 2 NetCon ({exc}). Is the game running with -netconport?"}
+    rel = next((m.group(1) for m in map(SCREENSHOT_RE.search, map(_strip_timestamp, lines)) if m), None)
+    if not rel:
+        return {"ok": False, "error": "The engine did not report a screenshot (is a map loaded?).", "console_tail": lines[-5:]}
+    path = (CONFIG.game_dir / "dota" / rel.replace("\\", "/")) if CONFIG.game_dir else None
+    if not path or not path.exists():
+        return {"ok": False, "error": f"Engine wrote '{rel}' but the file was not found.", "expected_path": str(path)}
+    return {
+        "ok": True,
+        "path": str(path),
+        "size_kb": round(path.stat().st_size / 1024),
+        "hint": "Open the .jpg with an image-capable file reader to look at the frame.",
+    }
+
+
 def _console_log_path() -> Optional[Path]:
     if not CONFIG.game_dir:
         return None

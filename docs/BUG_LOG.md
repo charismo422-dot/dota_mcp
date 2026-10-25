@@ -166,3 +166,15 @@
 - **Корневая причина:** The previous run ends with RespawnHero, so the player's hero stands in the fountain and has modifier_fountain_invulnerability (several stacks); removing modifier_invulnerable is not enough. Also the old 7 s invulnerability ran out before the kill step once the test got longer.
 - **Примененное решение:** Test Kill() uses damage_flags = DOTA_DAMAGE_FLAG_BYPASSES_INVULNERABILITY; start-of-test invulnerability raised to 12 s.
 - **Правило предотвращения:** Autotests must pass twice in a row: run every autotest a second time without relaunch. Test kills use BYPASSES_INVULNERABILITY; protection durations must cover the whole test.
+
+### [2026-10-25 17:00:07] Компонент: `mcp_lab Panorama cutscene (stage 10)`
+- **Симптом / Ошибка:** During the cutscene the rift HUD panel and the overhead charges stayed on screen (seen on a take_game_screenshot frame), although the probe reported the stock HUD hidden.
+- **Корневая причина:** $.GetContextPanel() is the layout's own CustomUIElement, not a child of it; the code walked one level too high and hid siblings of CustomUIContainer_Hud instead of the other custom layouts.
+- **Примененное решение:** Hide the siblings of $.GetContextPanel() inside its parent (CustomUIContainer_Hud) plus HUDElements; autotest asserts hidden == 3.
+- **Правило предотвращения:** For visual features always look at a real frame (take_game_screenshot); a probe only proves what the code thinks it did. Assert exact counts of hidden panels.
+
+### [2026-10-25 17:00:07] Компонент: `mcp_lab localization (stage 9 leftovers)`
+- **Симптом / Ошибка:** validate_and_sync_precache reported 5 tokens missing in addon_english.txt (Trophies, Hunters' power, Last killer, hunter power modifier tooltip).
+- **Корневая причина:** Stage 9 added HUD/modifier texts only to addon_russian.txt; the English pass was skipped.
+- **Примененное решение:** Added the 5 English strings via upsert_localization.
+- **Правило предотвращения:** Upsert every new token in all addon languages in the same step and read missing_in_language from validate_and_sync_precache before finishing a stage.

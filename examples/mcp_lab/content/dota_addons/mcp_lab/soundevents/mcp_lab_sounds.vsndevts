@@ -18,4 +18,18 @@
 		distance_max = 2000.0
 		vsnd_files = "sounds/mcp_lab/rift_zap.vsnd"
 	}
+	MCP_Lab.CutsceneTheme = 
+	{
+		type = "dota_src1_2d"
+		volume = 0.9
+		pitch = 1.0
+		vsnd_files = "sounds/mcp_lab/cutscene_theme.vsnd"
+	}
+	MCP_Lab.CutsceneBoom = 
+	{
+		type = "dota_src1_2d"
+		volume = 1.0
+		pitch = 1.0
+		vsnd_files = "sounds/mcp_lab/cutscene_boom.vsnd"
+	}
 }

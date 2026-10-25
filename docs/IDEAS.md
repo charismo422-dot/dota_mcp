@@ -41,10 +41,13 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - **AI profiles for any stock hero** — the stage 9 hunter AI has hand-written profiles only for Sven, Lina, Axe; for a real project generate a per-hero profile (which spells to combo, range/kite, escape and self-help items) from the hero's ability KV (`AbilityBehavior`, cast range, damage/stun values) and let the agent tune it per hero — `idea` (owner request, 2026-10-25)
 - **Precache stock heroes created from Lua** — detect `CreateUnitByName("npc_dota_hero_*")` literals (extension of the unit precache idea) — `idea`
 - **Compact `list_map_entities`** — default to id/classname/targetname/origin only, full properties on request; saves context — `idea`
+- **Cutscene template** — reusable Lua timeline + Panorama overlay from stage 10 (camera thinker path, HUD hide/restore, slides with zoom/shake, subtitles, hold-to-skip, sound length from `GetSoundDuration`); the agent fills shots/images/texts — `idea`
+- **`take_game_screenshot` options** — downscale (`screenshot_width`/`screenshot_height`) or crop a region to save image tokens; wait N seconds before the shot; a burst of shots for animations — `idea`
+- **Panorama edit guard** — after a `.xml`/`.js` change in a running game warn that hot reload keeps the old JS context (stale probes, frozen animation) and suggest relaunching the map before tests — `idea`
 
 - **Filter console noise** — split `errors_and_warnings` into addon errors (Lua, own assets) vs known base-game noise; trim server-info dumps from `read_latest_console_log` — `done` (noise filter, `grep`, `only_errors`)
 
 ## Verification gaps
 
-- **Verify `.png` icon compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 4 — `idea`
-- **Verify Panorama compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 5 — `idea`
+- **Verify `.png` icon compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 4 — `done` (stage 4 icon, stage 10 full-screen 1920×1080 slides)
+- **Verify Panorama compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 5 — `done` (stages 5, 5b, 10)

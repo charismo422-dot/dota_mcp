@@ -1,6 +1,6 @@
 # Техническая спецификация проекта `dota_mcp` (Dota 2 Workshop Tools MCP Server)
 
-> **Статус:** ✅ **Фаза 0 полностью пройдена на Windows-ПК с установленной Dota 2.** Все 19 инструментов MCP-сервера протестированы на реальных бинарниках (`dmxconvert.exe`, `resourcecompiler.exe`, `Source2Viewer-CLI.exe`) и живом подключении к движку по NetCon (`127.0.0.1:2121`). Тестовый аддон-песочница: `mcp_test`.
+> **Статус:** ✅ **Фаза 0 полностью пройдена на Windows-ПК с установленной Dota 2.** Все 19 инструментов фазы 0 MCP-сервера протестированы на реальных бинарниках (`dmxconvert.exe`, `resourcecompiler.exe`, `Source2Viewer-CLI.exe`) и живом подключении к движку по NetCon (`127.0.0.1:2121`). Тестовый аддон-песочница: `mcp_test`.
 
 ## 1. Назначение системы
 `dota_mcp` — специализированный сервер Model Context Protocol (MCP) и набор правил/навыков для ИИ-агента Antigravity, позволяющий создавать, модифицировать, компилировать и отлаживать кастомные игры (Custom Games) в **Dota 2 Workshop Tools** на ОС Windows полностью автономно по текстовому запросу пользователя.
@@ -62,7 +62,7 @@ dota_mcp/
 └── src/
     └── dota2_mcp/
         ├── __init__.py
-        ├── server.py                          # Точка входа MCPServer и регистрация всех 19 инструментов
+        ├── server.py                          # Точка входа MCPServer и регистрация всех 20 инструментов
         ├── config.py                          # Автоопределение путей Steam, Dota 2, dmxconvert, resourcecompiler
         ├── vpk_explorer.py                    # Модуль 1: Поиск ассетов, звуковых событий и чтение базовых KV в pak01_dir.vpk
         ├── asset_inspector.py                 # Модуль 2: Инспекция .vmdl_c (анимации/attachments) и .vpcf_c (CP)
@@ -74,7 +74,7 @@ dota_mcp/
 
 ---
 
-## 4. Спецификация всех 19 инструментов MCP-сервера (Tools Reference)
+## 4. Спецификация всех 20 инструментов MCP-сервера (Tools Reference)
 
 ### Модуль 1: Поиск ассетов, звуковых событий и оригинальных скриптов (`vpk_explorer.py`)
 1. `search_dota_assets(query: str, asset_type: str = "all", limit: int = 25) -> dict`
@@ -137,6 +137,8 @@ dota_mcp/
     - **Описание:** Ищет функции, классы и константы Lua в кэше `.cache/vscript_api/build_<ClientVersion>.txt`. Кэш строится один раз на билд Доты: команда `script_help2` (полный дамп ~12 000 строк), полный текст читается из `console.log` (NetCon обрезает вывод). Дальше поиск работает без запущенной игры и не пишет в консоль. Если билд сменился, а игра не запущена, используется последний кэш (`source: stale_cache`). Ответ компактный: `сигнатура -- описание` для функций, строка `ИМЯ = число -- ...` для констант.
 17. `read_latest_console_log(tail_lines: int = 40, grep: str = "", only_errors: bool = False, verbose: bool = False) -> dict`
     - **Описание:** Читает последний 1 МБ `game/dota/console.log` (при запуске Доты с `-condebug`), скрывает шум как `run_console_command`, `grep` оставляет строки с подстрокой, `only_errors` — только ошибки. Максимум 200 строк.
+20. `take_game_screenshot(name: str = "mcp_shot", quality: int = 60) -> dict`
+    - **Описание:** Делает снимок текущего кадра игры (мир + Panorama) командой движка `jpeg_screenshot <name> <quality>` через NetCon и возвращает абсолютный путь `game/dota/screenshots/<name>_NNNN.jpg` (`NNNN` растёт при повторе имени) и размер. Агент открывает `.jpg` средством чтения изображений и сам проверяет визуал (HUD, кат-сцены). Работает, когда окно Доты не в фокусе; нужна загруженная карта. Также есть `png_screenshot` и `screenshot` (проверено на 7.41).
 
 ### Модуль 6: Самодиагностика и Журнал багов (`diagnostics.py`)
 18. `run_mcp_self_test() -> dict`

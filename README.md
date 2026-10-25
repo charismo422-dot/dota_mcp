@@ -10,7 +10,7 @@
 
 ---
 
-## Key Capabilities (19 MCP Tools)
+## Key Capabilities (20 MCP Tools)
 
 1. **Zero-Hallucination Asset & Sound Discovery (`pak01_dir.vpk`):**
    - `search_dota_assets`: Search models (`.vmdl`), particles (`.vpcf`), materials (`.vmat`), Panorama textures (`.vtex`), and scripts directly inside `pak01_dir.vpk`.
@@ -25,6 +25,7 @@
    - `create_or_configure_addon`, `get_addon_paths`, `upsert_localization` (`UTF-16`), `validate_and_sync_precache`: Validate Valve KeyValues syntax, catch misplaced files, compile custom `.png` icons to `.vtex_c`, and automatically generate `auto_precache.lua`.
 5. **Live Engine Bridge (`NetCon` TCP port `2121`):**
    - `run_console_command`, `verify_vscript_api` (`script_help2`), `read_latest_console_log`: Launch custom games, hot-reload Lua scripts (`script_reload`), query live engine Lua API signatures, and inspect runtime stack traces.
+   - `take_game_screenshot`: Save a `.jpg` of the running game (world + custom UI) so the agent can check visuals itself.
 6. **Self-Diagnostics & Bug Logging:**
    - `run_mcp_self_test`, `log_bug_report`.
 
@@ -38,15 +39,14 @@
 - `create_or_configure_addon` (addon appears in the Workshop Tools UI), `prepare_map_from_template`, `add_map_entity`, `list_map_entities`, `compile_addon_resource` for `.vmap` (also covered by `tests/verify_phase0_acceptance.py`).
 - `upsert_localization`, `validate_and_sync_precache` (KV validation + `auto_precache.lua` for Lua/KV assets).
 - `run_console_command` (`dota_launch_custom_game`, `script_reload`), `verify_vscript_api`, `read_latest_console_log` over NetCon `2121`.
-- Claude Code: MCP connection (all 19 tools listed) and `run_mcp_self_test` only — no live in-game session yet.
+- Claude Code: staged live tests in the `mcp_lab` sandbox addon ([docs/TEST_PLAN.md](docs/TEST_PLAN.md), stages 0–10): ability, hero, waves and AI, item with own `.png` icon, Panorama HUD and world-space UI, map entities, own `.wav`/`.mp3` sounds, RU/EN localization, enemy heroes under Lua AI, cutscene with own full-screen images and `take_game_screenshot`.
 
 **Not verified yet:**
-- Compiling custom `.png` icons (spellicons/items) to `.vtex_c`.
-- Compiling Panorama UI (`.xml` / `.css` / `.js`) and materials via `compile_addon_resource`.
+- Compiling materials via `compile_addon_resource`.
 - `remove_map_entity` on brush/mesh entities.
 - Windows 10, other PCs, non-default Steam library layouts.
 - Cursor, Windsurf, Codex and other agents.
-- Mechanics beyond the single `mcp_test` ability (heroes, items, multiplayer, Workshop publishing).
+- Multiplayer and Workshop publishing.
 
 ---
 

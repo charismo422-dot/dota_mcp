@@ -58,7 +58,7 @@ Always consult and follow the project's technical documentation:
 
 4. **Self-Check, Live Verification & Bug Logging:**
    - Before generating KV or Lua code, verify against [docs/SELF_CHECK_PROTOCOL.md](./docs/SELF_CHECK_PROTOCOL.md).
-   - Test changes live in Dota 2 using `run_console_command` (`dota_launch_custom_game <addon> <map>` or `script_reload`) and check `read_latest_console_log` to confirm zero Lua runtime errors.
+   - Test changes live in Dota 2 using `run_console_command` (`dota_launch_custom_game <addon> <map>` or `script_reload`) and check `read_latest_console_log` to confirm zero Lua runtime errors. For anything visual (HUD, Panorama, cutscenes, effects) take `take_game_screenshot` and look at the image.
    - Record any discovered MCP or custom game bug into [docs/BUG_LOG.md](./docs/BUG_LOG.md) via `log_bug_report`.
    - Keep [docs/TECHNICAL_SPEC.md](./docs/TECHNICAL_SPEC.md) synchronized whenever tool signatures or architecture in `src/dota2_mcp/` change.
 

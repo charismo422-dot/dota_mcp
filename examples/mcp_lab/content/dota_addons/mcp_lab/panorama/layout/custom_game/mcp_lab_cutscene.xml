@@ -1,0 +1,25 @@
+<root>
+	<styles>
+		<include src="file://{resources}/styles/custom_game/mcp_lab_cutscene.css" />
+	</styles>
+	<scripts>
+		<include src="file://{resources}/scripts/custom_game/mcp_lab_cutscene.js" />
+	</scripts>
+	<!-- Stage 10 cutscene overlay: invisible and click-through until Lua sends mcp_lab_cut_start -->
+	<Panel hittest="false" class="CutsceneRoot">
+		<Panel hittest="false" id="SlideFrame" class="SlideFrame">
+			<Image hittest="false" id="Slide_rift" class="Slide" src="file://{images}/custom_game/cutscene/rift.png" scaling="stretch-to-cover-preserve-aspect" />
+			<Image hittest="false" id="Slide_mage" class="Slide" src="file://{images}/custom_game/cutscene/mage.png" scaling="stretch-to-cover-preserve-aspect" />
+			<Image hittest="false" id="Slide_hunters" class="Slide" src="file://{images}/custom_game/cutscene/hunters.png" scaling="stretch-to-cover-preserve-aspect" />
+		</Panel>
+		<Panel hittest="false" id="BarTop" class="Bar" />
+		<Panel hittest="false" id="BarBottom" class="Bar" />
+		<Label hittest="false" id="Subtitle" class="Subtitle" html="true" text="" />
+		<Panel hittest="false" id="SkipHint" class="SkipHint">
+			<Label hittest="false" class="SkipLabel" text="#mcp_lab_cut_skip" />
+			<Panel hittest="false" class="SkipTrack">
+				<Panel hittest="false" id="SkipFill" class="SkipFill" />
+			</Panel>
+		</Panel>
+	</Panel>
+</root>

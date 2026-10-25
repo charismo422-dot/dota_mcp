@@ -6,6 +6,7 @@ end
 
 require( "mcp_lab_links" )
 for name, method in pairs( require( "mcp_lab_hunters" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 9: enemy heroes under Lua AI
+for name, method in pairs( require( "mcp_lab_cutscene" ) ) do CAddonTemplateGameMode[ name ] = method end  -- stage 10: cutscene
 
 local WAVE_SPAWNERS = { "lab_spawn_west", "lab_spawn_east" }  -- info_target entities placed with add_map_entity
 
@@ -309,6 +310,7 @@ function CAddonTemplateGameMode:InitGameMode()
 	CustomGameEventManager:RegisterListener( "mcp_lab_world_ack", function(...) return self:OnWorldAck( ... ) end )
 	CustomGameEventManager:RegisterListener( "mcp_lab_play_sound", function() return self:PlayRiftSound() end )
 	CustomGameEventManager:RegisterListener( "mcp_lab_loc_ack", function( _, data ) self.loc_acks = self.loc_acks or {}; self.loc_acks[ tostring( data.ping ) ] = data end )
+	self:RegisterCutsceneListeners()
 	GameRules:GetGameModeEntity():SetContextThink( "MCPLabHud", function()
 		self:SendHudUpdate()
 		return 0.5

@@ -8,3 +8,5 @@ LinkLuaModifier( "modifier_mcp_hunter_ai", "modifiers/modifier_mcp_hunter_ai", L
 LinkLuaModifier( "modifier_mcp_hunter_power", "modifiers/modifier_mcp_hunter_power", LUA_MODIFIER_MOTION_NONE )
 LinkLuaModifier( "modifier_mcp_boss_ai", "modifiers/modifier_mcp_boss_ai", LUA_MODIFIER_MOTION_NONE )
 LinkLuaModifier( "modifier_mcp_boss_telegraph", "modifiers/modifier_mcp_boss_ai", LUA_MODIFIER_MOTION_NONE )
+LinkLuaModifier( "modifier_mcp_cutscene", "modifiers/modifier_mcp_cutscene", LUA_MODIFIER_MOTION_NONE )
+LinkLuaModifier( "modifier_mcp_cutscene_camera", "modifiers/modifier_mcp_cutscene", LUA_MODIFIER_MOTION_NONE )

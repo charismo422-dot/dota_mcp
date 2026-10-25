@@ -47,4 +47,4 @@ If the environment is not yet initialized on a Windows PC:
    - Always add human-readable names and descriptions via `upsert_localization`.
 
 4. **Live Testing via NetCon:**
-   - Use `run_console_command` to launch the map (`dota_launch_custom_game <addon> <map>`) or hot-reload scripts (`script_reload`) and check `read_latest_console_log` to ensure zero Lua errors.
+   - Use `run_console_command` to launch the map (`dota_launch_custom_game <addon> <map>`) or hot-reload scripts (`script_reload`) and check `read_latest_console_log` to ensure zero Lua errors. For anything visual (HUD, Panorama, cutscenes, effects) take `take_game_screenshot` and look at the image.
