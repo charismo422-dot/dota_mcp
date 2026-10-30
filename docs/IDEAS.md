@@ -61,4 +61,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - **Verify Panorama compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 5 — `done` (stages 5, 5b, 10)
 - MCP: `validate_and_sync_precache` could warn about `CustomGameEventManager:RegisterListener` at module top level (listener lost before Activate).
 - mcp_lab: draw the zone border on the ground (particle ring / line along the polygon) — owner can not see the zone (stage 12).
-- roshan: remove a stock Roshan that spawns after `FindPit` (periodic check) and fix the pit to one place.
+- mode-1: remove a stock map unit that spawns after the start scan (periodic check) and fix its zone to one place.
+- MCP: `get_base_dota_definition` — a compact mode (only `AbilityN` names + behavior/cast range) to save context.
