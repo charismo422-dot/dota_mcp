@@ -17,9 +17,11 @@ function mcp_rift_quake:OnSpellStart()
 		self:GetSpecialValueFor( "radius" ), DOTA_UNIT_TARGET_TEAM_ENEMY,
 		DOTA_UNIT_TARGET_HERO + DOTA_UNIT_TARGET_BASIC, DOTA_UNIT_TARGET_FLAG_NONE, 0, false )
 
-	-- CP0 only; check other control points with inspect_particle
+	-- CP0 = position; CP1 = radius (the particle reads CP1)
 	local pfx = ParticleManager:CreateParticle( "particles/units/heroes/hero_leshrac/leshrac_split_earth.vpcf", PATTACH_WORLDORIGIN, nil )
 	ParticleManager:SetParticleControl( pfx, 0, center )
+	local radius = self:GetSpecialValueFor( "radius" )
+	ParticleManager:SetParticleControl( pfx, 1, Vector( radius, radius, radius ) )
 	ParticleManager:ReleaseParticleIndex( pfx )
 	EmitSoundOnLocationWithCaster( center, "Hero_Leshrac.Split_Earth", caster )
 

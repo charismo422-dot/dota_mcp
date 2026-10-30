@@ -7,6 +7,11 @@ Convars:RegisterCommand( "mcp_lab_autotest13", function()
 	local name = "mcp_rift_quake"
 	local ability = hero:FindAbilityByName( name ) or hero:AddAbility( name )
 	if not ability then print( "[MCP_LAB] AUTOTEST stage13 FAIL: AddAbility returned nil" ) return end
+	-- AddAbility puts it after the talents (no hotkey); move it into the empty D slot
+	if ability:GetAbilityIndex() > 5 and hero:FindAbilityByName( "mcp_empty1" ) then
+		hero:SwapAbilities( "mcp_empty1", name, false, true )
+	end
+	print( "[MCP_LAB] stage13 ability slot " .. ability:GetAbilityIndex() )
 	ability:SetLevel( 1 )
 	ability:EndCooldown()
 	hero:SetMana( hero:GetMaxMana() )

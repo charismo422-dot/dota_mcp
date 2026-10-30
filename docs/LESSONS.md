@@ -222,3 +222,9 @@ Entry format:
 - **Test trap:** expected slow 30 % but the creep's speed fell 40 % — the Frost Mage's own frost aura adds 10 %. Check "slowed" as `<`, not an exact value, when the caster has auras.
 - **Not checked in game:** `kind="item"` and `kind="modifier"`.
 - **Log trap (known idea):** `read_latest_console_log(only_errors)` showed a Lua error from the previous session; confirm by timestamp against the last `Initializing game mode`.
+
+### 2026-10-30 — Test plan stage 14 (stage 13 fixes: hotkey, particle size)
+- **Runtime AddAbility has no hotkey:** it lands after the talents (index 20). Move it into an empty slot 0–5 with `SwapAbilities(empty, name, false, true)`; guard with `GetAbilityIndex() > 5`, otherwise a second run swaps it back (engine warns "trying to unhide in a slot > 5").
+- **Particle size = CP1:** `leshrac_split_earth` reads CP1 (`inspect_particle` → `control_points_used [1]`); with CP0 only it is ~2x smaller than radius 325. `Vector(radius, radius, radius)` on CP1 fits. `scaffold_game_element` now emits it automatically when the particle reads CP1 and the spec has `radius`.
+- **Live addon ≠ examples:** `examples/mcp_lab` is a git snapshot; the game runs `dota 2 beta/game/dota_addons/mcp_lab`. Edit/copy the live file before `script_reload`, otherwise the old code runs.
+- **Screenshot timing:** bring Dota to the foreground first; `run_console_command(wait 900 ms)` then `take_game_screenshot` catches a 0.3 s-delayed cast with its particle.

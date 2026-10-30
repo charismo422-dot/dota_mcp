@@ -226,3 +226,21 @@
 - **Корневая причина:** Old 6.83/6.85 maps are not compatible with the current client (683) / not shipped under that name (685).
 - **Примененное решение:** None; marked "не работает", not retried to avoid crashes.
 - **Правило предотвращения:** Do not launch old patch maps (dota_683/685) in live tests; use the stock dota map copy.
+
+### [2026-10-30 22:24:15] Компонент: `scaffold_game_element / mcp_lab stage 13 (earth rift ability hotkey)`
+- **Симптом / Ошибка:** Owner check 2026-10-30: the scaffolded ability "Разлом земли" works (icon, sound, particle, tooltip), but no hotkey is bound to its button.
+- **Корневая причина:** Open. Likely the ability is added at runtime (AddAbility in mcp_lab_autotest13) into a slot outside the hotkeyed slots, or hidden/extra slot index.
+- **Примененное решение:** Open — not fixed.
+- **Правило предотвращения:** When adding an ability at runtime, check its slot index (GetAbilityIndex) is within the hero's hotkeyed slots and test the hotkey, not only the button click.
+
+### [2026-10-30 22:24:16] Компонент: `scaffold_game_element / mcp_lab stage 13 (earth rift particle radius)`
+- **Симптом / Ошибка:** Owner check 2026-10-30: the "Разлом земли" particle (Leshrac stun) looks about 2x smaller than the damage radius.
+- **Корневая причина:** Open. The scaffold sets only CP0 position; the stock particle's radius control point (see inspect_particle) is not set to the ability radius.
+- **Примененное решение:** Open — not fixed.
+- **Правило предотвращения:** For area abilities, inspect_particle the effect and set its radius control point from the ability radius; check the visual size with a screenshot.
+
+### [2026-10-30 22:27:51] Компонент: `mcp_lab stage 13 hotkey + scaffold particle radius — FIXED (stage 14)`
+- **Симптом / Ошибка:** Follow-up to the 2026-10-30 22:24 entries: mcp_rift_quake had no hotkey; Leshrac split earth particle ~2x smaller than radius 325.
+- **Корневая причина:** AddAbility at runtime puts the ability after the talents (slot 20, no hotkey; engine warns "unhide in a slot > 5"). The particle reads its size from CP1 (inspect_particle: control_points_used [1]); only CP0 was set.
+- **Примененное решение:** Autotest swaps the ability into the empty D slot (SwapAbilities with mcp_empty1, only if GetAbilityIndex() > 5 — swapping again moves it back to 20). Ability sets CP1 = Vector(radius, radius, radius). scaffold_game_element now runs inspect_particle and emits the CP1 radius line when the particle reads CP1 and the spec has radius. Autotest PASS 7/7, slot 3 (D), screenshot: effect covers the radius.
+- **Правило предотвращения:** Runtime-added abilities: move into an empty slot 0-5 and guard against swapping twice. Area particles: set the CP that inspect_particle reports besides CP0 (usually CP1 = radius) and check size on a screenshot.

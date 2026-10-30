@@ -114,8 +114,16 @@ def _modifier_lua(mod_name: str, stats: list[str], debuff: bool, purgable: bool,
     return "\n".join(lines)
 
 
+def _particle_cps(particle: str) -> list[int]:
+    try:
+        from .asset_inspector import inspect_particle
+        return inspect_particle(particle).get("control_points_used", [])
+    except Exception:
+        return []
+
+
 def _ability_lua(name: str, behavior: str, effects: list[str], buff_mod: str, debuff_mod: str,
-                 particle: str, sound: str, values: dict[str, str]) -> str:
+                 particle: str, sound: str, values: dict[str, str], radius_cp: bool = False) -> str:
     folder = "items" if name.startswith("item_") else "abilities"
     stats = [e for e in effects if e in STAT_EFFECTS]
     out = [
@@ -150,10 +158,14 @@ def _ability_lua(name: str, behavior: str, effects: list[str], buff_mod: str, de
                         '\t\tself:GetSpecialValueFor( "radius" ), DOTA_UNIT_TARGET_TEAM_ENEMY,',
                         "\t\tDOTA_UNIT_TARGET_HERO + DOTA_UNIT_TARGET_BASIC, DOTA_UNIT_TARGET_FLAG_NONE, 0, false )"]
         if particle:
-            out += ["", "\t-- CP0 only; check other control points with inspect_particle",
+            out += ["", "\t-- CP0 = position" + ("; CP1 = radius (the particle reads CP1)" if radius_cp else
+                                                  "; check other control points with inspect_particle"),
                     f'\tlocal pfx = ParticleManager:CreateParticle( "{particle}", PATTACH_WORLDORIGIN, nil )',
-                    "\tParticleManager:SetParticleControl( pfx, 0, center )",
-                    "\tParticleManager:ReleaseParticleIndex( pfx )"]
+                    "\tParticleManager:SetParticleControl( pfx, 0, center )"]
+            if radius_cp:
+                out += ['\tlocal radius = self:GetSpecialValueFor( "radius" )',
+                        "\tParticleManager:SetParticleControl( pfx, 1, Vector( radius, radius, radius ) )"]
+            out.append("\tParticleManager:ReleaseParticleIndex( pfx )")
         if sound:
             out.append(f'\tEmitSoundOnLocationWithCaster( center, "{sound}", caster )')
         if hits:
@@ -358,7 +370,10 @@ def scaffold_game_element(
         lua_file = vscripts / folder / f"{name}.lua"
         lua_file.parent.mkdir(parents=True, exist_ok=True)
         buff_mod, debuff_mod = f"modifier_{name}_buff", f"modifier_{name}_debuff"
-        lua_file.write_text(_ability_lua(name, behavior, effects, buff_mod, debuff_mod, particle, sound, merged), encoding="utf-8")
+        # area particles usually take their size from CP1 (verified: leshrac_split_earth)
+        radius_cp = bool(particle) and "radius" in merged and 1 in _particle_cps(particle)
+        lua_file.write_text(_ability_lua(name, behavior, effects, buff_mod, debuff_mod, particle, sound, merged, radius_cp),
+                            encoding="utf-8")
         written.append(str(lua_file))
 
         prefix = f"DOTA_Tooltip_ability_{name}"
