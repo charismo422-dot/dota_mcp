@@ -63,3 +63,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mcp_lab: draw the zone border on the ground (particle ring / line along the polygon) — owner can not see the zone (stage 12).
 - mode-1: remove a stock map unit that spawns after the start scan (periodic check) and fix its zone to one place.
 - MCP: `get_base_dota_definition` — a compact mode (only `AbilityN` names + behavior/cast range) to save context.
+- mode-1: per-hero AI tuning for every hunter profile; hunter power shown in the HUD.

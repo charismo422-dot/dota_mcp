@@ -246,3 +246,11 @@ Entry format:
 - **Stock spawner entities are not in the `.vmap` copy:** `list_map_entities(classname_filter="roshan")` on a stock `dota.vmap` copy returns 0 — the spawner comes from a prefab/world layer. Take its origin from a runtime print (`Entities` scan) and hard-code it; remove it at runtime (`Entities:FindByClassname` + `UTIL_Remove`, repeated by a think).
 - **Budget:** the session start (rules + context files + reading the stage 9 AI) already costs most of the context; `get_base_dota_definition(category="hero")` returns the whole hero file (~6k tokens) — prefer checking ability names in game by a print.
 
+
+### 2026-10-31 — mode-1 part 2a-2 (AI packs, death rules, safety)
+- **Stock spawner off for 10 game min:** `sv_cheats 1; host_timescale 10` for ~60 s real time — spawner removed once at start, no stock boss appears later. There is no `script <lua>` console command; check state with a registered debug convar.
+- **Fountain invulnerability survives the respawn move (BUG_LOG):** a hero that respawns at the fountain and is moved by `FindClearSpaceForUnit` keeps `modifier_fountain_invulnerability` (seen stacked ×4); `FindUnitsInRadius` with no flags then skips it, so AI and creeps ignore the hero forever. Remove it in a loop (`while HasModifier do RemoveModifierByName end`) right after the move.
+- **Timed schedule by `GameRules:GetDOTATime(false,false)`** in a 1 s think works under timescale (packs at 90/300 s, noise every 2–3 min, power +2/min).
+- **Death rules / safety test:** `hero:Kill(nil, hunter)` fires `entity_killed` synchronously; `RespawnHero(false,false)` + `Kill` three times in one tick checks a "3 deaths / 60 s" rule instantly.
+- **Not solved — AI observer ward:** `CastAbilityOnPosition(point, item_ward_observer, -1)` by an ownerless hero did not place a ward (item stays, charges 1, castable), even with the target off the hero and no overriding orders for 3 s. Next: read the cast error, or spawn `npc_dota_observer_wards` directly.
+- **"Attempted to create unknown modifier type"** when `LinkLuaModifier` lives only in a server-required module — the client VM does not know the modifier; check whether harmless or link it where the client loads it too.

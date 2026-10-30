@@ -256,3 +256,15 @@
 - **Корневая причина:** CastFilterResultTarget also runs on the client VM, where C_DOTA_Ability_Lua has no GetAbilityTargetTeam/Type/Flags (server-only).
 - **Примененное решение:** UnitFilter with spelled-out constants DOTA_UNIT_TARGET_TEAM_ENEMY, HERO + BASIC, FLAG_NONE (UnitFilter confirmed on client via cl_script_help2). Relaunch + autotest: 0 Lua errors.
 - **Правило предотвращения:** In cast filters use only client-available API; check with cl_script_help2 <name>.
+
+### [2026-10-31 00:08:52] Компонент: `mode-1 addon (respawn)`
+- **Симптом / Ошибка:** After the first death the player hero was ignored by AI heroes and creeps (no more deaths); FindUnitsInRadius returned 0 next to it.
+- **Корневая причина:** Respawn at the fountain applies modifier_fountain_invulnerability (stacked x4); moving the hero away with FindClearSpaceForUnit does not remove it.
+- **Примененное решение:** Remove every modifier_fountain_invulnerability instance in the respawn handler right after the move.
+- **Правило предотвращения:** When a mode respawns heroes away from the fountain, strip fountain invulnerability after the move and assert it in the autotest.
+
+### [2026-10-31 00:08:52] Компонент: `mode-1 addon (AI ward)`
+- **Симптом / Ошибка:** Ownerless AI hero ordered CastAbilityOnPosition with item_ward_observer: the ward is never placed, item stays (charges 1, castable).
+- **Корневая причина:** Unknown (open). Not the target point under a unit and not overriding orders (both excluded).
+- **Примененное решение:** None yet (2 attempts).
+- **Правило предотвращения:** Next try: read the cast failure in the console, or spawn npc_dota_observer_wards with CreateUnitByName instead of casting.
