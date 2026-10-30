@@ -244,3 +244,15 @@
 - **Корневая причина:** AddAbility at runtime puts the ability after the talents (slot 20, no hotkey; engine warns "unhide in a slot > 5"). The particle reads its size from CP1 (inspect_particle: control_points_used [1]); only CP0 was set.
 - **Примененное решение:** Autotest swaps the ability into the empty D slot (SwapAbilities with mcp_empty1, only if GetAbilityIndex() > 5 — swapping again moves it back to 20). Ability sets CP1 = Vector(radius, radius, radius). scaffold_game_element now runs inspect_particle and emits the CP1 radius line when the particle reads CP1 and the spec has radius. Autotest PASS 7/7, slot 3 (D), screenshot: effect covers the radius.
 - **Правило предотвращения:** Runtime-added abilities: move into an empty slot 0-5 and guard against swapping twice. Area particles: set the CP that inspect_particle reports besides CP0 (usually CP1 = radius) and check size on a screenshot.
+
+### [2026-10-30 23:44:51] Компонент: `roshan addon (custom game) — hero spawn`
+- **Симптом / Ошибка:** No hero spawned on map pit; console: Unrecognized custom hero name 'npc_dota_hero_rp_roshan'. Game state ran, strays spawned, but [ROSHAN] hero ready never printed.
+- **Корневая причина:** npc_heroes_custom block npc_dota_hero_rp_roshan uses override_hero npc_dota_hero_tidehunter; such a hero keeps the template unit name, so SetCustomGameForceHero and the npc_spawned name check with the custom name never match.
+- **Примененное решение:** HERO = npc_dota_hero_tidehunter in roshan_game.lua (force hero + spawn check). Hero spawns at 0.5x in the pit, autotest PASS.
+- **Правило предотвращения:** With override_hero, force/compare the template hero name; the block name is only a label.
+
+### [2026-10-30 23:44:51] Компонент: `roshan addon (custom game) — rp_glutton CastFilterResultTarget`
+- **Симптом / Ошибка:** Repeated client Script Runtime Error: rp_glutton.lua:13 attempt to call method 'GetAbilityTargetTeam' (a nil value).
+- **Корневая причина:** CastFilterResultTarget also runs on the client VM, where C_DOTA_Ability_Lua has no GetAbilityTargetTeam/Type/Flags (server-only).
+- **Примененное решение:** UnitFilter with spelled-out constants DOTA_UNIT_TARGET_TEAM_ENEMY, HERO + BASIC, FLAG_NONE (UnitFilter confirmed on client via cl_script_help2). Relaunch + autotest: 0 Lua errors.
+- **Правило предотвращения:** In cast filters use only client-available API; check with cl_script_help2 <name>.

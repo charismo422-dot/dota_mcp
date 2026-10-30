@@ -234,3 +234,10 @@ Entry format:
 - **Scaffold trap:** `passive` always adds a default `bonus_damage 20` value even when the spec has other values — remove it by hand. The addon template ships a sample `templar_assassin_refraction_holdout` in `npc_abilities_custom.txt`.
 - **Budget:** a whole mode chapter does not fit in one session — split into "code" and "in-game run + HUD" parts. Code not run in game yet.
 
+
+### 2026-10-30 — Roshan stage 1 part 2 (HUD + first in-game run)
+- **`override_hero` keeps the template unit name:** a block `npc_dota_hero_rp_roshan` with `override_hero npc_dota_hero_tidehunter` spawns `npc_dota_hero_tidehunter`; `SetCustomGameForceHero("npc_dota_hero_rp_roshan")` logs `Unrecognized custom hero name` and no hero spawns. Force and match the template name.
+- **Ability getters missing on the client VM:** `self:GetAbilityTargetTeam/Type/Flags()` in `CastFilterResultTarget` → client `Script Runtime Error` on every hover (server has them). Spell the KV constants out; `UnitFilter` exists on the client (`cl_script_help2 UnitFilter` checks the client API).
+- **Stray creeps stuck:** a random point 1200 from the pit may be off the walkable grid / far around cliffs (creep moved 7 units in 9 s). Pick a point with `GridNav:IsTraversable` and `GridNav:FindPathLength(pos, pit)` in (0, 2500). Then 1200 → 0 in 9 s.
+- **Pit marker varies:** the first launch found the live stock Roshan (top pit, then removed); later launches ran `FindPit` before he spawned and used `npc_dota_roshan_spawner` (bottom). A stock Roshan may still spawn later — watch for it in chapter 2.
+- **HUD via net table** (`SubscribeNetTableListener` + initial `GetTableValue`) worked on the first launch — no custom JS event, so the stage 12 bug did not apply.
