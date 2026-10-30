@@ -228,3 +228,9 @@ Entry format:
 - **Particle size = CP1:** `leshrac_split_earth` reads CP1 (`inspect_particle` → `control_points_used [1]`); with CP0 only it is ~2x smaller than radius 325. `Vector(radius, radius, radius)` on CP1 fits. `scaffold_game_element` now emits it automatically when the particle reads CP1 and the spec has `radius`.
 - **Live addon ≠ examples:** `examples/mcp_lab` is a git snapshot; the game runs `dota 2 beta/game/dota_addons/mcp_lab`. Edit/copy the live file before `script_reload`, otherwise the old code runs.
 - **Screenshot timing:** bring Dota to the foreground first; `run_console_command(wait 900 ms)` then `take_game_screenshot` catches a 0.3 s-delayed cast with its particle.
+
+### 2026-10-30 — Roshan stage 1 part 1 (private addon `roshan`, offline build)
+- **Works:** `create_or_configure_addon` + `prepare_map_from_template(source_template="dota")` + map compile (1m10s, same 3 harmless carnival models) give a fresh addon on a stock map copy. `scaffold_game_element` made 3 KV/Lua/RU skeletons (unit_target, point_aoe, passive) in one call each; their Lua was then rewritten by hand (eat, dash with grab, innate).
+- **Scaffold trap:** `passive` always adds a default `bonus_damage 20` value even when the spec has other values — remove it by hand. The addon template ships a sample `templar_assassin_refraction_holdout` in `npc_abilities_custom.txt`.
+- **Budget:** a whole mode chapter does not fit in one session — split into "code" and "in-game run + HUD" parts. Code not run in game yet.
+
