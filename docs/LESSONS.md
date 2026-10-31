@@ -295,3 +295,11 @@ Entry format:
 - **Failed first:** "arrived" = within 80 of the spot → Hold fired while still walking, the hunter stopped 50 short (depth 260 < 280). Fix: Hold only when stopped within WAIT_NEAR (50) or moving within 30; margin ≥ WAIT_NEAR.
 - **Reach check:** `Script_GetAttackRange()` + both `GetHullRadius()`; attack range buffer left out (it only keeps an already started attack). Player rooted at 3 spots along the entrance: min gap 192, no hits.
 - **Note:** `sed -i` from Git Bash turns CRLF files into LF — re-save with CRLF after it.
+
+### 2026-10-31 — mode-1 stage R2 part 2b (return bug, simulation, upgrade card)
+- **Root cause of the flaky AI return:** after `unit:Hold()` the unit methods `MoveToPosition` / `MoveToTargetToAttack` were silently ignored by ownerless AI heroes (`IsMoving` false, moved 0, no root/stun flags) — `ExecuteOrderFromTable` with the same order worked at once. All AI and bot orders now go through `ExecuteOrderFromTable`. Test: 10 dash carries in different directions/lengths (also over the bowl wall), then the player at the entrance: 10/10 back deep.
+- **Debug pattern:** a convar that stops the AI think and issues orders by different methods side by side found the cause in one run; position/pathing dumps (`GridNav:FindPathLength`) ruled out pathing.
+- **`ForceKill(false)` fires no `entity_killed`** — tests that need death logic must use `Kill(nil, attacker)`.
+- **Bot simulation:** `SendToServerConsole("host_timescale N")` from Lua works; run ends when the pack is dead or by a cap; per-run line + average per pack in the log. The game client crashed once during a pack-2 run at timescale 4 (cause unknown, log overwritten on restart): timescale lowered to 3 and the forced `RespawnHero` between runs replaced by waiting for the normal respawn.
+- **Upgrade card:** net table key `card` {open, reason, options} + custom event for the pick works; `Label.html = true` for descriptions; 3 options = one untaken per branch.
+- **Charges by script:** spend a spare charge by ending the cooldown a moment after the cast (`SetContextThink` 0.05 s) — the engine starts the cooldown around `OnSpellStart`.

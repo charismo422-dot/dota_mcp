@@ -310,3 +310,15 @@
 - **Корневая причина:** The AI walks to the entrance points (outside -> just inside) and holds as soon as it is inside the polygon, i.e. right at the edge by the entrance.
 - **Примененное решение:** Fixed (part 2-fix-6): wait spot inside the zone at hunters.wait_depth (280) + margin from the entrance line toward the center, one of 5 slots per hunter; return walk, watchdog and 'player unseen' lead there; Hold only once stopped at the spot. Autotest 4: back at depth 330 in 4 s, player at the entrance never in reach (min gap 192), no hits; autotests 2 and 3 PASS.
 - **Правило предотвращения:** A waiting spot for AI must be chosen by distance from where the player can stand (attack range + hulls), not 'first point inside the polygon'.
+
+### [2026-10-31 15:21:13] Компонент: `custom game Lua AI (mode-1)`
+- **Симптом / Ошибка:** Hunter carried out of the inner zone by the dash stayed where dropped about half the time (owner: returns "через раз").
+- **Корневая причина:** After unit:Hold() ownerless AI heroes silently ignored MoveToPosition / MoveToTargetToAttack (IsMoving false, moved 0, no root/stun flags).
+- **Примененное решение:** All AI and bot orders go through ExecuteOrderFromTable. Autotest 4 now runs 10 carry trials (directions/lengths, over the wall): 10/10.
+- **Правило предотвращения:** For script-driven units use ExecuteOrderFromTable for orders, not the CDOTA_BaseNPC move helpers, especially after a Hold.
+
+### [2026-10-31 15:21:13] Компонент: `custom game simulation (mode-1)`
+- **Симптом / Ошибка:** Dota client crashed during a pack-2 simulation run under host_timescale 4.
+- **Корневая причина:** Unknown: console.log was overwritten on restart. Suspects: forced RespawnHero between runs, high timescale.
+- **Примененное решение:** Open. Timescale lowered to 3; forced RespawnHero replaced by waiting for the normal respawn. Not re-run yet.
+- **Правило предотвращения:** Copy console.log aside before long timescale runs; avoid RespawnHero while a respawn timer is pending.

@@ -68,3 +68,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mode-1: draw the inner zone (pit) outline in the world too, not only the outer border.
 - mode-1: show the "no attacks" state on hunters (icon/text) so the player sees why they only cast.
 - mode-1: stock warning "unknown modifier type modifier_life_stealer_open_wounds_intrinsic" when Lifestealer hunter spawns — harmless, not fixed.
+- mode-1: give the bot simulation its own screenshot/plot output; run the simulation headless in a dedicated map to avoid client crashes.
