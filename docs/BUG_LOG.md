@@ -334,3 +334,9 @@
 - **Корневая причина:** The skip path always called Say("start_half"), even when the tutorial script had already played it at step 0.
 - **Примененное решение:** The skip says the opening line only if the per-run said-counter for it is 0; autotest 6 checks the count is exactly 1 for both the console and the hold-SPACE skip. Autotest 6 PASS.
 - **Правило предотвращения:** Lines that must be heard once per run are guarded by the said-counter on every path (script, skip, finish), and tests check the total count.
+
+### [2026-10-31 18:46:04] Компонент: `mode-1 (private addon): long game / repeated fights`
+- **Симптом / Ошибка:** Dota client closes after 10–20 game minutes or on the 2nd–4th repeated 3-hero fight; 6 crash dumps on 2026-10-31, all the same access violation in server.dll at one offset (null object, field 0x344). Last one 3 s after Roshan killed a hunter that had just hit him.
+- **Корневая причина:** Open. Suspect: UTIL_Remove of a dead ownerless hero 3 s after a real fight (pending attacks/modifiers keep a pointer). Ruled out by measurement: hero churn without fights (30 removals), 15 spell casts in a row, Lua memory/particles/thinkers (flat).
+- **Примененное решение:** Dead hunters are no longer removed (REMOVE_DEAD = false, respawns disabled); a departing boss is parked (hidden, invulnerable, out of game) instead of removed. Not yet confirmed by a 20-minute soak.
+- **Правило предотвращения:** Read the minidump first (D:\steam\dumps, faulting module + offset) before guessing; do not UTIL_Remove heroes that took part in combat — keep them dead or park them.
