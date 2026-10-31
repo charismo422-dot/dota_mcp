@@ -285,3 +285,7 @@ Entry format:
 - **Kill right after RespawnHero is ignored** in the same frame (no entity_killed); in tests wait ≥ 0.5 s between them.
 - **FindUnitsInRadius respects fog:** an unseen target → the "no target" branch must also send the AI somewhere sensible; plus an idle watchdog (outside the area, not moving/attacking > 2 s → walk in).
 - **Test hygiene:** stray creeps also trigger global counters (blocked hits); count per attacker (`unit.rp_blocked`) in tests.
+
+### 2026-10-31 — mode-1 part 2-fix-6 (start)
+- **API checked:** `CDOTA_BaseNPC:GetBaseAttackRange()`, `GetAttackRangeBuffer()`, `GetHullRadius()` exist — use them for a "not in melee reach" check (range + both hulls).
+- **Budget:** a new stage in an already long chat hits the 150k hook almost at once — start every stage in a new chat.

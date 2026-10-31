@@ -304,3 +304,9 @@
 - **Корневая причина:** In the test the hunter walked back in 4 s; the hole found: with no visible target (fog/night) the AI walked only when farther than 300 from the zone center, so a hunter behind the wall near the center stood still.
 - **Примененное решение:** No target and outside the inner zone → walk in via the entrance; watchdog: outside the inner zone, not moving/attacking/stunned/rooted for > 2 s → walk in. Autotest 3 step 7 (dash carries a live AI hunter out, back in within 5 s) PASS.
 - **Правило предотвращения:** Every AI branch must end in an order; add an idle watchdog for "outside the allowed area".
+
+### [2026-10-31 14:47:09] Компонент: `mode-1 (private addon): hunters wait at the inner-zone entrance edge`
+- **Симптом / Ошибка:** Owner (2-fix-5 check): after being carried out by the dash, hunters walk back but stop on the inner-zone edge at the entrance; the player's melee hero hits them from outside, they cannot hit back (out-of-zone rule).
+- **Корневая причина:** The AI walks to the entrance points (outside -> just inside) and holds as soon as it is inside the polygon, i.e. right at the edge by the entrance.
+- **Примененное решение:** None yet (open, part 2-fix-6 planned): a wait point inside the zone at WAIT_DEPTH (balance.lua) from the entrance mouth, toward the center; watchdog and return walk lead there.
+- **Правило предотвращения:** A waiting spot for AI must be chosen by distance from where the player can stand (attack range + hulls), not 'first point inside the polygon'.
