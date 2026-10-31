@@ -2,8 +2,8 @@
 
 Events (hook_event_name from stdin JSON):
   SessionStart     -> print "## Следующий шаг" and "## Проверить глазами" from .private/STATUS.md
-  PostToolUse      -> context > 150k: remind once per session to /wrap; > 200k: every time, with СТОП
-  UserPromptSubmit -> context > 150k and prompt not starting with "!": block, ask for a new session
+  PostToolUse      -> context > 250k: remind once per session to /wrap; > 300k: every time, with СТОП
+  UserPromptSubmit -> context > 300k and prompt not starting with "!": block, ask for a new session
 
 Context size = input + cache_read + cache_creation tokens of the last assistant reply in the
 transcript tail. Any failure -> exit 0 with no output, so the hook never breaks a session.
@@ -13,8 +13,8 @@ import os
 import sys
 import tempfile
 
-WARN = 150_000
-STOP = 200_000
+WARN = 250_000
+STOP = 300_000
 TAIL_BYTES = 200 * 1024
 MAX_STATUS_LINES = 40
 SECTIONS = ("## Следующий шаг", "## Проверить глазами")
@@ -87,19 +87,19 @@ def main():
         return
 
     tokens = context_tokens(data.get("transcript_path"))
-    if tokens <= WARN:
+    if tokens <= WARN or (event == "UserPromptSubmit" and tokens <= STOP):
         return
     k = tokens // 1000
 
     if event == "PostToolUse":
         if tokens > STOP:
-            msg = "СТОП. Контекст %dk > 200k: закончи текущий пункт и сделай /wrap" % k
+            msg = "СТОП. Контекст %dk > 300k: закончи текущий пункт и сделай /wrap" % k
         else:
             marker = marker_path(data.get("session_id"))
             if os.path.exists(marker):
                 return
             open(marker, "w").close()
-            msg = "Контекст > 150k (%dk): закончи текущий пункт и сделай /wrap" % k
+            msg = "Контекст > 250k (%dk): закончи текущий пункт и сделай /wrap" % k
         out_json({"hookSpecificOutput": {
             "hookEventName": "PostToolUse", "additionalContext": msg}})
     elif event == "UserPromptSubmit":
