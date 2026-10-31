@@ -279,3 +279,9 @@ Entry format:
 - **Fails:** ownerless heroes (CreateUnitByName, no owner) never cast — CastAbility*(-1), ExecuteOrderFromTable, CastAbilityImmediately all dropped. Count a cast by mana/cooldown, not by the order (open bug).
 - **Test hygiene:** FindClearSpaceForUnit onto a spot taken by another unit shifts the hero (here: into the inner zone) — move the other unit first. Disarm the player's hero during AI checks or it kills the test unit.
 - There is no `script` console command in the Dota client — debug via a temporary `Convars:RegisterCommand`.
+
+### 2026-10-31 — mode-1 part 2-fix-5 (cast false alarm, idle watchdog, safety test)
+- **Check WTF first:** `dota_ability_debug 1` hides mana cost and cooldown, so "AI never casts" was a false alarm. Before any AI check run `dota_ability_debug 0`; count casts with `MODIFIER_EVENT_ON_ABILITY_EXECUTED` (`params.unit == parent`).
+- **Kill right after RespawnHero is ignored** in the same frame (no entity_killed); in tests wait ≥ 0.5 s between them.
+- **FindUnitsInRadius respects fog:** an unseen target → the "no target" branch must also send the AI somewhere sensible; plus an idle watchdog (outside the area, not moving/attacking > 2 s → walk in).
+- **Test hygiene:** stray creeps also trigger global counters (blocked hits); count per attacker (`unit.rp_blocked`) in tests.

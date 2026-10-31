@@ -289,12 +289,18 @@
 
 ### [2026-10-31 14:22:03] Компонент: `mode-1 (private addon): ownerless AI heroes do not cast spells`
 - **Симптом / Ошибка:** Stock heroes created by CreateUnitByName(name, pos, true, nil, nil, DOTA_TEAM_BADGUYS) accept move orders, but every cast is dropped: no ability phase, cooldown 0, mana unchanged. Old tests counted issued orders only, so it went unnoticed.
-- **Корневая причина:** Unknown (open, 3 attempts): CastAbilityOnPosition/OnTarget(..., -1), ExecuteOrderFromTable (CAST_POSITION), CastAbilityImmediately — none cast. Ability level 1, castable, not silenced/stunned, in range, owner -1.
-- **Примененное решение:** None yet. Autotest 3 now reports 'spell really cast' (mana spent) as info.
-- **Правило предотвращения:** Verify a cast by its effect (cooldown/mana), never by the issued order. Next tries: give the hero an owner (SetOwner / SetControllableByPlayer), compare with mcp_lab stage 9 hunters in-game, CreateUnitByName with a bot player.
+- **Корневая причина:** False alarm (closed 2026-10-31, part 2-fix-5): WTF mode was on (`dota_ability_debug 1`) — no mana cost and no cooldown, so the mana/cooldown check never saw the casts. With `dota_ability_debug 0` the ownerless AI casts (OnAbilityExecuted counted 2 casts).
+- **Примененное решение:** AI counts real casts in `OnAbilityExecuted` (MODIFIER_EVENT_ON_ABILITY_EXECUTED); autotest 3 requires ≥ 1 executed cast. No code change needed for casting.
+- **Правило предотвращения:** Before checking AI turn WTF off (`dota_ability_debug 0`); count a cast by OnAbilityExecuted / effect on the target, never by mana, cooldown or the issued order.
 
 ### [2026-10-31 14:22:04] Компонент: `mode-1 (private addon): autotest 2 'safety' check`
 - **Симптом / Ошибка:** chapter 2 autotest FAIL: safety — after 3 kills in a row only 1 death counted (hero:Kill right after RespawnHero).
-- **Корневая причина:** Unknown (open, not investigated; autotest 2 was not rerun since part 2-fix-1). Suspect respawn invulnerability or respawn timing.
-- **Примененное решение:** None yet.
-- **Правило предотвращения:** Rerun all chapter autotests after core changes.
+- **Корневая причина:** Test bug (closed 2026-10-31, part 2-fix-5): `hero:Kill()` in the same frame as `RespawnHero()` is ignored — no entity_killed. In real play the safety triggered after 3 deaths.
+- **Примененное решение:** Autotest kills 0.5 s after each respawn; autotest 2 PASS.
+- **Правило предотвращения:** Rerun all chapter autotests after core changes; in tests leave ≥ 1 frame (here 0.5 s) between RespawnHero and Kill.
+
+### [2026-10-31 15:00:00] Компонент: `mode-1 (private addon): hunter idle outside the inner zone`
+- **Симптом / Ошибка:** Owner: the dash carried a hunter out of the inner zone and it stood still, not attacking.
+- **Корневая причина:** In the test the hunter walked back in 4 s; the hole found: with no visible target (fog/night) the AI walked only when farther than 300 from the zone center, so a hunter behind the wall near the center stood still.
+- **Примененное решение:** No target and outside the inner zone → walk in via the entrance; watchdog: outside the inner zone, not moving/attacking/stunned/rooted for > 2 s → walk in. Autotest 3 step 7 (dash carries a live AI hunter out, back in within 5 s) PASS.
+- **Правило предотвращения:** Every AI branch must end in an order; add an idle watchdog for "outside the allowed area".
