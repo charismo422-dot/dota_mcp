@@ -56,6 +56,7 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - **Scaffold: autotest stub** — generate a console-command autotest for each scaffolded element (spawn target, cast, assert effects) — `idea`
 
 ## Verification gaps
+- MCP tool `measure_game_loudness`: loopback recording around a console command (peak / RMS per window) to check sound levels without ears.
 
 - **Verify `.png` icon compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 4 — `done` (stage 4 icon, stage 10 full-screen 1920×1080 slides)
 - **Verify Panorama compilation live** — see [TEST_PLAN.md](./TEST_PLAN.md) stage 5 — `done` (stages 5, 5b, 10)
