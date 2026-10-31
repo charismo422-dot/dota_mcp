@@ -289,3 +289,9 @@ Entry format:
 ### 2026-10-31 — mode-1 part 2-fix-6 (start)
 - **API checked:** `CDOTA_BaseNPC:GetBaseAttackRange()`, `GetAttackRangeBuffer()`, `GetHullRadius()` exist — use them for a "not in melee reach" check (range + both hulls).
 - **Budget:** a new stage in an already long chat hits the 150k hook almost at once — start every stage in a new chat.
+
+### 2026-10-31 — mode-1 part 2-fix-6 (deep wait spot)
+- **Worked:** AI wait spot = entrance mouth (middle of the polygon's closing edge) + inward direction × (wait_depth + margin), 5 slots with side/depth offsets, each checked InPit + traversable. Depth measured along the inward direction (distance to the entrance line), not to the mouth point.
+- **Failed first:** "arrived" = within 80 of the spot → Hold fired while still walking, the hunter stopped 50 short (depth 260 < 280). Fix: Hold only when stopped within WAIT_NEAR (50) or moving within 30; margin ≥ WAIT_NEAR.
+- **Reach check:** `Script_GetAttackRange()` + both `GetHullRadius()`; attack range buffer left out (it only keeps an already started attack). Player rooted at 3 spots along the entrance: min gap 192, no hits.
+- **Note:** `sed -i` from Git Bash turns CRLF files into LF — re-save with CRLF after it.

@@ -308,5 +308,5 @@
 ### [2026-10-31 14:47:09] Компонент: `mode-1 (private addon): hunters wait at the inner-zone entrance edge`
 - **Симптом / Ошибка:** Owner (2-fix-5 check): after being carried out by the dash, hunters walk back but stop on the inner-zone edge at the entrance; the player's melee hero hits them from outside, they cannot hit back (out-of-zone rule).
 - **Корневая причина:** The AI walks to the entrance points (outside -> just inside) and holds as soon as it is inside the polygon, i.e. right at the edge by the entrance.
-- **Примененное решение:** None yet (open, part 2-fix-6 planned): a wait point inside the zone at WAIT_DEPTH (balance.lua) from the entrance mouth, toward the center; watchdog and return walk lead there.
+- **Примененное решение:** Fixed (part 2-fix-6): wait spot inside the zone at hunters.wait_depth (280) + margin from the entrance line toward the center, one of 5 slots per hunter; return walk, watchdog and 'player unseen' lead there; Hold only once stopped at the spot. Autotest 4: back at depth 330 in 4 s, player at the entrance never in reach (min gap 192), no hits; autotests 2 and 3 PASS.
 - **Правило предотвращения:** A waiting spot for AI must be chosen by distance from where the player can stand (attack range + hulls), not 'first point inside the polygon'.
