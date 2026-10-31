@@ -294,7 +294,7 @@
 - **Правило предотвращения:** Verify a cast by its effect (cooldown/mana), never by the issued order. Next tries: give the hero an owner (SetOwner / SetControllableByPlayer), compare with mcp_lab stage 9 hunters in-game, CreateUnitByName with a bot player.
 
 ### [2026-10-31 14:22:04] Компонент: `mode-1 (private addon): autotest 2 'safety' check`
-- **Симптом / Ошибка:** roshan_autotest2 FAIL: safety — after 3 kills in a row only 1 death counted (hero:Kill right after RespawnHero).
+- **Симптом / Ошибка:** chapter 2 autotest FAIL: safety — after 3 kills in a row only 1 death counted (hero:Kill right after RespawnHero).
 - **Корневая причина:** Unknown (open, not investigated; autotest 2 was not rerun since part 2-fix-1). Suspect respawn invulnerability or respawn timing.
 - **Примененное решение:** None yet.
 - **Правило предотвращения:** Rerun all chapter autotests after core changes.
