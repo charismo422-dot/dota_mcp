@@ -337,3 +337,9 @@ Entry format:
 - **A flee needs a hard deadline outside the stun check:** the Ursa AI returned early while stunned/carried, so the "flee over" check never ran; the deadline now sits first in the think, the target is a far walkable point (`FindWalkPoint(2200)`), time 35 s.
 - **Hero template leftovers:** model replaced on the client with `MODIFIER_PROPERTY_MODEL_CHANGE`; template wearables are hidden with `EF_NODRAW` on `dota_item_wearable` children (none were found on the hero at runtime — the visible Tidehunter parts came from the model swap itself); template voice silenced with `"VoiceFile" ""` in the hero KV (the log then shows `Failed to start voice … tide_lasthit` instead of playing it).
 - **Screenshots go stale when the Dota window is not in front:** three identical files (same md5, same game clock). `ShowWindow(h, 9)` + `SetForegroundWindow` right before the shot fixes it.
+
+### 2026-10-31 — mode-1 stage R5 (subtitles + icons)
+- **Subtitles:** the HUD looks up `#roshan_line_<id>` and hides the box when the token is missing, so "no subtitle" = no localization key. Source text: strip `[english tag]` (bracket not glued to a letter), in-word `[..]` → one `*` per letter. Check by comparing every `"roshan"` id of the LINES table against the localization file (server Lua cannot read it).
+- **Icons:** source art is 1024² JPG → center-crop to 11:8, resize 88×64 PNG into `content/<addon>/panorama/images/items/<name>.png`; `validate_and_sync_precache` compiles them. Its `icon_compile_errors` can be a false alarm (log says "OK: 8 compiled, 0 failed, 2 skipped"): verify `*_png.vtex_c` exist.
+- **Shell:** Cyrillic file names in a bash heredoc python get mangled; match by the timestamp suffix instead.
+- **Demo helpers:** `roshan_cardpick [id]` picks a mutation without a click, `roshan_claw` gives the Claw (card otherwise covers the screen).
