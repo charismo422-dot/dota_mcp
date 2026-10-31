@@ -280,3 +280,21 @@
 - **Корневая причина:** Unknown (open, 1 attempt). Likely MoveToPosition(target position) ends at the wall edge, then the unit auto-attacks the visible target in range.
 - **Примененное решение:** None yet.
 - **Правило предотвращения:** Route the AI through an explicit entrance point of the inner zone; forbid attack orders and auto-attack (e.g. Stop + MoveToPosition) while outside it.
+
+### [2026-10-31 14:22:03] Компонент: `mode-1 (private addon): AI entering the inner zone — fixed`
+- **Симптом / Ошибка:** (follow-up of the open entry above) AI hero behind the inner-zone wall never entered and hit from outside.
+- **Корневая причина:** MoveToPosition(target position) from behind the wall ended at the wall; the idle unit auto-acquired the target. Also a free auto-attack before the first AI think (0.25 s).
+- **Примененное решение:** Route via two fixed entrance points (outside, then inside); stock modifier_disarmed every AI tick unless both the hunter and the player stand in the inner zone; one AI tick right in OnCreated. Autotest: in zone, 0 blocked hits.
+- **Правило предотвращения:** Restrict attacks by state (disarm), not by orders alone; run the first AI tick in OnCreated.
+
+### [2026-10-31 14:22:03] Компонент: `mode-1 (private addon): ownerless AI heroes do not cast spells`
+- **Симптом / Ошибка:** Stock heroes created by CreateUnitByName(name, pos, true, nil, nil, DOTA_TEAM_BADGUYS) accept move orders, but every cast is dropped: no ability phase, cooldown 0, mana unchanged. Old tests counted issued orders only, so it went unnoticed.
+- **Корневая причина:** Unknown (open, 3 attempts): CastAbilityOnPosition/OnTarget(..., -1), ExecuteOrderFromTable (CAST_POSITION), CastAbilityImmediately — none cast. Ability level 1, castable, not silenced/stunned, in range, owner -1.
+- **Примененное решение:** None yet. Autotest 3 now reports 'spell really cast' (mana spent) as info.
+- **Правило предотвращения:** Verify a cast by its effect (cooldown/mana), never by the issued order. Next tries: give the hero an owner (SetOwner / SetControllableByPlayer), compare with mcp_lab stage 9 hunters in-game, CreateUnitByName with a bot player.
+
+### [2026-10-31 14:22:04] Компонент: `mode-1 (private addon): autotest 2 'safety' check`
+- **Симптом / Ошибка:** roshan_autotest2 FAIL: safety — after 3 kills in a row only 1 death counted (hero:Kill right after RespawnHero).
+- **Корневая причина:** Unknown (open, not investigated; autotest 2 was not rerun since part 2-fix-1). Suspect respawn invulnerability or respawn timing.
+- **Примененное решение:** None yet.
+- **Правило предотвращения:** Rerun all chapter autotests after core changes.

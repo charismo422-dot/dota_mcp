@@ -66,3 +66,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mode-1: per-hero AI tuning for every hunter profile; hunter power shown in the HUD.
 - mode-1: draw the zone border in the world (owner could not see it); idea only.
 - mode-1: draw the inner zone (pit) outline in the world too, not only the outer border.
+- mode-1: show the "no attacks" state on hunters (icon/text) so the player sees why they only cast.

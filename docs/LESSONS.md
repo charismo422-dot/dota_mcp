@@ -272,3 +272,10 @@ Entry format:
 - **Zone border in the world:** one ground rope particle (`range_finder_draggable_line`, CP0/CP1) per merged run of cell edges facing walkable outside ground; edges against cliffs/trees skipped → 61 lines. Not visible on a night/fog screenshot — check in daylight.
 - **Open:** AI behind the pit wall walks but keeps hitting from outside (`MoveToPosition(target)` does not lead it in); next — route via the pit entrance point.
 - **Budget:** pit + fortress rule + point dash + border + autotest filled the session; the bot simulation moves to the next part.
+
+### 2026-10-31 — mode-1 part 2-fix-4 (attack rule, AI entry)
+- **Works:** attack vs spell in the damage filter: `entindex_inflictor_const` is nil for auto-attacks. Stock `modifier_disarmed` (AddNewModifier, no ability) blocks auto-attacks of AI heroes; set it every AI tick from state (both in the inner zone → armed), not from order branches.
+- **Works:** AI enters an enclosed area via two fixed entrance points (outside → inside); a direct MoveToPosition to the target behind a wall stops at the wall.
+- **Fails:** ownerless heroes (CreateUnitByName, no owner) never cast — CastAbility*(-1), ExecuteOrderFromTable, CastAbilityImmediately all dropped. Count a cast by mana/cooldown, not by the order (open bug).
+- **Test hygiene:** FindClearSpaceForUnit onto a spot taken by another unit shifts the hero (here: into the inner zone) — move the other unit first. Disarm the player's hero during AI checks or it kills the test unit.
+- There is no `script` console command in the Dota client — debug via a temporary `Convars:RegisterCommand`.
