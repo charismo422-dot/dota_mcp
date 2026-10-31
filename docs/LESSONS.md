@@ -350,3 +350,9 @@ Entry format:
 - **Consumable pattern:** `item_lua` with `ItemRequiresCharges` + `ItemInitialCharges`; spend with `SetCurrentCharges`, `RemoveItem` at 0. Item icon `AbilityTextureName "item_rp_x"` resolves to `images/items/rp_x`. Modifier model scale: `MODIFIER_PROPERTY_MODEL_SCALE` returns percent.
 - **Test traps:** a 30 s buff from the previous run hides the effect in a rerun - clear it first; right after the use order wait ~1.5 s before reading scale. Dota not in foreground = stale screenshots (see stage 11) - bring it forward with `SetForegroundWindow`.
 - **Boss resize guard:** `FindModifierByName` on a dead boss returns nil -> check before use.
+
+## mode-1 stage 4c (voice back on the Game channel, louder)
+- **`dota_update_vo_switch` is not usable for custom voice:** the 4b switch made all our voice silent although `GetSoundDuration` was > 0. Keep `dota_src1_2d`. `GetSoundDuration` proves compilation only, not audibility.
+- **Loudness:** gain to -13 dBFS RMS, then a tanh soft limiter above a 0.55 knee, peak <= -1 dBFS (pure Python, ffmpeg only decodes).
+- **Ducking from an addon:** `scripts/soundmixers.txt` (base game, read with `Source2Viewer-CLI --vpk_filepath`) matches sound groups by `path_substring` of the sound path. Group `Video` (`video_ducks_music`, mix vol 1.0) has `causes_ducking = 1`, group `All` is ducked to 80 % (about -2 dB, not tunable). Group `Stingers` also ducks but its mix vol is 0.5, so it would make the voice quieter. Our wavs now live in `sounds/vo/<speaker>/video_ducks_music/`. Whether it is audible is an ear check.
+- **Own volume:** `EmitSoundOnClient` has no volume; for a percent other than 100 the hero plays the event with `EmitSoundParams(ev, 0, pct/100, 0)`. Console: `roshan_vo_volume 0..200`. Values above 1.0 in the event file itself were not tried.

@@ -355,3 +355,9 @@
 
 ### 2026-10-31 - mode-1: Lua error in the boss resize when the boss is dead (fixed)
 `SetBossHp` indexed a nil AI modifier when Roshan died after the boss was already gone (`roshan_boss.lua:22`). Fixed: nil guard + alive check.
+
+### [2026-10-31 22:58:59] Компонент: `mode-1 voice channel`
+- **Симптом / Ошибка:** After moving *.vo.* sound events to type dota_update_vo_switch (stage 4b), all Roshan and Courier voice lines were fully silent at Game 100 % / Unit speech 100 % (owner ear check).
+- **Корневая причина:** The hero-response type is routed by the engine only under its own conditions (hero speech); a custom event of that type does not play for a custom-game emitter. GetSoundDuration stays > 0, so the check did not catch it.
+- **Примененное решение:** Events back to dota_src1_2d (Game channel); wavs louder (-13 dBFS RMS, soft limiter, peak <= -1 dBFS); wavs placed under a folder named video_ducks_music so the engine mixer (soundmixers.txt, group Video: causes_ducking, others to 80 %) ducks the rest while a line plays; own volume 0-200 % via roshan_vo_volume (EmitSoundParams).
+- **Правило предотвращения:** GetSoundDuration > 0 proves only that the event compiled, not that it is audible. Never change the sound event type of custom voice to a hero-speech type; ear-check any channel change.
