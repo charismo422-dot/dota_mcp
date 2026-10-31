@@ -268,3 +268,9 @@
 - **Корневая причина:** Unknown (open). Not the target point under a unit and not overriding orders (both excluded).
 - **Примененное решение:** None yet (2 attempts).
 - **Правило предотвращения:** Next try: read the cast failure in the console, or spawn npc_dota_observer_wards with CreateUnitByName instead of casting.
+
+### [2026-10-31 13:51:35] Компонент: `mode-1 (private addon): unit-target eat ability vs zone knockback`
+- **Симптом / Ошибка:** Eat ability on a low-HP enemy hero plays the move/cast start but the hero is never eaten.
+- **Корневая причина:** Target stood just outside the small zone: the caster walked to it, the zone knockback threw it back, the order never completed. Also the retreating AI regenerated 8 %/s and rose above the HP threshold before the caster got in range (the filter is rechecked).
+- **Примененное решение:** Zone widened by walkable path (pit + river), hunters no longer flee/regenerate in chapter 1, threshold 25 %. Verified by a real CastAbilityOnTarget order with the AI on.
+- **Правило предотвращения:** Test unit-target abilities with a real order (not OnSpellStart) and with the target near a zone border and under its live AI.

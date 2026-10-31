@@ -255,3 +255,11 @@ Entry format:
 - **Solved (R2 2a-3) — AI observer ward:** spend the item (`RemoveItem`) and spawn the ward unit: `CreateUnitByName("npc_dota_observer_wards", pos, false, hero, hero, team)` + `modifier_kill {duration=360}`. The autotest checks the live ward unit, not only a counter. Was: `CastAbilityOnPosition(point, item_ward_observer, -1)` by an ownerless hero did not place a ward (item stays, charges 1, castable), even with the target off the hero and no overriding orders for 3 s. Next: read the cast error, or spawn `npc_dota_observer_wards` directly.
 - **"Attempted to create unknown modifier type"** when `LinkLuaModifier` lives only in a server-required module — the client VM does not know the modifier; check whether harmless or link it where the client loads it too.
 - **R2 2a-3:** "unknown modifier type" for the hunters fixed the same way as stage 5b: `LinkLuaModifier` moved from the server-only module into `mcp_scaffold_links.lua` (also loaded by the client through ability scripts). Rule: every new Lua modifier link goes there, not into a game-logic module.
+
+### 2026-10-31 — mode-1 part 2-fix-1 (playable core, code only)
+- **Zone by walkability:** precompute a grid (cell 96, radius 1900) once at start: a cell is in the zone when traversable and `GridNav:FindPathLength(pit, cell) <= path`; `InZone(pos)` is an O(1) lookup — cheap enough for a 0.1 s border think and for every damage event.
+- **"Damage only from inside the zone":** `SetDamageFilter(function(ctx, e) return ctx:DamageFilter(e) end, self)`; return false when `entindex_attacker_const` is outside — covers attacks, spells and DoTs. The AI must walk in first, otherwise ranged hunters deal 0.
+- **Border knockback toward the last inside point** (not the pit center) — the center can be behind a wall.
+- **Debug unit-target abilities with a real order** (`CastAbilityOnTarget`) — `OnSpellStart` in an autotest skips range, chasing and the cast filter (see BUG_LOG).
+- **Stock `roshan_spell_block` / `roshan_bash` exist as abilities** (VPK); added to the hero with `AddAbility` + `SwapAbilities` into placeholder slots 4–5.
+- **Budget:** the core fix (6 code items) filled a session; the bot simulation and tuning go to the next one.
