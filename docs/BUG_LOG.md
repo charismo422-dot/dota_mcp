@@ -340,3 +340,9 @@
 - **Корневая причина:** Open. Suspect: UTIL_Remove of a dead ownerless hero 3 s after a real fight (pending attacks/modifiers keep a pointer). Ruled out by measurement: hero churn without fights (30 removals), 15 spell casts in a row, Lua memory/particles/thinkers (flat).
 - **Примененное решение:** Dead hunters are no longer removed (REMOVE_DEAD = false, respawns disabled); a departing boss is parked (hidden, invulnerable, out of game) instead of removed. Not yet confirmed by a 20-minute soak.
 - **Правило предотвращения:** Read the minidump first (D:\steam\dumps, faulting module + offset) before guessing; do not UTIL_Remove heroes that took part in combat — keep them dead or park them.
+
+### [2026-10-31 19:30:01] Компонент: `mode-1 (private addon): stock hero as boss`
+- **Симптом / Ошибка:** Autotest 7: boss spawned with 1242 max HP instead of 5000; boss never attacked (console spam 'invalid order … Target can't be seen by the unit's team'); trader courier stood at its spawn behind the pit wall.
+- **Корневая причина:** Hero max HP is recalculated from stats (SetBaseMaxHealth does not stick); attack orders on a fogged target are refused; MoveToPosition on a fresh ownerless unit is ignored.
+- **Примененное решение:** HP bonus = target − natural max via MODIFIER_PROPERTY_HEALTH_BONUS on the boss AI modifier; AI walks to the target when CanEntityBeSeenByMyTeam is false; trader spawns at the pit mouth and walks by ExecuteOrderFromTable 0.1 s after spawn. Autotest 7 PASS.
+- **Правило предотвращения:** Stock hero bosses: set HP through a modifier bonus and check GetMaxHealth in the test; AI checks visibility before attack orders; all orders to ownerless units through ExecuteOrderFromTable.
