@@ -274,3 +274,9 @@
 - **Корневая причина:** Target stood just outside the small zone: the caster walked to it, the zone knockback threw it back, the order never completed. Also the retreating AI regenerated 8 %/s and rose above the HP threshold before the caster got in range (the filter is rechecked).
 - **Примененное решение:** Zone widened by walkable path (pit + river), hunters no longer flee/regenerate in chapter 1, threshold 25 %. Verified by a real CastAbilityOnTarget order with the AI on.
 - **Правило предотвращения:** Test unit-target abilities with a real order (not OnSpellStart) and with the target near a zone border and under its live AI.
+
+### [2026-10-31 14:03:30] Компонент: `mode-1 (private addon): AI entering the inner zone`
+- **Симптом / Ошибка:** AI hero placed behind the inner-zone wall (player inside) walks (17 move orders in 12 s) but never enters; it lands 3 attacks from outside (6 hits blocked by the damage filter).
+- **Корневая причина:** Unknown (open, 1 attempt). Likely MoveToPosition(target position) ends at the wall edge, then the unit auto-attacks the visible target in range.
+- **Примененное решение:** None yet.
+- **Правило предотвращения:** Route the AI through an explicit entrance point of the inner zone; forbid attack orders and auto-attack (e.g. Stop + MoveToPosition) while outside it.

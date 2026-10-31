@@ -65,3 +65,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - MCP: `get_base_dota_definition` — a compact mode (only `AbilityN` names + behavior/cast range) to save context.
 - mode-1: per-hero AI tuning for every hunter profile; hunter power shown in the HUD.
 - mode-1: draw the zone border in the world (owner could not see it); idea only.
+- mode-1: draw the inner zone (pit) outline in the world too, not only the outer border.

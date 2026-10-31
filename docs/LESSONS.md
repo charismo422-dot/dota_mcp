@@ -263,3 +263,12 @@ Entry format:
 - **Debug unit-target abilities with a real order** (`CastAbilityOnTarget`) — `OnSpellStart` in an autotest skips range, chasing and the cast filter (see BUG_LOG).
 - **Stock `roshan_spell_block` / `roshan_bash` exist as abilities** (VPK); added to the hero with `AddAbility` + `SwapAbilities` into placeholder slots 4–5.
 - **Budget:** the core fix (6 code items) filled a session; the bot simulation and tuning go to the next one.
+
+### 2026-10-31 — mode-1 part 2-fix-2 (inner zone, point dash, border)
+- **Find a map area's walls by a walkability scan:** a console command prints a 64-unit grid around the point (`#` = not traversable/blocked, digits = height); the inner side of the walls gives a polygon. Verify with `DebugDrawLine` + a camera on the hero (`PlayerResource:SetCameraTarget`) and one screenshot — matched the bowl on the first try.
+- **No `script` console command in tools mode:** add a small Lua `Convars:RegisterCommand` for one-off checks instead.
+- **Damage filter by a smaller inner polygon** only while the victim stands in it; outside — normal fight. Test with `ApplyDamage` from a placed unit (deterministic), not with real attacks.
+- **Point dash (Skewer-like):** `GetCastRange()` from the balance table, length = min(cursor distance, range), duration = length / speed; stop when the next step leaves the zone — no knockback needed.
+- **Zone border in the world:** one ground rope particle (`range_finder_draggable_line`, CP0/CP1) per merged run of cell edges facing walkable outside ground; edges against cliffs/trees skipped → 61 lines. Not visible on a night/fog screenshot — check in daylight.
+- **Open:** AI behind the pit wall walks but keeps hitting from outside (`MoveToPosition(target)` does not lead it in); next — route via the pit entrance point.
+- **Budget:** pit + fortress rule + point dash + border + autotest filled the session; the bot simulation moves to the next part.
