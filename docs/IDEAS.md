@@ -71,3 +71,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mode-1: give the bot simulation its own screenshot/plot output; run the simulation headless in a dedicated map to avoid client crashes.
 - mode-1 tutorial: remember "tutorial done" per player and pre-tick the lobby skip box on the next launch.
 - mode-1: find the client crash on repeated 3-hero packs (try removing dead heroes later, or reuse them instead of new spawns).
+- mode-1 bot sim: measure each upgrade against pack 2 (pack 1 has no deaths, so on-respawn upgrades like the Aegis flash never fire there).

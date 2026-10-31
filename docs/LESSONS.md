@@ -307,3 +307,9 @@ Entry format:
 - **Client crash in long bot series:** the client crashed on the 2nd–4th repeat of the same 3-hero pack in one game at timescale 3 and at 1 (not the timescale). Keep series short (2–3 runs per launch), copy `console.log` before each, cause still open (BUG_LOG).
 - **Per-group balance knob:** one global damage % could not fit two packs (one far too easy, one close); a per-pack `damage_pct` kept on the unit and added to the power stack solves it without touching the AI.
 - **Tutorial pattern (mode-1):** one script runner (list of waits / calls / wait-for-condition / say-line) with a generation counter, so a skip stops it at once; skip and finish both call one "apply result" function that sets absolute values — then both paths give the same state by construction. Lines go through one `Say(id)` (subtitle now, voice later). Exit blocked by `point_simple_obstruction` + `prop_dynamic` crates; a dash motion controller must also respect the tutorial area or it carries the hero through the blockers.
+
+### 2026-10-31 — mode-1 stage R2 part 2b-3 (tutorial live test, re-sim, close R2)
+- **Tutorial bot autotest worked first time** except one check: a skip after the opening line had been heard said it again. Rule: "say once" lines are guarded by the per-run said-counter (`tut_said[id] == 0`), and the test checks the total count is 1 in both skip paths.
+- **`console.log` is not reset on a map relaunch** (only on a Dota restart): wait loops must compare the count of a marker line with the count before the command, not just grep for it.
+- **Per-pack damage knob confirmed by sim:** pack 2 at +50 % → 0 deaths, at +150 % → 1.0 deaths (2 runs); pack 1 at +150 % → Roshan min HP 24 %. Each upgrade alone (pack 1) lifts min HP to 45–51 %.
+- **Crash-safe series:** relaunch the map before every 2 pack-2 runs and copy `console.log` first — no crash this session (2 + 2 pack-2 runs in separate launches).

@@ -328,3 +328,9 @@
 - **Корневая причина:** Unknown. Common factor: several pack-2 spawns in one game (Lifestealer / Witch Doctor / Lion created by CreateUnitByName, dead ones removed by UTIL_Remove after 3 s); console shows 'unknown modifier type modifier_life_stealer_open_wounds_intrinsic' at every pack-2 spawn. Not the timescale.
 - **Примененное решение:** Not fixed (3 attempts limit for this stage reached: timescale 4 -> 3 -> 1, delay 1 -> 4 s). Balance data taken from the runs that finished (5 pack-2 runs over 2 games). Console log copied before every sim run.
 - **Правило предотвращения:** Run pack-2 simulations at most 2–3 runs per game launch and copy console.log before each series. Next check: do not UTIL_Remove dead hunter heroes (leave them dead or hide them) and test without Lifestealer.
+
+### [2026-10-31 17:10:12] Компонент: `mode-1 tutorial (skip)`
+- **Симптом / Ошибка:** Tutorial autotest 6 FAIL skip_start_half: a console skip in the middle of step 2 played the opening Roshan line a second time.
+- **Корневая причина:** The skip path always called Say("start_half"), even when the tutorial script had already played it at step 0.
+- **Примененное решение:** The skip says the opening line only if the per-run said-counter for it is 0; autotest 6 checks the count is exactly 1 for both the console and the hold-SPACE skip. Autotest 6 PASS.
+- **Правило предотвращения:** Lines that must be heard once per run are guarded by the said-counter on every path (script, skip, finish), and tests check the total count.
