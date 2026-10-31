@@ -343,3 +343,10 @@ Entry format:
 - **Icons:** source art is 1024² JPG → center-crop to 11:8, resize 88×64 PNG into `content/<addon>/panorama/images/items/<name>.png`; `validate_and_sync_precache` compiles them. Its `icon_compile_errors` can be a false alarm (log says "OK: 8 compiled, 0 failed, 2 skipped"): verify `*_png.vtex_c` exist.
 - **Shell:** Cyrillic file names in a bash heredoc python get mangled; match by the timestamp suffix instead.
 - **Demo helpers:** `roshan_cardpick [id]` picks a mutation without a click, `roshan_claw` gives the Claw (card otherwise covers the screen).
+
+### 2026-10-31 — mode-1 stage R6 (voice channel + consumables)
+- **Sound sliders (console):** `volume` = Master, `snd_gamevolume` = Game, `snd_musicvolume` = Music, `snd_voipvolume` = voice chat, **`snd_gamevoicevolume` = "Game v.o. volume" = unit speech**. Found with `find volume` in the console.
+- **Hero speech is not a mixgroup:** stock hero/announcer VO events (`game_sounds_vo_*.vsndevts_c`, decompiled with `Source2Viewer-CLI -i <file> -b DATA`) carry `type = "dota_update_vo_switch"` and no `mixgroup`; the type itself routes them to the unit-speech channel. Our `*.vo.*` events were `dota_src1_2d` (Game channel) -> switched to `dota_update_vo_switch`. `GetSoundDuration` stays > 0 and the lines play. The channel itself is engine-internal: no console command shows it, so it needs an ear check (Game 20 %, Unit speech 100 %).
+- **Consumable pattern:** `item_lua` with `ItemRequiresCharges` + `ItemInitialCharges`; spend with `SetCurrentCharges`, `RemoveItem` at 0. Item icon `AbilityTextureName "item_rp_x"` resolves to `images/items/rp_x`. Modifier model scale: `MODIFIER_PROPERTY_MODEL_SCALE` returns percent.
+- **Test traps:** a 30 s buff from the previous run hides the effect in a rerun - clear it first; right after the use order wait ~1.5 s before reading scale. Dota not in foreground = stale screenshots (see stage 11) - bring it forward with `SetForegroundWindow`.
+- **Boss resize guard:** `FindModifierByName` on a dead boss returns nil -> check before use.

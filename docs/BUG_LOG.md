@@ -352,3 +352,6 @@
 - **Корневая причина:** Ursa AI think returned early while stunned or carried, so the 'flee over' deadline never ran; the exit target was only 700 units from the pit mouth. Hero template (Tidehunter) kept its own voice file and base model. The test sampled the timescale in the same tick as the grab.
 - **Примененное решение:** Flee deadline (35 s) is checked first in the think and the exit is a far walkable point (FindWalkPoint 2200); MODEL_CHANGE modifier + EF_NODRAW on wearables; hero KV VoiceFile/IdleSoundLoop/PickSound empty, SoundSet Roshan; the test keeps the lowest timescale seen while the slow motion is on.
 - **Правило предотвращения:** Any 'run away and leave' AI needs a deadline that runs before stun/hold early-returns. A hero-template custom hero must override VoiceFile and swap the model on the client too. Sample transient engine state (timescale) for a short window, not in the tick of the trigger.
+
+### 2026-10-31 - mode-1: Lua error in the boss resize when the boss is dead (fixed)
+`SetBossHp` indexed a nil AI modifier when Roshan died after the boss was already gone (`roshan_boss.lua:22`). Fixed: nil guard + alive check.
