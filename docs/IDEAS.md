@@ -76,3 +76,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mode-1 soak bot is weak (9 deaths in 20 min, never catches the fleeing boss) — teach it the dash on a fleeing boss for a fuller long-run test.
 - mode-1: if unit-speech routing turns out gated, fall back to a `roshan_vo_volume` console variable (0-200 %) and ducking of game sounds.
 - mode-1: a thrown-bone projectile particle (no stock bone particle found) and a pit-closed sign effect for the consumables.
+- Voice: ducking strength is fixed by the engine mixer (80 %); a user-set ducking level and a lobby volume slider (stage 9) are not done. Hunter voice: per-hero extra lines (more variants per trigger) and healing-ward/Blade Fury tuning.

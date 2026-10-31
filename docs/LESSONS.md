@@ -356,3 +356,8 @@ Entry format:
 - **Loudness:** gain to -13 dBFS RMS, then a tanh soft limiter above a 0.55 knee, peak <= -1 dBFS (pure Python, ffmpeg only decodes).
 - **Ducking from an addon:** `scripts/soundmixers.txt` (base game, read with `Source2Viewer-CLI --vpk_filepath`) matches sound groups by `path_substring` of the sound path. Group `Video` (`video_ducks_music`, mix vol 1.0) has `causes_ducking = 1`, group `All` is ducked to 80 % (about -2 dB, not tunable). Group `Stingers` also ducks but its mix vol is 0.5, so it would make the voice quieter. Our wavs now live in `sounds/vo/<speaker>/video_ducks_music/`. Whether it is audible is an ear check.
 - **Own volume:** `EmitSoundOnClient` has no volume; for a percent other than 100 the hero plays the event with `EmitSoundParams(ev, 0, pct/100, 0)`. Console: `roshan_vo_volume 0..200`. Values above 1.0 in the event file itself were not tried.
+
+## mode-1 stage 6b (hunter voices, shared queue)
+- **Voice per hero from a table:** the TTS pipeline reads hero voice ids from a local markdown table (ids are not secrets, the API key stays in the env file); one speaker per hero, events `hunter.vo.<hero>.<line>`, one `.vsndevts` per speaker, masters cached by text+voice+model hash.
+- **One queue for all speakers:** `Say` delays a new line behind the latest line of anybody (`talk_until.any`), so Roshan, the Courier and hunters never overlap. Hunter story beats (spawn, death, boss phases) queue at most 6 s; reactive ones (hit, hurt) are dropped when somebody talks and have a per-speaker gap of 17 s. Roshan's own lines are never dropped.
+- **Sim needs the chapter running:** `roshan_sim` before the tutorial ends fails with `packs_sent` nil; skip the tutorial first (`roshan_tutorial_skip` works only after the hero exists).
