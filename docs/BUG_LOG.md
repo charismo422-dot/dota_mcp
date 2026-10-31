@@ -322,3 +322,9 @@
 - **Корневая причина:** Unknown: console.log was overwritten on restart. Suspects: forced RespawnHero between runs, high timescale.
 - **Примененное решение:** Open. Timescale lowered to 3; forced RespawnHero replaced by waiting for the normal respawn. Not re-run yet.
 - **Правило предотвращения:** Copy console.log aside before long timescale runs; avoid RespawnHero while a respawn timer is pending.
+
+### [2026-10-31 16:32:02] Компонент: `mode-1 bot simulation (roshan_sim, pack 2)`
+- **Симптом / Ошибка:** Dota 2 client crashes (access violation minidump) during the 2nd–4th pack-2 run in one game: twice at host_timescale 3 (about 1 s after the next pack spawned), once at timescale 1 with 4 s between runs (mid-fight of run 4). Pack 1 series (5 runs) never crashed.
+- **Корневая причина:** Unknown. Common factor: several pack-2 spawns in one game (Lifestealer / Witch Doctor / Lion created by CreateUnitByName, dead ones removed by UTIL_Remove after 3 s); console shows 'unknown modifier type modifier_life_stealer_open_wounds_intrinsic' at every pack-2 spawn. Not the timescale.
+- **Примененное решение:** Not fixed (3 attempts limit for this stage reached: timescale 4 -> 3 -> 1, delay 1 -> 4 s). Balance data taken from the runs that finished (5 pack-2 runs over 2 games). Console log copied before every sim run.
+- **Правило предотвращения:** Run pack-2 simulations at most 2–3 runs per game launch and copy console.log before each series. Next check: do not UTIL_Remove dead hunter heroes (leave them dead or hide them) and test without Lifestealer.

@@ -69,3 +69,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mode-1: show the "no attacks" state on hunters (icon/text) so the player sees why they only cast.
 - mode-1: stock warning "unknown modifier type modifier_life_stealer_open_wounds_intrinsic" when Lifestealer hunter spawns — harmless, not fixed.
 - mode-1: give the bot simulation its own screenshot/plot output; run the simulation headless in a dedicated map to avoid client crashes.
+- mode-1 tutorial: remember "tutorial done" per player and pre-tick the lobby skip box on the next launch.
+- mode-1: find the client crash on repeated 3-hero packs (try removing dead heroes later, or reuse them instead of new spawns).
