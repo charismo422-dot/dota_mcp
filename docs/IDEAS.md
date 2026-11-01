@@ -91,3 +91,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - `record_game_audio(seconds, command)` MCP tool: loopback recording + per-band loudness, with a check that the game window (title `Dota 2`, not Asset Browser) is in front.
 - `fence_snapshot` demo command: put Roshan against the next closed gate and lock the camera, for screenshots without timing.
 - `check_elevenlabs_plan` MCP tool: read tier/credits via `/v1/user/subscription` and say which permission is missing.
+- Music: per-scene music cues (stinger on events, e.g. a fence opening) instead of one track per scene; tutorial music intensity by step.
