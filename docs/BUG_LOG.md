@@ -391,3 +391,9 @@
 - **Корневая причина:** Prologue had no hit sound at all (only two quiet synthesized shutters). The recording was silent because the Dota client stopped presenting frames and produced no audio.
 - **Примененное решение:** Prologue: stock Roshan.Slam on the stamp and panel 4, Roshan.RevengeRoar on the red eye, shutters over the voice. Audibility not yet confirmed by a recording (pending after a Dota restart).
 - **Правило предотвращения:** Check sounds by a loopback recording on a freshly started, rendering Dota; a Windows beep test first proves the recorder works.
+
+### [2026-11-01 19:54:51] Компонент: `mode-1 tutorial v4 autotest 6 (R14)`
+- **Симптом / Ошибка:** roshan_autotest6 on a fresh map after the film: FAIL all_lines, chapter, crates, death_shown, finished, full_state, hold_same, shop_step, skip_same. The full bot run ends with eaten=0, aegis=0, chapter=false (bot did not progress the river tutorial); console shows "[ROSHAN_ROUTE] fence open to 1: 0 crates (+0, -33)" right when the test restarts the tutorial.
+- **Корневая причина:** Not investigated yet (context budget). Likely the autotest-6 bot still uses the old pit tutorial positions/steps, and RestartTutorial reopens the route fence (removes the 33 river crates).
+- **Примененное решение:** None yet; next session.
+- **Правило предотвращения:** When a tutorial moves (pit -> river) update its autotest bot in the same change and run it once before closing the stage.

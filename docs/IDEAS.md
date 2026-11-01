@@ -88,3 +88,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mode-1: creeps spawned during a scene get no "on hold" (a stray with a red health bar walked into a scene shot in the autotest; in the real flow the chapter starts after the scene).
 
 - mode-1: voice pipeline — `previous_text`/`next_text` context and `speed` per speaker (voice_direction.md), not tried yet.
+- `record_game_audio(seconds, command)` MCP tool: loopback recording + per-band loudness, with a check that the game window (title `Dota 2`, not Asset Browser) is in front.
