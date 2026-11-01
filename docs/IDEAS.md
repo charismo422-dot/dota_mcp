@@ -89,3 +89,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 
 - mode-1: voice pipeline — `previous_text`/`next_text` context and `speed` per speaker (voice_direction.md), not tried yet.
 - `record_game_audio(seconds, command)` MCP tool: loopback recording + per-band loudness, with a check that the game window (title `Dota 2`, not Asset Browser) is in front.
+- `fence_snapshot` demo command: put Roshan against the next closed gate and lock the camera, for screenshots without timing.

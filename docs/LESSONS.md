@@ -422,3 +422,8 @@ Entry format:
 - **Game window focus:** the game (tools mode) barely advances while another window is in front; a background PowerShell loop `WScript.Shell.AppActivate("Dota 2")` every 2–3 s keeps it running during long autotests.
 - **Route tests must move the hero physically** before and after each opening: `InPlayArea` checks passed while the river spot was open toward the road (new `river_holds` check FAILs).
 - **After `script_reload`, relaunch the map** for fence tests: `InitRoute` is not re-run, a cache built with the fence standing is wrong.
+
+### 2026-11-01 — mode-1 stage R14 part 4 (route fence closed, autotests 6/15 PASS)
+- **Old distance filters vs a new zone shape:** the route fence kept the old "no crates within pit_edge of the pit center" rule; the river circle's road side lies ~290 from the center, so that side had no crates. Dropping the filter for the route closed it (42 crates); crates near the pit only appear on walkable ground outside the area.
+- **Autotests and running films:** `film_auto = false` stops new scenes only; a scene already playing mutes tutorial lines. End it (`EndScene(true)`) before restarting the tutorial.
+- **netcon output arrives late** (tens of seconds) during long runs; for timed screenshots use a fixed wait from the command (`wait_response_ms`) with the focus loop running, not the log lines. `dota_camera_lock 1` keeps the camera on Roshan.
