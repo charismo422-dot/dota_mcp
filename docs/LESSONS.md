@@ -427,3 +427,7 @@ Entry format:
 - **Old distance filters vs a new zone shape:** the route fence kept the old "no crates within pit_edge of the pit center" rule; the river circle's road side lies ~290 from the center, so that side had no crates. Dropping the filter for the route closed it (42 crates); crates near the pit only appear on walkable ground outside the area.
 - **Autotests and running films:** `film_auto = false` stops new scenes only; a scene already playing mutes tutorial lines. End it (`EndScene(true)`) before restarting the tutorial.
 - **netcon output arrives late** (tens of seconds) during long runs; for timed screenshots use a fixed wait from the command (`wait_response_ms`) with the focus loop running, not the log lines. `dota_camera_lock 1` keeps the camera on Roshan.
+
+### 2026-11-01 — mode-1 stage R14 session 2 (music plan check, blocked)
+- **Scoped ElevenLabs keys:** a key without `user_read` gets 401 `missing_permissions` on `/v1/user` and `/v1/user/subscription`, so the plan tier cannot be read from the API; `/v1/models` still works. Ask the owner for the plan name or a key with `user_read`.
+- **Eleven Music terms (music-terms, 09.10.2026):** Music API — paid plans only (Free: no API, no downloads); Free/Starter — "Music Streaming Distribution" prohibited, Creator+ permitted; all non-Enterprise plans exclude film/TV/radio and "Studio Games"; Free–Pro "individual use only". YouTube is not named — confirm before use. Cost ~900 credits/min, 3 s–5 min per track.
