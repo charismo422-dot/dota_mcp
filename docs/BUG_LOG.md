@@ -373,3 +373,9 @@
 - **Корневая причина:** Goal lines waited only 4-8 s in the voice queue while Roshan/hunter death lines (higher priority) or a fast bot kept it busy. SpawnTrader: a guarded text patch was skipped because the replacement text already existed in the new reuse branch, so the fresh-spawn branch kept the hard-coded ending lines.
 - **Примененное решение:** Goal lines wait 15 s; goal 8 uses SayChain (next line only when the queue is idle); SpawnTrader fresh branch now plays the passed lines. Both fixes not yet re-tested.
 - **Правило предотвращения:** A skip-if-already-applied patch guard must check the exact old text is gone, not that the new text exists somewhere; story lines that must be heard get a long wait or a chain.
+
+### [2026-11-01 13:51:50] Компонент: `mode-1 cinema (Lua scene runner)`
+- **Симптом / Ошибка:** Scene stopped after a few steps, no Lua error; voice line never played. Autotest 14 also counted only 12/30 ch1_pit lines voiced (open, run was polluted by a previous test run).
+- **Корневая причина:** Steps chained via SetContextThink("RoshanFilmStep"): the callback re-registered the same name, then returned nil, which removed the new think.
+- **Примененное решение:** Unique think name per step (DoUniqueString). ch1_pit plays to the end (107 s), skip PASS. 12/30 voiced lines: not investigated.
+- **Правило предотвращения:** Never re-register a fixed-name context think inside its own callback that returns nil; use unique names for chained one-shot timers.
