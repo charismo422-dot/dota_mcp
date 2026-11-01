@@ -379,3 +379,9 @@
 - **Корневая причина:** Steps chained via SetContextThink("RoshanFilmStep"): the callback re-registered the same name, then returned nil, which removed the new think.
 - **Примененное решение:** Unique think name per step (DoUniqueString). ch1_pit plays to the end (107 s), skip PASS. 12/30 voiced lines: not investigated.
 - **Правило предотвращения:** Never re-register a fixed-name context think inside its own callback that returns nil; use unique names for chained one-shot timers.
+
+### [2026-11-01 14:26:16] Компонент: `mode-1 cinema (film lines, scene start)`
+- **Симптом / Ошибка:** Autotest 14: only 12/30 then 29/30 scene lines voiced (one line "dropped: waited too long"); our goal/stats panels stayed visible in cinema; a scene started while Roshan was dead crashed (roshan_film.lua:64 attempt to index a nil value).
+- **Корневая причина:** 12/30: sound events compiled after Dota start are not loaded until a full Dota restart. 29/30: a film line queued behind the previous voice, its length read was stale, the next step came early and the queued line expired after 2 s. Panels: hidden via .visible, later updates showed them again. Crash: AddNewModifier on a dead hero returns nil.
+- **Примененное решение:** Dota restarted; Say(opt.film) always plays at once; root class FilmCinema + CSS collapse for own panels; PlayScene respawns a dead hero first. Test: mark-mode crate chosen by a short free path; mutation card closed before walking. Autotest 14: all parts PASS (mark part re-run after the test fix), 30/30 voiced.
+- **Правило предотвращения:** Restart Dota after compiling new sound events or localization; scripted lines never go through the waiting queue; hide own HUD with a CSS root class; guard AddNewModifier results on units that may be dead.
