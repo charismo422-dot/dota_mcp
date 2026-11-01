@@ -397,3 +397,9 @@
 - **Корневая причина:** Not investigated yet (context budget). Likely the autotest-6 bot still uses the old pit tutorial positions/steps, and RestartTutorial reopens the route fence (removes the 33 river crates).
 - **Примененное решение:** None yet; next session.
 - **Правило предотвращения:** When a tutorial moves (pit -> river) update its autotest bot in the same change and run it once before closing the stage.
+
+### [2026-11-01 20:29:33] Компонент: `mode-1 route fence / tutorial autotest 6 (R14)`
+- **Симптом / Ошибка:** 1) RestartTutorial at route_open=1 removed all 33 river crates (+0, -33). 2) Autotest 6 bot stuck: "invalid order (26). Target can't be seen", later bag creep behind the crates. 3) New autotest 15 check river_holds FAIL: before the tutorial is done Roshan sent from pit_start to road1 ends outside the play area (1141 from road1) - the river spot is not closed on the road side; opening 1->3 removes 0 crates.
+- **Корневая причина:** 1) RouteEdges re-checked GridNav:IsBlocked on rebuild; our own point_simple_obstruction blocked the outside cells, so no edge survived. 2) Tutorial props spawned up in the pit (fog from the river) and bag creeps spread past the fence. 3) Not found yet: likely the road-side edges of the river circle are within pit_edge (700) of the pit center and are filtered out.
+- **Примененное решение:** 1) Walkable cells cached per map (self.route_walk), fence cleared in InitRoute. 2) AddFOWViewer at the tutorial spot, TutFarPoint skips the pit and keeps 220 off the fence, creeps outside the area spawn at the bag; bot eats the nearest creep. 3) Not fixed (stopped by the context budget).
+- **Правило предотвращения:** When a fence is built from GridNav state, cache walkability before spawning own obstructions. Route tests must move the hero physically (not only InPlayArea) both before and after each opening.
