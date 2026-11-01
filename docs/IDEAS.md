@@ -80,3 +80,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - Voice: ducking strength is fixed by the engine mixer (80 %); a user-set ducking level and a lobby volume slider (stage 9) are not done. Hunter voice: per-hero extra lines (more variants per trigger) and healing-ward/Blade Fury tuning.
 - mode-1: Ursa's escape route goes to a random far point; aim it through the broken river crates so the chase reads.
 - mode-1: goal 1 counts any meal; count only the Courier's delivery creeps (tagged strays).
+- mode-1: route points are synced from console.log by a script (Lua has no file io); a server-side MCP tool "pull marks from the log" would save the manual step.
+- mode-1: starting gold (600) still exists, only hidden and frozen; set it to 0 if any stock gold UI shows up again.
