@@ -444,3 +444,10 @@ Entry format:
 - **Fake meat hook:** `pudge_meathook.vpcf` with CP0 = `attach_weapon_chain_rt` on the caster, CP1 = tip, CP2 = (speed, range, width), CP3 = (time); move CP1 back to the caster for the retract. Pull a unit with `SetAbsOrigin` lerp; pull a hero with `modifier_knockback` whose center is placed behind the hero (knockback pushes away from the center).
 - **Timed race needs a refill:** a fixed camp of 9 creeps was eaten in ~20 s of a 60 s race; spawn more when fewer than 4 are left.
 - **`script_reload` drops voice lengths:** after a reload scene lines log without "(voice N s)" and cut each other (fallback seconds); judge scene timing only on a fresh `dota_launch_custom_game`.
+
+## mode-1, stage 9-1 (road talk, quest 2, Ursa transmission) — 2026-11-01
+- **Works:** transmission scenes (`mode = "tx"`) reuse the scene engine for on-the-move talk: bottom bar + portrait, the game goes on; a cinema scene started later just ends them. New speakers need three things: voice prefix in the `VOICE` table, a portrait unit in the HUD `PORTRAIT` map, `roshan_who_<speaker>` string.
+- **Works:** an NPC on a tree top = a normal hero unit + a Lua modifier with `MODIFIER_PROPERTY_VISUAL_Z_DELTA` (stack count = height); hop arcs change the stack every 0.05 s, the unit itself stays on the ground.
+- **Failed → fixed:** the camera visibility check called every shot "blocked" when the NPC sits inside a tree (the trace ends in the tree crown). Fix: aim at the drawn height (origin + perch) and skip the last samples next to the unit.
+- **Failed (open):** `take_game_screenshot` returned the same stale frame twice in a row (different file names, identical 202 KB image, old HUD numbers) after the window was activated by script. Do not trust a screenshot whose HUD numbers do not match the log.
+- **Noise:** each Monkey King hero unit prints "Creating monkey at <t>" once per second to the console (engine, not our code); clones are removed at the end of each round.

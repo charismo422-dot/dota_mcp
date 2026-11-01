@@ -94,3 +94,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - Music: per-scene music cues (stinger on events, e.g. a fence opening) instead of one track per scene; tutorial music intensity by step.
 - Scenes: when `FilmClearYaw` finds no clear yaw (forest camps), hide/fade trees between camera and actors instead of keeping a blocked shot.
 - Music volume above 100 %: a second event set with `volume = 2.0` in the `.vsndevts` (untested whether the engine honours it).
+- (2026-11-01) MCP: `take_game_screenshot` should check that the frame changed (hash vs the previous shot) and warn when it is stale.
+- (2026-11-01) mode-1: autotest for quest «Прятки» (all three outcomes via a scripted Q into a bush) — the console Q helper `roshan_mk_q` did not fire in the first try.

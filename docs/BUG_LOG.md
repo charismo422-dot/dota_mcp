@@ -409,3 +409,9 @@
 - **Корневая причина:** 1) RouteEdges dropped edges within goals.pit_edge (700) of the pit center; the river circle (r 700 around pit_start, 433 from the center) has its road side ~290 from the center, so no crates there. 2) The test set film_auto=false but did not end a film already running. 3) packs_sent is set only in StartHunters, which the route mode never calls: nil == 0 is false.
 - **Примененное решение:** 1) Removed the pit_edge filter from the route fence (42 crates on the river spot instead of 33). 2) Autotest 6 ends running films (EndScene) before RestartTutorial. 3) Check uses (packs_sent or 0) == 0. Autotests 15 and 6 PASS.
 - **Правило предотвращения:** A distance filter tuned for one zone shape must be re-checked when the zone shape changes. Tests that compare counters must tolerate nil when a mode skips the subsystem that creates them.
+
+### [2026-11-01 23:53:24] Компонент: `MCP take_game_screenshot`
+- **Симптом / Ошибка:** Two shots minutes apart (different names) gave the identical 202 KB image with old HUD values (Beast 0 after the log showed Beast 1).
+- **Корневая причина:** Unknown; the Dota window was activated by WScript AppActivate right before each shot — the engine may save the last presented frame of an unfocused window.
+- **Примененное решение:** None yet (open). Checked the stage by the console log instead.
+- **Правило предотвращения:** Compare HUD numbers in a screenshot with the log before trusting it; tool should hash-compare with the previous frame and warn.
