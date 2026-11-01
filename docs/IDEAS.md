@@ -84,3 +84,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mode-1: starting gold (600) still exists, only hidden and frozen; set it to 0 if any stock gold UI shows up again.
 - mode-1: cinema — hide unit health bars during a scene; keep the camera off pit walls (it looked through a rock on the pit close-up).
 - mode-1: film portrait asks for missing `panorama/images/heroes/icons/npc_dota_roshan_png` / `npc_rp_tut_courier_png` (console noise only; the 3D portrait works) — add icons or drop the fallback.
+- mode-1: in mark mode hide the goals panel (it shows through under the points panel).
+- mode-1: creeps spawned during a scene get no "on hold" (a stray with a red health bar walked into a scene shot in the autotest; in the real flow the chapter starts after the scene).
