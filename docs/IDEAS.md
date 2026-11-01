@@ -86,3 +86,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - mode-1: film portrait asks for missing `panorama/images/heroes/icons/npc_dota_roshan_png` / `npc_rp_tut_courier_png` (console noise only; the 3D portrait works) — add icons or drop the fallback.
 - mode-1: in mark mode hide the goals panel (it shows through under the points panel).
 - mode-1: creeps spawned during a scene get no "on hold" (a stray with a red health bar walked into a scene shot in the autotest; in the real flow the chapter starts after the scene).
+
+- mode-1: voice pipeline — `previous_text`/`next_text` context and `speed` per speaker (voice_direction.md), not tried yet.

@@ -385,3 +385,9 @@
 - **Корневая причина:** 12/30: sound events compiled after Dota start are not loaded until a full Dota restart. 29/30: a film line queued behind the previous voice, its length read was stale, the next step came early and the queued line expired after 2 s. Panels: hidden via .visible, later updates showed them again. Crash: AddNewModifier on a dead hero returns nil.
 - **Примененное решение:** Dota restarted; Say(opt.film) always plays at once; root class FilmCinema + CSS collapse for own panels; PlayScene respawns a dead hero first. Test: mark-mode crate chosen by a short free path; mutation card closed before walking. Autotest 14: all parts PASS (mark part re-run after the test fix), 30/30 voiced.
 - **Правило предотвращения:** Restart Dota after compiling new sound events or localization; scripted lines never go through the waiting queue; hide own HUD with a CSS root class; guard AddNewModifier results on units that may be dead.
+
+### [2026-11-01 19:10:21] Компонент: `mode-1 prologue sounds / test environment`
+- **Симптом / Ошибка:** Owner hears no hit/shutter sounds in the prologue; agent's loopback recording of Dota was pure digital silence (even voice lines).
+- **Корневая причина:** Prologue had no hit sound at all (only two quiet synthesized shutters). The recording was silent because the Dota client stopped presenting frames and produced no audio.
+- **Примененное решение:** Prologue: stock Roshan.Slam on the stamp and panel 4, Roshan.RevengeRoar on the red eye, shutters over the voice. Audibility not yet confirmed by a recording (pending after a Dota restart).
+- **Правило предотвращения:** Check sounds by a loopback recording on a freshly started, rendering Dota; a Windows beep test first proves the recorder works.
