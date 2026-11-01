@@ -162,30 +162,86 @@ def run_console_command(
 SCREENSHOT_RE = re.compile(r"Screenshot written to:\s*(.+?)\s*$")
 
 
+def _bring_dota_to_front() -> bool:
+    """Best effort: restore and focus the Dota 2 window (a minimized/background window renders a frozen frame)."""
+    if os.name != "nt":
+        return False
+    try:
+        import ctypes
+
+        user32 = ctypes.windll.user32
+        hwnd = user32.FindWindowW(None, "Dota 2")
+        if not hwnd:
+            return False
+        if user32.IsIconic(hwnd):
+            user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+        user32.SetForegroundWindow(hwnd)
+        time.sleep(0.5)  # let the engine draw a few fresh frames
+        return True
+    except Exception:
+        return False
+
+
+def _file_digest(path: Path) -> str:
+    import hashlib
+
+    return hashlib.md5(path.read_bytes()).hexdigest()
+
+
 def take_game_screenshot(name: str = "mcp_shot", quality: int = 60) -> dict[str, Any]:
     """Save a .jpg of the current Dota 2 frame (game world + Panorama UI) via the engine's 'jpeg_screenshot'.
 
-    Verified on 7.41: works over NetCon while the game window is not focused; files land in
-    game/dota/screenshots/<name>_NNNN.jpg (NNNN increments when the name repeats).
+    Verified on 7.41: works over NetCon; files land in game/dota/screenshots/<name>_NNNN.jpg.
+    Each call gets a unique name (time suffix), waits for the new file to finish writing and
+    flags 'stale' when the bytes equal the previous shot (the engine re-saves a frozen frame while
+    the window is minimized or in the background), so the window is brought to front first.
     """
     clean = re.sub(r"[^A-Za-z0-9_]", "_", name.strip()) or "mcp_shot"
+    clean = f"{clean}_{time.strftime('%H%M%S')}"
     quality = max(1, min(100, int(quality)))
+    shots_dir = (CONFIG.game_dir / "dota" / "screenshots") if CONFIG.game_dir else None
+    previous = None
+    if shots_dir and shots_dir.is_dir():
+        jpgs = sorted(shots_dir.glob("*.jpg"), key=lambda p: p.stat().st_mtime)
+        previous = jpgs[-1] if jpgs else None
+    focused = _bring_dota_to_front()
+    started = time.time()
     try:
         lines = _send_netcon_raw(f"jpeg_screenshot {clean} {quality}", wait_response_ms=2500)
     except OSError as exc:
         return {"ok": False, "error": f"Could not connect to Dota 2 NetCon ({exc}). Is the game running with -netconport?"}
-    rel = next((m.group(1) for m in map(SCREENSHOT_RE.search, map(_strip_timestamp, lines)) if m), None)
+    matches = [m.group(1) for m in map(SCREENSHOT_RE.search, map(_strip_timestamp, lines)) if m]
+    rel = next((r for r in reversed(matches) if clean in r), None)
     if not rel:
-        return {"ok": False, "error": "The engine did not report a screenshot (is a map loaded?).", "console_tail": lines[-5:]}
+        return {"ok": False, "error": "The engine did not report this screenshot (is a map loaded?).", "console_tail": lines[-5:]}
     path = (CONFIG.game_dir / "dota" / rel.replace("\\", "/")) if CONFIG.game_dir else None
+    deadline = time.monotonic() + 5.0
+    last_size = -1
+    while path and time.monotonic() < deadline:
+        if path.exists():
+            size = path.stat().st_size
+            if size > 0 and size == last_size:
+                break
+            last_size = size
+        time.sleep(0.25)
     if not path or not path.exists():
         return {"ok": False, "error": f"Engine wrote '{rel}' but the file was not found.", "expected_path": str(path)}
-    return {
+    stale = bool(previous and previous != path and previous.exists() and _file_digest(previous) == _file_digest(path))
+    result = {
         "ok": True,
         "path": str(path),
         "size_kb": round(path.stat().st_size / 1024),
+        "written_after_call": path.stat().st_mtime >= started - 1,
+        "window_focused": focused,
+        "stale": stale,
         "hint": "Open the .jpg with an image-capable file reader to look at the frame.",
     }
+    if stale:
+        result["hint"] = (
+            "Same bytes as the previous shot: the engine saved a frozen frame. Bring the Dota 2 window "
+            "to front (not minimized) and retry."
+        )
+    return result
 
 
 def _console_log_path() -> Optional[Path]:

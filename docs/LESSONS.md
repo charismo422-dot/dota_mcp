@@ -451,3 +451,6 @@ Entry format:
 - **Failed → fixed:** the camera visibility check called every shot "blocked" when the NPC sits inside a tree (the trace ends in the tree crown). Fix: aim at the drawn height (origin + perch) and skip the last samples next to the unit.
 - **Failed (open):** `take_game_screenshot` returned the same stale frame twice in a row (different file names, identical 202 KB image, old HUD numbers) after the window was activated by script. Do not trust a screenshot whose HUD numbers do not match the log.
 - **Noise:** each Monkey King hero unit prints "Creating monkey at <t>" once per second to the console (engine, not our code); clones are removed at the end of each round.
+
+## mode-1, stage 9-10 (screenshot fix, road 2, Shaker, Zeus, pack strength) — 2026-11-02
+- **Fixed (stale screenshot):** the "old frame" shots were byte-identical (same MD5), so it was not a file-name/cache mix-up: `jpeg_screenshot` saves whatever frame the engine last drew, and a minimized/background Dota window draws nothing new. Fix in `take_game_screenshot`: restore + focus the "Dota 2" window (`FindWindowW` / `SetForegroundWindow`, 0.5 s pause), unique name with a time suffix, take the last `Screenshot written to` line that contains that name, wait until the file size stops changing, and return `stale: true` when the bytes equal the previous shot.

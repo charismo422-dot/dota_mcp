@@ -139,7 +139,7 @@ dota_mcp/
 17. `read_latest_console_log(tail_lines: int = 40, grep: str = "", only_errors: bool = False, verbose: bool = False) -> dict`
     - **Описание:** Читает последний 1 МБ `game/dota/console.log` (при запуске Доты с `-condebug`), скрывает шум как `run_console_command`, `grep` оставляет строки с подстрокой, `only_errors` — только ошибки. Максимум 200 строк.
 20. `take_game_screenshot(name: str = "mcp_shot", quality: int = 60) -> dict`
-    - **Описание:** Делает снимок текущего кадра игры (мир + Panorama) командой движка `jpeg_screenshot <name> <quality>` через NetCon и возвращает абсолютный путь `game/dota/screenshots/<name>_NNNN.jpg` (`NNNN` растёт при повторе имени) и размер. Агент открывает `.jpg` средством чтения изображений и сам проверяет визуал (HUD, кат-сцены). Работает, когда окно Доты не в фокусе; нужна загруженная карта. Также есть `png_screenshot` и `screenshot` (проверено на 7.41).
+    - **Описание:** Делает снимок текущего кадра игры (мир + Panorama) командой движка `jpeg_screenshot <name> <quality>` через NetCon и возвращает абсолютный путь `game/dota/screenshots/<name>_NNNN.jpg` (`NNNN` растёт при повторе имени) и размер. Агент открывает `.jpg` средством чтения изображений и сам проверяет визуал (HUD, кат-сцены). Перед снимком выводит окно «Dota 2» на передний план (свёрнутое/фоновое окно отдаёт замёрзший кадр); имя получает суффикс времени; ждёт, пока файл допишется; возвращает `written_after_call`, `window_focused` и `stale` (байты совпали с прошлым снимком — кадр старый). Нужна загруженная карта. Также есть `png_screenshot` и `screenshot` (проверено на 7.41).
 
 ### Модуль 6: Самодиагностика и Журнал багов (`diagnostics.py`)
 18. `run_mcp_self_test() -> dict`
