@@ -92,3 +92,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - `fence_snapshot` demo command: put Roshan against the next closed gate and lock the camera, for screenshots without timing.
 - `check_elevenlabs_plan` MCP tool: read tier/credits via `/v1/user/subscription` and say which permission is missing.
 - Music: per-scene music cues (stinger on events, e.g. a fence opening) instead of one track per scene; tutorial music intensity by step.
+- Scenes: when `FilmClearYaw` finds no clear yaw (forest camps), hide/fade trees between camera and actors instead of keeping a blocked shot.
+- Music volume above 100 %: a second event set with `volume = 2.0` in the `.vsndevts` (untested whether the engine honours it).
