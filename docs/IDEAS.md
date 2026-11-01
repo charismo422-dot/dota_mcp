@@ -96,3 +96,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - Music volume above 100 %: a second event set with `volume = 2.0` in the `.vsndevts` (untested whether the engine honours it).
 - (2026-11-01) MCP: `take_game_screenshot` should check that the frame changed (hash vs the previous shot) and warn when it is stale.
 - (2026-11-01) mode-1: autotest for quest «Прятки» (all three outcomes via a scripted Q into a bush) — the console Q helper `roshan_mk_q` did not fire in the first try.
+- (2026-11-02) mode-1: route bot `roshan_run` could eat (E) and buy at stalls, so the bones check is not a lower bound.
+- (2026-11-02) mode-1: a flying cloud for Zeus (model or particle in the air) — Nimbus particle draws only on the ground.

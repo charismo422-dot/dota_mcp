@@ -415,3 +415,15 @@
 - **Корневая причина:** Unknown; the Dota window was activated by WScript AppActivate right before each shot — the engine may save the last presented frame of an unfocused window.
 - **Примененное решение:** None yet (open). Checked the stage by the console log instead.
 - **Правило предотвращения:** Compare HUD numbers in a screenshot with the log before trusting it; tool should hash-compare with the previous frame and warn.
+
+### [2026-11-02 01:01:25] Компонент: `netcon_bridge.take_game_screenshot`
+- **Симптом / Ошибка:** Two screenshots in a row returned the same old frame (different file names, byte-identical jpg).
+- **Корневая причина:** jpeg_screenshot saves the last frame the engine drew; a minimized/background Dota window draws no new frames.
+- **Примененное решение:** Restore + focus the 'Dota 2' window before the shot, unique name with a time suffix, take the last 'Screenshot written to' line with that name, wait until the file size is stable, return stale=true when bytes equal the previous shot.
+- **Правило предотвращения:** Always check the 'stale' flag; if true, bring the window to front and retry before judging visuals.
+
+### [2026-11-02 01:01:25] Компонент: `mode-1 hunters (modifier_rp_hunter_ai, roshan_ambush)`
+- **Симптом / Ошибка:** Route ambush: Script Runtime Error 'arithmetic on hunter_power (nil)' in SpawnHunter; ring heroes stood behind the route fence crates.
+- **Корневая причина:** StartHunters had not initialised hunters/hunter_power in route mode; ring spots were placed on a fixed radius without checking the open corridor.
+- **Примененное решение:** AmbushStart initialises hunters/hunter_power; ring spots are pulled toward the center until InPlayArea and traversable; hunters get rp_field (no pit rules).
+- **Правило предотвращения:** Any spawn outside the pit: check InPlayArea for each spot and never rely on chapter-start state being initialised.
