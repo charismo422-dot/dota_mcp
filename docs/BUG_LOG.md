@@ -427,3 +427,9 @@
 - **Корневая причина:** StartHunters had not initialised hunters/hunter_power in route mode; ring spots were placed on a fixed radius without checking the open corridor.
 - **Примененное решение:** AmbushStart initialises hunters/hunter_power; ring spots are pulled toward the center until InPlayArea and traversable; hunters get rp_field (no pit rules).
 - **Правило предотвращения:** Any spawn outside the pit: check InPlayArea for each spot and never rely on chapter-start state being initialised.
+
+### [2026-11-02 15:17:44] Компонент: `mode-1 Panorama cinema HUD (OnFilm)`
+- **Симптом / Ошибка:** After a cinema scene that is followed immediately by a transmission (tx) scene, the game camera stays low/close (pitch and distance locked to the last film shot). After skipping the prologue, comic panels stay over the next scene. The skip hint is hidden under the full-screen comic. Transmission subtitles cover the ability panel.
+- **Корневая причина:** The net table jumps cinema -> tx (or scene -> scene) without an 'off' state Panorama can see; the 'on' branch had no cleanup and no camera restore, and the camera was re-saved with CamNow() while still in film pose. The skip hint panel is a sibling drawn before the film root. Tx strip reused the bottom letterbox position.
+- **Примененное решение:** FilmOff() cleanup runs whenever the scene id/gen (net table n) changes; the player's camera is saved once outside any scene and re-applied when leaving cinema for tx or for gameplay; prologue music stopped on skip; skip hint z-index over the comic; tx strip moved to the top band (1000 px, clear of Goals); camera after a scene is logged via roshan_film_camdbg.
+- **Правило предотвращения:** For state pushed through net tables, detect transitions by a generation counter, not only by on/off, and run the full exit path before every new state. Never snapshot the camera while a scripted camera may still be applied.
