@@ -98,3 +98,4 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - (2026-11-01) mode-1: autotest for quest «Прятки» (all three outcomes via a scripted Q into a bush) — the console Q helper `roshan_mk_q` did not fire in the first try.
 - (2026-11-02) mode-1: route bot `roshan_run` could eat (E) and buy at stalls, so the bones check is not a lower bound.
 - (2026-11-02) mode-1: a flying cloud for Zeus (model or particle in the air) — Nimbus particle draws only on the ground.
+- (2026-11-02) mode-1: voice pipeline `--check` that calls one cheap TTS request and reports billing/permission errors before a batch.
