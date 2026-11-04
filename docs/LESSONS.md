@@ -491,3 +491,16 @@ Entry format:
 ", ... )` on a file opened with `newline=""` silently does nothing when the file has CRLF. Assert the result of every patch.
 - **Gotcha:** a dash stopped at the old corridor border (600 from the route line) even inside the walls; with walls on, the walls alone limit it now.
 - **Found, not fixed:** `DamageFilter` drops enemy heroes' auto-attacks outside the pit, also in route ambushes, so ambushes hit with spells only. Quest 1 needs an exemption; old ambushes are easier than designed.
+
+## mode-1, card q1b (quest at the safe lane tower: scripted fight, team switch, restartable fight) — 2026-11-04
+- **Works:** `GameRules:SetCreepSpawningEnabled( false )` turns off lane waves on the whole map; quests spawn their own creeps by hand.
+- **Works:** `SetTeam` on an ownerless stock hero switches enemy and ally live; disarm the allied tower while the hero is on the other team, and remove his summons before the switch back (a ward keeps its old team).
+- **Works:** units created in a scene's `setup` run after the scene's freeze, so they fight during the cutscene; real abilities and the tower give the fight for free, with `Kill` at a fixed step as the guarantee.
+- **Works:** a hero's max HP: a small modifier with `MODIFIER_PROPERTY_HEALTH_BONUS`, stack = target minus the HP after `CalculateStatBonus`.
+- **Gotcha:** a console start that ends the prologue once starts the next scene and then the tutorial on top of the quest (wrong camera, Courier thrown at walls). Loop `EndScene` 3 times with `film_auto = false`, as the older autotests do.
+- **Gotcha:** a test bot that skips every cinema scene also skips the choice, and the default flag makes the branch look broken. Skip all scenes except the one with the choice.
+- **Gotcha:** Templar Assassin's Refraction plus Meld made her close to unkillable for an attack-only bot: she alone finished both heroes. In this quest her Refraction stays at level 0.
+- **Gotcha:** a `tx` scene's lines cut any hint queued at the same time. Start the first enemy ultimate after the scene has ended.
+- **Gotcha:** a bash heredoc with long non-ASCII Python failed to parse in this shell; write the patch script to a file with the Write tool.
+- **Found, not fixed:** a mutation card offered by a skipped tutorial covers the screen during the next fight. It comes only from the console skip, but it blocks clean screenshots.
+

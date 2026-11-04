@@ -439,3 +439,9 @@
 - **Корневая причина:** The check counted fence crates only; since the hand-drawn walls replaced the corridor fence that counter stays 0.
 - **Примененное решение:** The check accepts either the old crate fence or active walls. Re-run: PASS.
 - **Правило предотвращения:** When a system is replaced, grep older autotests for its counters in the same session.
+
+### [2026-11-04 21:06:24] Компонент: `mode-1 quest fight (open-field hero fight with restart)`
+- **Симптом / Ошибка:** With the allied hero dead, the fight restarted endlessly: a bot went through 7 restarts and the "weaker enemies after 2 deaths" rule never fired.
+- **Корневая причина:** The tick checked "both dead -> restart" and returned before it counted the player's death, so the counter stayed at 0 whenever the ally was already dead. Nothing else eased the fight between restarts.
+- **Примененное решение:** Count the death before the restart check; each restart also lowers enemy max HP by 25 % (floor 40 %). The same bot now wins after 2 restarts.
+- **Правило предотвращения:** A fight that restarts on failure must get easier by itself, and early returns in a tick must come after all counters. Test the worst branch with a bot, not only the normal one.

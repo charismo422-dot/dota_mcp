@@ -103,3 +103,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - (2026-11-03) mode-1: walls hole check — draw the real GridNav path instead of the 64-cell flood-fill path; delete an empty wall from the console by index.
 - (2026-11-04) mode-1: a console dump of Roshan's state (level, XP, skill levels, active modifiers) so a check needs no screenshot.
 - (2026-11-04) mode-1: remove old autotests 1-5 built on the removed eating skill, or port them to the new kit.
+- (2026-11-04) mode-1: a console command that picks the open mutation card, so screenshots after a skipped tutorial are clean.
+- (2026-11-04) mode-1: quest bot that also uses W and E, for balance numbers closer to a real player.
