@@ -105,3 +105,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - (2026-11-04) mode-1: remove old autotests 1-5 built on the removed eating skill, or port them to the new kit.
 - (2026-11-04) mode-1: a console command that picks the open mutation card, so screenshots after a skipped tutorial are clean.
 - (2026-11-04) mode-1: quest bot that also uses W and E, for balance numbers closer to a real player.
+- (2026-11-04) mode-1: `roshan_mk_next` skips the choice with the default answer; add a step that stops at the choice.
+- (2026-11-04) mode-1: clear leftovers (Courier, parked heroes, corpses) when a quest restarts from the console.

@@ -504,3 +504,11 @@ Entry format:
 - **Gotcha:** a bash heredoc with long non-ASCII Python failed to parse in this shell; write the patch script to a file with the Write tool.
 - **Found, not fixed:** a mutation card offered by a skipped tutorial covers the screen during the next fight. It comes only from the console skip, but it blocks clean screenshots.
 
+## mode-1: card q2, a chase and a duel with a stock hero (2026-11-04)
+- A bot that re-issues orders every 0.5 s cancels a spell with a 0.47 s cast point. Check `ability:IsInAbilityPhase()` before a new order. Symptom here: phase 1 ended by its anti-stall timer only, 3 of 3.
+- Model Z offset above trees: 230 hides a unit under the canopy with the default camera, 340 sits on top. Pull the scene camera back too (dist about 1500, pitch 52): a raised unit leaves the frame at dist 1200.
+- `roshan_cardpick` already existed. Grep the console commands before adding one.
+- Stock Wukong's Command soldiers are not the caster: a filter keyed on an attacker flag misses them, so the damage filter needs a fight-wide switch.
+- A quest skipped from the console leaves its unit, Courier and corpse in the world. Repeated runs in one game fill frames with leftovers, so take clean snapshots on a fresh map.
+- One big shell command with a heredoc can fail with ENAMETOOLONG on Windows: write long files with the file tool, then apply them with a small script.
+- Autotest 6 needs a fresh map (level 1 check); after autotest 18 in the same game it fails with `full_state`.
