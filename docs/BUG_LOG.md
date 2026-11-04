@@ -445,3 +445,9 @@
 - **Корневая причина:** The tick checked "both dead -> restart" and returned before it counted the player's death, so the counter stayed at 0 whenever the ally was already dead. Nothing else eased the fight between restarts.
 - **Примененное решение:** Count the death before the restart check; each restart also lowers enemy max HP by 25 % (floor 40 %). The same bot now wins after 2 restarts.
 - **Правило предотвращения:** A fight that restarts on failure must get easier by itself, and early returns in a tick must come after all counters. Test the worst branch with a bot, not only the normal one.
+
+### [2026-11-04 22:11:12] Компонент: `mode-1 quest bot`
+- **Симптом / Ошибка:** Bot of quest 2 never felled a tree: every phase 1 fall came from the anti-stall timer.
+- **Корневая причина:** The bot re-issued orders every 0.5 s and cancelled W, which has a 0.47 s cast point.
+- **Примененное решение:** The bot checks IsInAbilityPhase on W and Q before giving a new order.
+- **Правило предотвращения:** A bot that casts spells with a cast point must not issue orders during the ability phase.
