@@ -484,3 +484,10 @@ Entry format:
 - **Gotcha (test orders):** `CastAbilityOnTarget( x, ab, -1 )` on a just-created AI hero is silently dropped, and a point-cast ward too. `ExecuteOrderFromTable` after ~0.6 s works. A check like "channel broken" passes falsely if the channel never started: assert the channel began first.
 - **Gotcha (Lua error text):** the "module not found" line hides the real cause in the next line of the log (here a missing `)`): read the tail with a grep on the module name.
 - **Gotcha (walls vs spawned targets):** points chosen by radius can land behind a wall drawn later; `GridNav:CanFindPath( from, p )` filters them, since walls block the grid.
+
+### mode-1: quest point vs hand-drawn walls (card q1b, 2026-11-04)
+- **Works:** a small `roshan_nav x0 y0 x1 y1 cell` command prints the walkable grid of one rectangle (28 x 26 cells), enough to design a wall pocket without dumping the map.
+- **Gotcha (Python patches on Windows):** `str.replace( "...
+", ... )` on a file opened with `newline=""` silently does nothing when the file has CRLF. Assert the result of every patch.
+- **Gotcha:** a dash stopped at the old corridor border (600 from the route line) even inside the walls; with walls on, the walls alone limit it now.
+- **Found, not fixed:** `DamageFilter` drops enemy heroes' auto-attacks outside the pit, also in route ambushes, so ambushes hit with spells only. Quest 1 needs an exemption; old ambushes are easier than designed.
