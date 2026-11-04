@@ -101,3 +101,5 @@ Format: **Name** — what it does / why — status (`idea` / `discussing` / `in 
 - (2026-11-02) mode-1: voice pipeline `--check` that calls one cheap TTS request and reports billing/permission errors before a batch.
 - (2026-11-03) mode-1: walls panel — save straight to the data file via the MCP server (read [ROSHAN_WALL] lines on a console command) instead of a manual sync script.
 - (2026-11-03) mode-1: walls hole check — draw the real GridNav path instead of the 64-cell flood-fill path; delete an empty wall from the console by index.
+- (2026-11-04) mode-1: a console dump of Roshan's state (level, XP, skill levels, active modifiers) so a check needs no screenshot.
+- (2026-11-04) mode-1: remove old autotests 1-5 built on the removed eating skill, or port them to the new kit.

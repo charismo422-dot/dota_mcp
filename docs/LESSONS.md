@@ -475,3 +475,12 @@ Entry format:
 - **Note:** new localization tokens this time showed after a plain map relaunch (contrary to earlier notes) — the "failed to localize" lines came only from the first panel build.
 - **Works (closing hand-drawn walls offline):** `roshan_wall_dump` prints the walkable grid (64 cells, `.`/`#`) to the log; a Python flood fill over it with the walls rasterized the same way as in game finds leaks (path to the map edge) and checks gates section by section (which route points each opened prefix reaches) without touching the game. The offline result matched the in-game hole check (0 holes). Cliffs in GridNav are thin non-traversable lines; any gap in them is walkable — owner walls only plug those gaps, so check every wall end.
 - **Gotcha:** the hole check run before the route is loaded floods from nothing and reports «0 holes» — guarded now (prints «no start»).
+
+### mode-1: hero levels and own skills (card q1a, 2026-11-04)
+- **Works (custom levels with enemies above the cap):** `SetCustomXPRequiredToReachNextLevel` + `SetUseCustomHeroLevels(true)` with a 30-entry table whose levels 7+ are out of reach: the player stops at 6 by XP, enemies still go to 12 via `HeroLevelUp`. `SetCustomHeroMaxLevel` prints "deprecated" but works.
+- **Works (XP only from script):** `SetModifyExperienceFilter` returning a flag set around `AddExperience` cuts all stock XP; `GetLevel()` changes synchronously, so a before/after compare is a level-up event.
+- **Works (free skill points):** KV `RequiredLevel 1` + `LevelsBetweenUpgrades 1` let `+` raise a skill on any hero level; stock `+` buttons need no UI code.
+- **Works (Linken-like passive):** `MODIFIER_PROPERTY_ABSORB_SPELL` / `GetAbsorbSpell` returning 1 blocks stock targeted spells; own cooldown table needs a Lua passive, the stock `roshan_spell_block` has one fixed value.
+- **Gotcha (test orders):** `CastAbilityOnTarget( x, ab, -1 )` on a just-created AI hero is silently dropped, and a point-cast ward too. `ExecuteOrderFromTable` after ~0.6 s works. A check like "channel broken" passes falsely if the channel never started: assert the channel began first.
+- **Gotcha (Lua error text):** the "module not found" line hides the real cause in the next line of the log (here a missing `)`): read the tail with a grep on the module name.
+- **Gotcha (walls vs spawned targets):** points chosen by radius can land behind a wall drawn later; `GridNav:CanFindPath( from, p )` filters them, since walls block the grid.

@@ -433,3 +433,9 @@
 - **Корневая причина:** The net table jumps cinema -> tx (or scene -> scene) without an 'off' state Panorama can see; the 'on' branch had no cleanup and no camera restore, and the camera was re-saved with CamNow() while still in film pose. The skip hint panel is a sibling drawn before the film root. Tx strip reused the bottom letterbox position.
 - **Примененное решение:** FilmOff() cleanup runs whenever the scene id/gen (net table n) changes; the player's camera is saved once outside any scene and re-applied when leaving cinema for tx or for gameplay; prologue music stopped on skip; skip hint z-index over the comic; tx strip moved to the top band (1000 px, clear of Goals); camera after a scene is logged via roshan_film_camdbg.
 - **Правило предотвращения:** For state pushed through net tables, detect transitions by a generation counter, not only by on/off, and run the full exit path before every new state. Never snapshot the camera while a scripted camera may still be applied.
+
+### [2026-11-04 19:47:59] Компонент: `mode-1 autotest 6 (tutorial)`
+- **Симптом / Ошибка:** Tutorial autotest failed on its fence check although the tutorial road was closed correctly.
+- **Корневая причина:** The check counted fence crates only; since the hand-drawn walls replaced the corridor fence that counter stays 0.
+- **Примененное решение:** The check accepts either the old crate fence or active walls. Re-run: PASS.
+- **Правило предотвращения:** When a system is replaced, grep older autotests for its counters in the same session.
